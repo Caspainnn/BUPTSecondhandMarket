@@ -35,9 +35,10 @@ AppID 和云环境 ID 是公开配置。AppSecret、云密钥、Token 和用户�
 1. 使用微信开发者工具导入仓库根目录。
 2. 确认 `project.config.json` 中的 AppID。
 3. 确认 `miniprogram/config/env.js` 中的云环境 ID。
-4. 按 [数据库初始化说明](database/README.md) 创建集合、导入基础数据并配置权限和索引。
-5. 在开发者工具中分别上传并部署 `login` 和 `updateProfile` 云函数，选择“云端安装依赖”。
-6. 编译后使用真机预览验证微信身份、头像选择和云端读写。
+4. 按 [数据库初始化说明](database/README.md) 部署并云端测试一次性 `setupDatabase`，一键创建集合和基础数据。
+5. 手动配置数据库权限和索引；成功后删除云端的 `setupDatabase`。
+6. 在开发者工具中分别上传并部署 `login` 和 `updateProfile` 云函数，选择“云端安装依赖”。
+7. 编译后使用真机预览验证微信身份、头像选择和云端读写。
 
 ## 开发原则
 
