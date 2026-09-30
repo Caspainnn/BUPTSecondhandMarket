@@ -1,0 +1,23 @@
+[
+  {
+    "campusId": "bupt-xitucheng",
+    "schoolId": "bupt",
+    "name": "西土城校区",
+    "enabled": true,
+    "sortOrder": 10
+  },
+  {
+    "campusId": "bupt-shahe",
+    "schoolId": "bupt",
+    "name": "沙河校区",
+    "enabled": true,
+    "sortOrder": 20
+  },
+  {
+    "campusId": "bupt-hainan",
+    "schoolId": "bupt",
+    "name": "海南校区",
+    "enabled": true,
+    "sortOrder": 30
+  }
+]
