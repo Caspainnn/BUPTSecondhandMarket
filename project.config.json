@@ -32,5 +32,6 @@
     "include": []
   },
   "appid": "wx598761603636d41f",
-  "editorSetting": {}
+  "editorSetting": {},
+  "cloudfunctionTemplateRoot": "cloudfunctionTemplate/"
 }
