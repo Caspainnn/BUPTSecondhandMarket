@@ -89,3 +89,50 @@
 - `campuses` 的三个 `schoolId` 都是 `bupt`；
 - 客户端无法直接写入任一集合；
 - `getCampuses` 云函数可以读取三个校区，客户端无法直接读写集合。
+
+## 7. 阶段 1 交易集合初始化
+
+阶段 0 验收完成后，右键 `cloudfunctions/setupStage1Database`，选择“上传并部署：云端安装依赖”，再使用以下参数进行一次云端测试：
+
+```json
+{
+  "confirm": "INIT_STAGE_1"
+}
+```
+
+该函数只创建缺失的 `posts`、`conversations`、`messages`、`transactions`、`transaction_events` 和 `inventory_movements`，可以安全重复执行，不会删除或覆盖业务记录。返回值中的 `indexes` 和 `rules` 是需要在控制台配置的声明；云函数不会自动修改索引或安全规则。
+
+初始化成功并完成下述人工配置后，从云端删除 `setupStage1Database`。
+
+### 7.1 权限
+
+六个阶段 1 集合均设置为：
+
+```json
+{
+  "read": false,
+  "write": false
+}
+```
+
+公开商品、个人发布、会话、消息和交易数据均通过对应云函数按身份裁剪后返回，客户端不直接访问集合。
+
+### 7.2 索引
+
+| 集合 | 索引名 | 字段（按顺序） | 类型 |
+| --- | --- | --- | --- |
+| `posts` | `discovery` | `status`、`campusId`、`availableQuantity` 升序，`publishedAt`、`_id` 降序 | 普通 |
+| `posts` | `owner_posts` | `ownerId`、`status` 升序，`updatedAt` 降序 | 普通 |
+| `posts` | `owner_create_request` | `ownerId`、`createRequestId` 升序 | 唯一 |
+| `conversations` | `unique_conversation` | `uniqueKey` 升序 | 唯一 |
+| `conversations` | `buyer_conversations` | `buyerId` 升序、`updatedAt` 降序 | 普通 |
+| `conversations` | `seller_conversations` | `sellerId` 升序、`updatedAt` 降序 | 普通 |
+| `messages` | `conversation_messages` | `conversationId` 升序、`createdAt` 和 `_id` 降序 | 普通 |
+| `messages` | `sender_request` | `senderId`、`requestId` 升序 | 唯一 |
+| `transactions` | `buyer_transactions` | `buyerId`、`status` 升序，`updatedAt` 降序 | 普通 |
+| `transactions` | `seller_transactions` | `sellerId`、`status` 升序，`updatedAt` 降序 | 普通 |
+| `transactions` | `active_conversation` | `conversationId`、`activeKey` 升序 | 唯一 |
+| `transaction_events` | `transaction_events` | `transactionId` 升序、`createdAt` 降序 | 普通 |
+| `transaction_events` | `actor_request` | `actorId`、`requestId` 升序 | 唯一 |
+| `inventory_movements` | `post_movements` | `postId` 升序、`createdAt` 降序 | 普通 |
+| `inventory_movements` | `transaction_movements` | `transactionId` 升序、`createdAt` 降序 | 普通 |
