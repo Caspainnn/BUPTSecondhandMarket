@@ -5,6 +5,13 @@ const test = require('node:test')
 test('excludes mini program test files from packaging', () => {
   const config = JSON.parse(fs.readFileSync('project.config.json', 'utf8'))
   const ignored = config.packOptions.ignore.map((item) => item.value)
+  const collect = (directory) => fs.readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+    const fullPath = `${directory}/${entry.name}`
+    return entry.isDirectory() ? collect(fullPath) : [fullPath]
+  })
+  const tests = collect('miniprogram')
+    .filter((file) => file.endsWith('.test.js'))
+    .map((file) => file.replace(/^miniprogram\//, ''))
 
-  assert.ok(ignored.includes('pages/profile-edit/view.test.js'))
+  assert.deepEqual(tests.filter((file) => !ignored.includes(file)), [])
 })

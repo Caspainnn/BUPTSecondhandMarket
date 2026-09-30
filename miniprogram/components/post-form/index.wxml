@@ -1,0 +1,23 @@
+<view class="post-form">
+  <view class="images">
+    <view wx:for="{{form.images}}" wx:key="tempPath" class="image-item">
+      <image class="preview" src="{{item.fileId || item.tempPath}}" mode="aspectFill" />
+      <button class="mini danger" data-index="{{index}}" bindtap="remove">删除</button>
+      <view class="move-row">
+        <button wx:if="{{index > 0}}" class="mini" data-from="{{index}}" data-to="{{index - 1}}" bindtap="move">左移</button>
+        <button wx:if="{{index < form.images.length - 1}}" class="mini" data-from="{{index}}" data-to="{{index + 1}}" bindtap="move">右移</button>
+      </view>
+    </view>
+    <button wx:if="{{form.images.length < 6}}" class="add-image" bindtap="chooseImages">+ 添加图片</button>
+  </view>
+  <label class="field"><text>标题</text><input data-field="title" value="{{form.title}}" maxlength="30" placeholder="2～30 个字" bindinput="patch" /></label>
+  <label class="field"><text>详细描述</text><textarea data-field="description" value="{{form.description}}" maxlength="1000" placeholder="说明型号、状态和使用情况" bindinput="patch" /></label>
+  <label class="field"><text>分类</text><picker range="{{categories}}" range-key="name" bindchange="pickCategory"><view class="picker">{{categoryName || '请选择分类'}}</view></picker></label>
+  <label class="field"><text>参考单价（元）</text><input data-field="price" value="{{form.price}}" type="digit" placeholder="0 表示免费赠送" bindinput="patch" /></label>
+  <label class="field"><text>库存数量</text><input data-field="totalQuantity" value="{{form.totalQuantity}}" type="number" bindinput="patch" /></label>
+  <label class="field"><text>新旧程度</text><picker range="{{conditions}}" range-key="name" bindchange="pickCondition"><view class="picker">{{conditionName || '请选择新旧程度'}}</view></picker></label>
+  <label wx:if="{{form.conditionId === 'partially_faulty'}}" class="field"><text>故障说明</text><textarea data-field="defectDescription" value="{{form.defectDescription}}" maxlength="200" bindinput="patch" /></label>
+  <label class="field"><text>校区</text><picker range="{{campuses}}" range-key="name" bindchange="pickCampus"><view class="picker">{{campusName || '请选择校区'}}</view></picker></label>
+  <text wx:if="{{error}}" class="error">{{error}}</text>
+  <button class="submit" loading="{{status === 'saving' || status === 'uploading'}}" disabled="{{status === 'saving' || status === 'uploading'}}" bindtap="submit">{{status === 'uploading' ? '正在上传图片' : submitText}}</button>
+</view>

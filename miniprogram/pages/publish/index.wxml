@@ -1,0 +1,1 @@
+<view class="page"><view class="card"><post-form form="{{form}}" status="{{status}}" error="{{error}}" bindpatch="onPatch" bindaddimages="onAddImages" bindremoveimage="onRemoveImage" bindmoveimage="onMoveImage" bindfailure="onFailure" bindsubmit="submit" /></view></view>

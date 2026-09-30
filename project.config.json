@@ -31,6 +31,10 @@
       {
         "type": "file",
         "value": "pages/profile-edit/view.test.js"
+      },
+      {
+        "type": "file",
+        "value": "services/post-form-state.test.js"
       }
     ],
     "include": []
