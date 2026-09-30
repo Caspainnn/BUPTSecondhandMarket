@@ -1,0 +1,14 @@
+<view class="page home">
+  <view class="hero">
+    <text class="eyebrow">北京邮电大学校园闲置平台</text>
+    <text class="title">邮子二手铺</text>
+    <text class="short-name">邮二手</text>
+    <text class="intro">先逛逛，需要发布、聊天或预约时再完善资料。</text>
+  </view>
+
+  <view class="card status-card">
+    <text class="status-title">当前状态</text>
+    <text class="muted">你正在匿名浏览，阶段 0 暂不展示商品。</text>
+    <button class="primary-button" bindtap="openProtectedDemo">体验受保护操作</button>
+  </view>
+</view>

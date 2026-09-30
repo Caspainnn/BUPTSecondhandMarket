@@ -1,0 +1,6 @@
+<view class="page">
+  <view class="card profile-state">
+    <text class="state-title">个人资料</text>
+    <text class="muted">{{message}}</text>
+  </view>
+</view>

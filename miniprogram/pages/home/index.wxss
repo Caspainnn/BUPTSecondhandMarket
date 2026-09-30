@@ -1,0 +1,59 @@
+.home {
+  padding-top: 96rpx;
+}
+
+.hero,
+.status-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.hero {
+  margin-bottom: 56rpx;
+}
+
+.eyebrow {
+  margin-bottom: 20rpx;
+  color: #2479b8;
+  font-size: 24rpx;
+  letter-spacing: 4rpx;
+}
+
+.title {
+  font-size: 64rpx;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.short-name {
+  margin-top: 12rpx;
+  color: #4aa8e8;
+  font-size: 36rpx;
+  font-weight: 600;
+}
+
+.intro {
+  margin-top: 32rpx;
+  color: #53677a;
+  font-size: 30rpx;
+  line-height: 1.7;
+}
+
+.status-title {
+  margin-bottom: 16rpx;
+  font-size: 32rpx;
+  font-weight: 600;
+}
+
+.primary-button {
+  width: 100%;
+  margin-top: 36rpx;
+  border-radius: 999rpx;
+  background: #83c7f4;
+  color: #17324d;
+  font-size: 28rpx;
+}
+
+.primary-button::after {
+  border: 0;
+}

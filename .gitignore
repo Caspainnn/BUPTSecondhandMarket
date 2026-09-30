@@ -16,3 +16,6 @@ dist/
 Thumbs.db
 .idea/
 .vscode/
+
+# Superpowers execution scratch data
+.superpowers/sdd/
