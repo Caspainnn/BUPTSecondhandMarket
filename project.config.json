@@ -27,6 +27,10 @@
       {
         "type": "file",
         "value": "services/cloud-result.test.js"
+      },
+      {
+        "type": "file",
+        "value": "pages/profile-edit/view.test.js"
       }
     ],
     "include": []

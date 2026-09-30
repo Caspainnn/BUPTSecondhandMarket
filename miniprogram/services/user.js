@@ -25,12 +25,8 @@ async function requireCompletedProfile() {
 }
 
 async function getCampuses() {
-  const result = await wx.cloud.database()
-    .collection('campuses')
-    .where({ schoolId: 'bupt', enabled: true })
-    .orderBy('sortOrder', 'asc')
-    .get()
-  return result.data
+  const data = await callCloud('getCampuses')
+  return data.campuses
 }
 
 async function uploadAvatar(tempPath) {

@@ -50,12 +50,12 @@
 
 ```json
 {
-  "read": true,
+  "read": false,
   "write": false
 }
 ```
 
-用户资料由 `login` 和 `updateProfile` 云函数读写。学校与校区允许客户端读取，但只能由云端维护。
+用户资料由 `login` 和 `updateProfile` 云函数读写，校区列表由 `getCampuses` 云函数读取。客户端不直接访问这些集合。
 
 ## 4. 手动导入基础数据
 
@@ -77,7 +77,6 @@
 | `users` | `_openid` 升序 | 唯一 | 一个微信身份只对应一个用户 |
 | `schools` | `schoolId` 升序 | 唯一 | 稳定学校业务 ID |
 | `campuses` | `campusId` 升序 | 唯一 | 稳定校区业务 ID |
-| `campuses` | `schoolId`、`enabled`、`sortOrder` 均升序 | 普通组合索引 | 查询启用校区并排序 |
 
 若控制台不允许为系统字段 `_openid` 创建唯一索引，应保留普通索引，并依赖 `login` 云函数的幂等查询；上线并发压测前必须再次确认唯一性保障。
 
@@ -89,4 +88,4 @@
 - `schools` 只有 `schoolId = bupt` 的启用记录；
 - `campuses` 的三个 `schoolId` 都是 `bupt`；
 - 客户端无法直接写入任一集合；
-- 客户端可以读取学校和校区列表。
+- `getCampuses` 云函数可以读取三个校区，客户端无法直接读写集合。

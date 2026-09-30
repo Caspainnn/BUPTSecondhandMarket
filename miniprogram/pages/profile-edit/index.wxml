@@ -8,10 +8,11 @@
     <text class="state-title">完善个人资料</text>
     <text class="muted">头像、昵称和常驻校区均为必填。</text>
 
-    <button class="avatar-button" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar" disabled="{{status === 'uploading' || status === 'saving'}}">
-      <image wx:if="{{form.avatarPreview}}" class="avatar" src="{{form.avatarPreview}}" mode="aspectFill" />
-      <view wx:else class="avatar avatar-empty">选择头像</view>
-    </button>
+    <view class="avatar-picker">
+      <image wx:if="{{form.avatarPreview}}" class="avatar-visual" src="{{form.avatarPreview}}" mode="aspectFill" />
+      <view wx:else class="avatar-visual avatar-empty">选择头像</view>
+      <button class="avatar-button" aria-label="选择头像" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar" disabled="{{status === 'uploading' || status === 'saving'}}"></button>
+    </view>
 
     <label class="field">
       <text class="field-label">昵称</text>

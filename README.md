@@ -2,7 +2,7 @@
 
 面向北京邮电大学校内用户的闲置物品与轻量服务信息小程序。平台计划提供出售/求购信息、校内搜索、站内聊天、线下预约和库存状态记录；不经手支付，也不提供交易担保或售后仲裁。
 
-当前处于 V1 阶段 0：本地实现与自动测试已完成，等待云端部署和真机验收。
+V1 阶段 0 已完成开发、云端部署和人工验收。下一步在用户确认范围后进入阶段 1：最小物品交易闭环。
 
 ## 技术栈
 
@@ -15,7 +15,7 @@
 
 ```text
 miniprogram/       小程序客户端
-cloudfunctions/    云函数（阶段 0 使用 login、updateProfile）
+cloudfunctions/    云函数（阶段 0 使用 login、getCampuses、updateProfile）
 database/          基础数据、权限与索引说明
 docs/              设计、计划与阶段验收文档
 开发日志.md         长期项目上下文和阶段状态
@@ -37,7 +37,7 @@ AppID 和云环境 ID 是公开配置。AppSecret、云密钥、Token 和用户�
 3. 确认 `miniprogram/config/env.js` 中的云环境 ID。
 4. 按 [数据库初始化说明](database/README.md) 部署并云端测试一次性 `setupDatabase`，一键创建集合和基础数据。
 5. 手动配置数据库权限和索引；成功后删除云端的 `setupDatabase`。
-6. 在开发者工具中分别上传并部署 `login` 和 `updateProfile` 云函数，选择“云端安装依赖”。
+6. 在开发者工具中分别上传并部署 `login`、`getCampuses` 和 `updateProfile` 云函数，选择“云端安装依赖”。
 7. 编译后使用真机预览验证微信身份、头像选择和云端读写。
 
 ## 开发原则
