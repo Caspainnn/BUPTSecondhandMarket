@@ -1,10 +1,43 @@
 .profile-state {
+  align-items: center;
   display: flex;
   flex-direction: column;
   gap: 20rpx;
+  text-align: center;
 }
 
 .state-title {
   font-size: 36rpx;
   font-weight: 600;
+}
+
+.avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 144rpx;
+  height: 144rpx;
+  border-radius: 50%;
+  background: #d9effd;
+  color: #2479b8;
+  font-size: 52rpx;
+  font-weight: 700;
+}
+
+.error-text {
+  color: #c2413b;
+}
+
+.secondary-button {
+  width: 100%;
+  margin-top: 20rpx;
+  border: 1rpx solid #83c7f4;
+  border-radius: 999rpx;
+  background: #ffffff;
+  color: #2479b8;
+  font-size: 28rpx;
+}
+
+.secondary-button::after {
+  border: 0;
 }

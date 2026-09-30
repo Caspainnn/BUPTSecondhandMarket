@@ -9,6 +9,6 @@
   <view class="card status-card">
     <text class="status-title">当前状态</text>
     <text class="muted">你正在匿名浏览，阶段 0 暂不展示商品。</text>
-    <button class="primary-button" bindtap="openProtectedDemo">体验受保护操作</button>
+    <button class="primary-button" loading="{{checking}}" disabled="{{checking}}" bindtap="openProtectedDemo">体验受保护操作</button>
   </view>
 </view>

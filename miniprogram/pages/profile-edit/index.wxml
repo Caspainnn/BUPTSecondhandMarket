@@ -1,6 +1,36 @@
 <view class="page">
-  <view class="card edit-state">
+  <view wx:if="{{status === 'loading'}}" class="card edit-state">
     <text class="state-title">完善个人资料</text>
-    <text class="muted">{{message}}</text>
+    <text class="muted">正在加载…</text>
+  </view>
+
+  <view wx:else class="card edit-state">
+    <text class="state-title">完善个人资料</text>
+    <text class="muted">头像、昵称和常驻校区均为必填。</text>
+
+    <button class="avatar-button" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar" disabled="{{status === 'uploading' || status === 'saving'}}">
+      <image wx:if="{{form.avatarPreview}}" class="avatar" src="{{form.avatarPreview}}" mode="aspectFill" />
+      <view wx:else class="avatar avatar-empty">选择头像</view>
+    </button>
+
+    <label class="field">
+      <text class="field-label">昵称</text>
+      <input class="input" type="nickname" maxlength="20" value="{{form.nickname}}" placeholder="请输入昵称" bindinput="onNicknameInput" />
+    </label>
+
+    <label class="field">
+      <text class="field-label">常驻校区</text>
+      <picker range="{{campuses}}" range-key="name" value="{{campusIndex}}" bindchange="onCampusChange">
+        <view class="picker {{campusIndex < 0 ? 'placeholder' : ''}}">
+          {{campusIndex < 0 ? '请选择常驻校区' : campuses[campusIndex].name}}
+        </view>
+      </picker>
+    </label>
+
+    <text wx:if="{{error}}" class="error-text">{{error}}</text>
+    <button wx:if="{{error && campuses.length === 0}}" class="retry-button" bindtap="retryLoad">重新加载</button>
+    <button class="primary-button" loading="{{status === 'saving'}}" disabled="{{status === 'saving' || status === 'uploading'}}" bindtap="submit">
+      {{status === 'uploading' ? '正在上传头像' : '保存资料'}}
+    </button>
   </view>
 </view>

@@ -1,10 +1,97 @@
 .edit-state {
   display: flex;
   flex-direction: column;
-  gap: 20rpx;
+  gap: 28rpx;
 }
 
 .state-title {
   font-size: 36rpx;
   font-weight: 600;
+}
+
+.avatar-button {
+  width: 168rpx;
+  height: 168rpx;
+  margin: 16rpx auto;
+  padding: 0;
+  border-radius: 50%;
+  background: transparent;
+}
+
+.avatar-button::after {
+  border: 0;
+}
+
+.avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 168rpx;
+  height: 168rpx;
+  border-radius: 50%;
+}
+
+.avatar-empty {
+  box-sizing: border-box;
+  border: 2rpx dashed #83c7f4;
+  background: #edf8ff;
+  color: #2479b8;
+  font-size: 24rpx;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 14rpx;
+}
+
+.field-label {
+  font-size: 28rpx;
+  font-weight: 600;
+}
+
+.input,
+.picker {
+  box-sizing: border-box;
+  min-height: 88rpx;
+  padding: 24rpx;
+  border: 1rpx solid #dbeaf4;
+  border-radius: 18rpx;
+  background: #f9fcfe;
+  font-size: 28rpx;
+}
+
+.placeholder {
+  color: #9aa8b5;
+}
+
+.error-text {
+  color: #c2413b;
+  font-size: 26rpx;
+}
+
+.primary-button {
+  width: 100%;
+  margin-top: 12rpx;
+  border-radius: 999rpx;
+  background: #83c7f4;
+  color: #17324d;
+  font-size: 28rpx;
+}
+
+.primary-button::after {
+  border: 0;
+}
+
+.retry-button {
+  width: 100%;
+  border: 1rpx solid #83c7f4;
+  border-radius: 999rpx;
+  background: #ffffff;
+  color: #2479b8;
+  font-size: 28rpx;
+}
+
+.retry-button::after {
+  border: 0;
 }

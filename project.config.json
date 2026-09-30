@@ -19,7 +19,16 @@
   "cloudfunctionRoot": "cloudfunctions/",
   "simulatorPluginLibVersion": {},
   "packOptions": {
-    "ignore": [],
+    "ignore": [
+      {
+        "type": "file",
+        "value": "services/profile-state.test.js"
+      },
+      {
+        "type": "file",
+        "value": "services/cloud-result.test.js"
+      }
+    ],
     "include": []
   },
   "appid": "wx598761603636d41f",
