@@ -7,7 +7,7 @@ function setup(fail=false){
  Page:x=>page=x,
  setInterval:()=>1,clearInterval:()=>{},console:{warn(){}},
  require:()=>({
- listTransactions:async()=>({transactions:[],nextCursor:null}),getCurrentUser:async()=>user,getCampuses:async()=>[{campusId:'campus',name:'沙河'}],
+ listOngoingTransactions:async()=>({transactions:[],nextCursor:null}),getCurrentUser:async()=>user,getCampuses:async()=>[{campusId:'campus',name:'沙河'}],
  uploadAvatar:async()=> 'cloud://new.jpg',
  saveProfile:async input=>{saved=input;if(fail)throw Error('保存失败');return {...input,profileCompleted:true}},
  }),

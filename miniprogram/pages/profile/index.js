@@ -1,4 +1,4 @@
-const { listTransactions } = require('../../services/transactions')
+const { listOngoingTransactions } = require('../../services/transactions')
 const { getCurrentUser, getCampuses, saveProfile, uploadAvatar } = require('../../services/user')
 
 Page({
@@ -54,20 +54,12 @@ Page({
   async loadOngoing(event) {
     if (!this.ongoingToken || this.loadingOngoing || !this.data.user || !this.data.user.profileCompleted) return
     const token = this.ongoingToken
-    const more = event && event.currentTarget && event.currentTarget.dataset.more
     this.loadingOngoing = true
     this.setData({ ongoingLoading: true })
     try {
-      const result = await listTransactions('', 'ongoing', more ? this.data.ongoingCursor : null, 20)
-      if (!more) {
-        while (result.nextCursor && result.transactions.length < this.data.ongoing.length && this.ongoingToken === token) {
-          const next = await listTransactions('', 'ongoing', result.nextCursor, 20)
-          result.transactions.push(...next.transactions)
-          result.nextCursor = next.nextCursor
-        }
-      }
+      const result = await listOngoingTransactions()
       if (this.ongoingToken !== token) return
-      const rows = more ? [...this.data.ongoing, ...result.transactions] : result.transactions
+      const rows = result.transactions
       this.setData({ ongoing: rows.filter((item, index) => rows.findIndex(row => row._id === item._id) === index), ongoingCursor: result.nextCursor, ongoingError: '' })
     } catch (error) {
       console.warn('Ongoing orders refresh failed', error)

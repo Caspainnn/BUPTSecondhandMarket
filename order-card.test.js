@@ -45,3 +45,18 @@ test('profile order card registration resolves to complete BOM-free component fi
  }
  assert.equal(JSON.parse(fs.readFileSync(base+'.json','utf8')).component,true)
 })
+
+test('ongoing orders use persisted statuses across both roles and follow every page',async()=>{
+ let service,requests=[]
+ const context={module:{exports:{}},require:()=>({callCloud:async(name,input)=>{
+ requests.push(input)
+ assert.equal(input.role,'');assert.notEqual(input.status,'ongoing')
+ if(input.status==='pending_seller')return {transactions:[{_id:'buyer-pending',status:'pending_seller',updatedAt:1}],nextCursor:null}
+ return input.cursor?{transactions:[{_id:'older-handover',status:'awaiting_handover',updatedAt:0}],nextCursor:null}:{transactions:[{_id:'seller-handover',status:'awaiting_handover',updatedAt:2}],nextCursor:{id:'next'}}
+ }})}
+ vm.runInNewContext(fs.readFileSync('miniprogram/services/transactions.js','utf8'),context)
+ service=context.module.exports;requests=[]
+ const result=await service.listOngoingTransactions()
+ assert.deepEqual(Array.from(result.transactions,row=>row._id),['seller-handover','buyer-pending','older-handover'])
+ assert.equal(requests.length,3)
+})

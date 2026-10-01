@@ -10,4 +10,19 @@ const submitResult = (transactionId, result, requestId) => action('submitResult'
 const listTransactions = (role, status, cursor, limit = 20) => action('list', { role, status, cursor, limit })
 const getTransaction = (transactionId) => action('detail', { transactionId })
 
-module.exports = { reviseTransaction, cancelTransaction, createTransaction, getTransaction, listTransactions, respondTransaction, submitResult, withdrawTransaction }
+async function listOngoingTransactions() {
+  const groups = await Promise.all(['pending_seller', 'awaiting_handover'].map(async status => {
+    const rows = []
+    let cursor = null
+    do {
+      const result = await listTransactions('', status, cursor, 20)
+      rows.push(...result.transactions)
+      cursor = result.nextCursor || null
+    } while (cursor)
+    return rows
+  }))
+  const rows = groups.flat()
+  return { transactions: rows.filter((row, index) => ['pending_seller', 'awaiting_handover'].includes(row.status) && rows.findIndex(item => item._id === row._id) === index).sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()), nextCursor: null }
+}
+
+module.exports = { listOngoingTransactions, reviseTransaction, cancelTransaction, createTransaction, getTransaction, listTransactions, respondTransaction, submitResult, withdrawTransaction }
