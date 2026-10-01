@@ -1,5 +1,5 @@
 .chat-page { min-height: 100vh; padding-bottom: 150rpx; background: #f4f8fb; }
-.transaction-entry { flex-shrink: 0; box-sizing: border-box; width: auto; height: 38rpx; line-height: 38rpx; margin: 0; padding: 0 12rpx; border-radius: 999rpx; background: #e4f4ff; color: #2479b8; font-size: 24rpx; }.transaction-entry::after { border: 0; }
+.transaction-entry { flex-shrink: 0; align-self: flex-end; box-sizing: border-box; width: 80rpx; height: 45rpx; line-height: 45rpx; margin: 0; padding: 0 4rpx; white-space: nowrap; border-radius: 999rpx; background: #e4f4ff; color: #2479b8; font-size: 18rpx; }.transaction-entry::after { border: 0; }
 .messages { box-sizing: border-box; height: calc(100vh - 290rpx - env(safe-area-inset-bottom)); padding: 24rpx; }
 .message-row { display: flex; margin: 16rpx 0; justify-content: flex-start; }
 .message-row.mine { justify-content: flex-end; }
