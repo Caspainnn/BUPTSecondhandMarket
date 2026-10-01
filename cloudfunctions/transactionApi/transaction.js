@@ -1,4 +1,4 @@
-const { reserveInventory } = require('./inventory')
+const { releaseInventory, reserveInventory, sellInventory } = require('./inventory')
 
 const ACTIVE_STATUSES = ['pending_seller', 'awaiting_handover']
 const CAMPUSES = ['bupt-xitucheng', 'bupt-shahe', 'bupt-hainan']
@@ -111,6 +111,74 @@ async function withdrawTransaction({ actor, transactionId, reason, requestId: re
   })
 }
 
+async function cancelTransaction({ actor, transactionId, reason, requestId: request, transactions, now }) {
+  requireActor(actor)
+  const key = requestKey(actor, 'cancel', request)
+  return transactions.runTransaction(async (tx) => {
+    const repeated = await tx.findRequest(key)
+    if (repeated) return { transaction: repeated, post: await tx.getPost(repeated.postId) }
+    const transaction = await tx.getTransaction(transactionId)
+    if (!transaction) throw new TransactionError('TRANSACTION_NOT_FOUND', '交易不存在')
+    if (transaction.buyerId !== actor._id && transaction.sellerId !== actor._id) throw new TransactionError('FORBIDDEN', '你无权取消该交易')
+    if (transaction.status !== 'awaiting_handover') throw new TransactionError('STALE_STATUS', '当前交易不可取消')
+    if (now >= Number(transaction.scheduledAt)) throw new TransactionError('CANCEL_WINDOW_CLOSED', '已到约定时间，请提交交接结果')
+    const normalizedReason = normalizeReason(reason, true)
+    const post = await tx.getPost(transaction.postId)
+    const inventory = releaseInventory(post, transaction.quantity, { transactionId, requestKey: key, now })
+    const updatedPost = await tx.updatePost(post._id, { ...inventory.patch, updatedAt: now })
+    await tx.createMovement(inventory.movement)
+    const updated = await tx.updateTransaction(transactionId, { status: 'cancelled', activeKey: undefined, cancelledBy: actor._id, cancelType: 'participant_cancelled', cancelReason: normalizedReason, cancelledAt: now, updatedAt: now })
+    await tx.createEvent({ transactionId, actorId: actor._id, type: 'participant_cancelled', reason: normalizedReason, requestId: requestId(request), requestKey: key, createdAt: now })
+    await appendSystem(tx, updated, actor, `交易已取消：${normalizedReason}`, key, now)
+    return { transaction: updated, post: updatedPost }
+  })
+}
+
+async function submitTransactionResult({ actor, transactionId, result, requestId: request, transactions, now }) {
+  requireActor(actor)
+  if (!['success', 'failure'].includes(result)) throw new TransactionError('INVALID_RESULT', '交接结果无效')
+  const key = requestKey(actor, `result:${result}`, request)
+  return transactions.runTransaction(async (tx) => {
+    const repeated = await tx.findRequest(key)
+    if (repeated) return { transaction: repeated, post: await tx.getPost(repeated.postId) }
+    const transaction = await tx.getTransaction(transactionId)
+    if (!transaction) throw new TransactionError('TRANSACTION_NOT_FOUND', '交易不存在')
+    const role = transaction.buyerId === actor._id ? 'buyer' : transaction.sellerId === actor._id ? 'seller' : ''
+    if (!role) throw new TransactionError('FORBIDDEN', '你无权提交该交易结果')
+    if (!['awaiting_handover', 'failed'].includes(transaction.status)) throw new TransactionError('STALE_STATUS', '当前交易不可提交结果')
+    if (now < Number(transaction.scheduledAt)) throw new TransactionError('RESULT_NOT_OPEN', '到达约定时间后才能提交交接结果')
+    const ownField = `${role}Result`
+    const otherField = role === 'buyer' ? 'sellerResult' : 'buyerResult'
+    if (transaction[ownField]) throw new TransactionError('RESULT_IMMUTABLE', '交接结果提交后不可修改')
+    const eventType = `${role}_result_${result}`
+    let status = transaction.status
+    let post = await tx.getPost(transaction.postId)
+    let updatedPost = post
+    let inventory = null
+    if (result === 'failure' && transaction.status === 'awaiting_handover') {
+      inventory = releaseInventory(post, transaction.quantity, { transactionId, requestKey: key, now })
+      status = 'failed'
+    } else if (result === 'success' && transaction.status === 'failed') {
+      status = 'abnormal'
+    } else if (result === 'success' && transaction[otherField] === 'success') {
+      inventory = sellInventory(post, transaction.quantity, { transactionId, requestKey: key, now })
+      status = 'completed'
+    }
+    if (inventory) {
+      const postPatch = { ...inventory.patch, updatedAt: now }
+      if (status === 'completed' && inventory.patch.reservedQuantity === 0 && post.availableQuantity === 0) postPatch.status = 'sold'
+      updatedPost = await tx.updatePost(post._id, postPatch)
+      await tx.createMovement(inventory.movement)
+    }
+    const terminal = ['completed', 'failed', 'abnormal'].includes(status)
+    const updated = await tx.updateTransaction(transactionId, { [ownField]: result, [`${role}ResultAt`]: now, status, ...(terminal ? { activeKey: undefined } : {}), completedAt: status === 'completed' ? now : transaction.completedAt, failedAt: status === 'failed' ? (transaction.failedAt || now) : transaction.failedAt, abnormalAt: status === 'abnormal' ? now : transaction.abnormalAt, updatedAt: now })
+    await tx.createEvent({ transactionId, actorId: actor._id, type: eventType, result, requestId: requestId(request), requestKey: key, createdAt: now })
+    const statusText = status === 'completed' ? '双方均确认交接成功，交易已完成' : status === 'abnormal' ? '双方交接结果不一致，交易已标记异常' : result === 'failure' ? (transaction.status === 'failed' ? `${role === 'buyer' ? '买家' : '卖家'}也反馈交接失败` : `${role === 'buyer' ? '买家' : '卖家'}反馈交接失败，库存已释放`) : `${role === 'buyer' ? '买家' : '卖家'}已确认交接成功，等待另一方确认`
+    await appendSystem(tx, updated, actor, statusText, key, now)
+    return { transaction: updated, post: updatedPost }
+  })
+}
+
 async function listTransactions({ actor, role, status, cursor, limit, transactions }) {
   requireActor(actor)
   if (role && !['buyer', 'seller'].includes(role)) throw new TransactionError('INVALID_ROLE', '交易角色无效')
@@ -126,4 +194,4 @@ async function getTransactionDetail({ actor, transactionId, transactions }) {
   return { transaction, events: await transactions.getEvents(transactionId) }
 }
 
-module.exports = { ACTIVE_STATUSES, TransactionError, createTransaction, getTransactionDetail, listTransactions, respondTransaction, withdrawTransaction }
+module.exports = { ACTIVE_STATUSES, TransactionError, cancelTransaction, createTransaction, getTransactionDetail, listTransactions, respondTransaction, submitTransactionResult, withdrawTransaction }

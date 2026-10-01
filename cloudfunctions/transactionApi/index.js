@@ -82,6 +82,8 @@ exports.main = async (event = {}) => {
       create: () => service.createTransaction({ actor, ...event, transactions, now }),
       withdraw: () => service.withdrawTransaction({ actor, ...event, transactions, now }),
       respond: () => service.respondTransaction({ actor, ...event, transactions, now }),
+      cancel: () => service.cancelTransaction({ actor, ...event, transactions, now }),
+      submitResult: () => service.submitTransactionResult({ actor, ...event, transactions, now }),
       list: () => service.listTransactions({ actor, ...event, transactions }),
       detail: () => service.getTransactionDetail({ actor, transactionId: event.transactionId, transactions }),
     }

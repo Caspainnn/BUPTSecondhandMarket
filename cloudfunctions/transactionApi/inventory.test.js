@@ -1,7 +1,7 @@
 const test = require('node:test')
 const assert = require('node:assert/strict')
 
-const { releaseInventory, reserveInventory } = require('./inventory')
+const { releaseInventory, reserveInventory, sellInventory } = require('./inventory')
 
 test('reserves available inventory without changing total or sold counts', () => {
   const result = reserveInventory({ _id: 'p', totalQuantity: 5, availableQuantity: 3, reservedQuantity: 1, soldQuantity: 1 }, 2, { transactionId: 't', now: 10 })
@@ -22,4 +22,10 @@ test('release restores available inventory and preserves the invariant', () => {
 test('rejects invalid quantities and impossible inventory records', () => {
   assert.throws(() => reserveInventory({ availableQuantity: 2, reservedQuantity: 0 }, 0, {}))
   assert.throws(() => releaseInventory({ totalQuantity: 1, availableQuantity: 0, reservedQuantity: 0, soldQuantity: 1 }, 1, {}), (error) => error.code === 'INVENTORY_INVARIANT')
+})
+
+test('moves reserved inventory to sold on successful handover', () => {
+  const result = sellInventory({ _id: 'p', totalQuantity: 5, availableQuantity: 2, reservedQuantity: 2, soldQuantity: 1 }, 2, { transactionId: 't', now: 10 })
+  assert.deepEqual(result.patch, { reservedQuantity: 0, soldQuantity: 3 })
+  assert.equal(result.movement.type, 'sell')
 })

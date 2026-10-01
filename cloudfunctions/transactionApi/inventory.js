@@ -38,4 +38,11 @@ function releaseInventory(post, value, context = {}) {
   return { patch: { availableQuantity: current.available + amount, reservedQuantity: current.reserved - amount }, movement: movement(post, amount, 'release', context) }
 }
 
-module.exports = { InventoryError, releaseInventory, reserveInventory }
+function sellInventory(post, value, context = {}) {
+  const amount = quantity(value)
+  const current = counts(post)
+  if (current.reserved < amount) throw new InventoryError('INVENTORY_INVARIANT', '预留库存不足，无法完成交易')
+  return { patch: { reservedQuantity: current.reserved - amount, soldQuantity: current.sold + amount }, movement: movement(post, amount, 'sell', context) }
+}
+
+module.exports = { InventoryError, releaseInventory, reserveInventory, sellInventory }

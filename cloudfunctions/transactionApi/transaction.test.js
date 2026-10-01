@@ -1,7 +1,7 @@
 const test = require('node:test')
 const assert = require('node:assert/strict')
 
-const { createTransaction, getTransactionDetail, listTransactions, respondTransaction, withdrawTransaction } = require('./transaction')
+const { cancelTransaction, createTransaction, getTransactionDetail, listTransactions, respondTransaction, submitTransactionResult, withdrawTransaction } = require('./transaction')
 
 const NOW = Date.parse('2026-10-01T00:00:00Z')
 const buyer = { _id: 'buyer', status: 'active', profileCompleted: true }
@@ -128,4 +128,68 @@ test('participant-only list and detail include pending counts and audit events',
   const detail = await getTransactionDetail({ actor: buyer, transactionId: created.transaction._id, transactions })
   assert.equal(detail.events[0].type, 'created')
   await assert.rejects(getTransactionDetail({ actor: { ...buyer, _id: 'other' }, transactionId: created.transaction._id, transactions }), (error) => error.code === 'FORBIDDEN')
+})
+
+function awaitingSeed(overrides = {}) {
+  return {
+    posts: [{ ...structuredClone(post), availableQuantity: 1, reservedQuantity: 2 }],
+    transactions: [{ _id: 't1', conversationId: 'c1', postId: 'post', buyerId: 'buyer', sellerId: 'seller', quantity: 2, scheduledAt: NOW + 60 * 60 * 1000, status: 'awaiting_handover', activeKey: 'active', buyerResult: '', sellerResult: '', ...overrides }],
+  }
+}
+
+test('either participant can cancel before appointment and inventory is released exactly once', async () => {
+  for (const actor of [buyer, seller]) {
+    const transactions = repository(awaitingSeed())
+    await cancelTransaction({ actor, transactionId: 't1', reason: '临时无法交接', requestId: `cancel-${actor._id}`, transactions, now: NOW })
+    await cancelTransaction({ actor, transactionId: 't1', reason: '临时无法交接', requestId: `cancel-${actor._id}`, transactions, now: NOW })
+    assert.equal(transactions.state.transactions[0].status, 'cancelled')
+    assert.deepEqual([transactions.state.posts[0].availableQuantity, transactions.state.posts[0].reservedQuantity], [3, 0])
+    assert.deepEqual([transactions.state.events.length, transactions.state.movements.length, transactions.state.messages.length], [1, 1, 1])
+  }
+})
+
+test('cancellation is rejected at appointment and results are rejected before appointment', async () => {
+  const atTime = repository(awaitingSeed({ scheduledAt: NOW }))
+  await assert.rejects(cancelTransaction({ actor: buyer, transactionId: 't1', reason: '来不及了', requestId: 'c', transactions: atTime, now: NOW }), (error) => error.code === 'CANCEL_WINDOW_CLOSED')
+  const beforeTime = repository(awaitingSeed())
+  await assert.rejects(submitTransactionResult({ actor: buyer, transactionId: 't1', result: 'success', requestId: 's', transactions: beforeTime, now: NOW }), (error) => error.code === 'RESULT_NOT_OPEN')
+})
+
+test('first success waits; both successes complete and move reserved stock to sold', async () => {
+  const transactions = repository(awaitingSeed({ scheduledAt: NOW }))
+  await submitTransactionResult({ actor: buyer, transactionId: 't1', result: 'success', requestId: 'buyer-success', transactions, now: NOW })
+  assert.equal(transactions.state.transactions[0].status, 'awaiting_handover')
+  assert.equal(transactions.state.movements.length, 0)
+  await submitTransactionResult({ actor: seller, transactionId: 't1', result: 'success', requestId: 'seller-success', transactions, now: NOW + 1 })
+  assert.equal(transactions.state.transactions[0].status, 'completed')
+  assert.deepEqual([transactions.state.posts[0].reservedQuantity, transactions.state.posts[0].soldQuantity], [0, 2])
+  assert.equal(transactions.state.movements[0].type, 'sell')
+})
+
+test('first failure immediately releases stock and a second failure changes no inventory', async () => {
+  const transactions = repository(awaitingSeed({ scheduledAt: NOW }))
+  await submitTransactionResult({ actor: buyer, transactionId: 't1', result: 'failure', requestId: 'buyer-fail', transactions, now: NOW })
+  assert.equal(transactions.state.transactions[0].status, 'failed')
+  assert.deepEqual([transactions.state.posts[0].availableQuantity, transactions.state.posts[0].reservedQuantity], [3, 0])
+  await submitTransactionResult({ actor: seller, transactionId: 't1', result: 'failure', requestId: 'seller-fail', transactions, now: NOW + 1 })
+  assert.equal(transactions.state.transactions[0].status, 'failed')
+  assert.equal(transactions.state.movements.length, 1)
+})
+
+test('opposing success after released failure becomes abnormal without re-reserving', async () => {
+  const transactions = repository(awaitingSeed({ scheduledAt: NOW }))
+  await submitTransactionResult({ actor: buyer, transactionId: 't1', result: 'failure', requestId: 'buyer-fail', transactions, now: NOW })
+  const afterRelease = structuredClone(transactions.state.posts[0])
+  await submitTransactionResult({ actor: seller, transactionId: 't1', result: 'success', requestId: 'seller-success', transactions, now: NOW + 1 })
+  assert.equal(transactions.state.transactions[0].status, 'abnormal')
+  assert.deepEqual(transactions.state.posts[0], afterRelease)
+  assert.equal(transactions.state.movements.length, 1)
+})
+
+test('submitted results are immutable and result retries append nothing', async () => {
+  const transactions = repository(awaitingSeed({ scheduledAt: NOW }))
+  await submitTransactionResult({ actor: buyer, transactionId: 't1', result: 'success', requestId: 'same', transactions, now: NOW })
+  await submitTransactionResult({ actor: buyer, transactionId: 't1', result: 'success', requestId: 'same', transactions, now: NOW + 1 })
+  assert.equal(transactions.state.events.length, 1)
+  await assert.rejects(submitTransactionResult({ actor: buyer, transactionId: 't1', result: 'failure', requestId: 'different', transactions, now: NOW + 2 }), (error) => error.code === 'RESULT_IMMUTABLE')
 })
