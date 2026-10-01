@@ -188,7 +188,7 @@ git commit -m "feat: add trusted post cloud api"
 **Interfaces:**
 - Consumes: `postApi` actions from Task 3 and constants from Task 1.
 - Produces: create/edit form state with `PATCH`, `ADD_IMAGES`, `REMOVE_IMAGE`, `MOVE_IMAGE`, `UPLOAD_START`, `UPLOAD_SUCCESS`, `SAVE_START`, `SAVE_SUCCESS`, and `FAILURE` transitions.
-- Produces: `uploadPostImages(tempFiles) -> Promise<string[]>` that compresses/rejects files above 2 MB and uploads to `posts/<user>/<nonce>.<ext>`.
+- Produces: `uploadPostImages(tempFiles) -> Promise<string[]>` that targets 2 MB with progressive compression and rejects final files above 5 MB (updated 2026-10-01) and uploads to `posts/<user>/<nonce>.<ext>`.
 
 - [ ] **Step 1: Write failing form-state tests**
 
