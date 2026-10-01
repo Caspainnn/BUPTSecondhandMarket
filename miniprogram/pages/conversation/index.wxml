@@ -3,7 +3,7 @@
     <view wx:if="{{conversation}}" class="product-info" bindtap="openPost">
       <cloud-image wx:if="{{!imageError}}" class="product-cover" src="{{conversation.postSnapshot.coverFileId}}" mode="aspectFill" binderror="onImageError" />
       <view wx:else class="product-cover image-placeholder">图片加载失败</view>
-      <view class="product-text"><text class="product-title">{{conversation.postSnapshot.title}}</text><text class="product-price">参考单价 ¥{{conversation.postSnapshot.unitPriceCents / 100}}</text></view>
+      <view class="product-text"><text class="product-title">{{conversation.postSnapshot.title}}</text><text class="product-price">¥{{conversation.postSnapshot.unitPriceCents / 100}}</text></view>
     </view>
     <text wx:else class="product-title">正在获取商品信息</text>
     <button wx:if="{{canCreateTransaction}}" class="transaction-entry" bindtap="createTransaction">预约购买</button>
