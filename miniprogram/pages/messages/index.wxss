@@ -1,0 +1,15 @@
+.messages-page { padding: 24rpx; }
+.conversation-list { overflow: hidden; border-radius: 24rpx; background: #fff; }
+.conversation { display: flex; align-items: center; gap: 20rpx; padding: 24rpx; border-bottom: 1rpx solid #edf3f7; }
+.avatar { width: 92rpx; height: 92rpx; flex: none; border-radius: 50%; background: #dfeef7; }
+.content { min-width: 0; flex: 1; }
+.top { display: flex; align-items: center; gap: 16rpx; }
+.name { font-size: 29rpx; font-weight: 600; }
+.post-title, .preview { overflow: hidden; color: #72808e; font-size: 24rpx; text-overflow: ellipsis; white-space: nowrap; }
+.post-title { flex: 1; text-align: right; }
+.preview { display: block; margin-top: 12rpx; }
+.unread { min-width: 36rpx; padding: 4rpx 8rpx; border-radius: 999rpx; background: #e66b45; color: #fff; font-size: 20rpx; text-align: center; }
+.empty { display: flex; flex-direction: column; align-items: center; gap: 20rpx; margin-top: 48rpx; text-align: center; }
+.empty button { width: 220rpx; border-radius: 999rpx; background: #83c7f4; }
+.empty button::after { border: 0; }
+.error { color: #c2413b; }

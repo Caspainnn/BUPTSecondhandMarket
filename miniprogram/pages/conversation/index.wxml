@@ -1,0 +1,12 @@
+<view class="chat-page">
+  <scroll-view class="messages" scroll-y scroll-with-animation scroll-into-view="bottom-anchor" upper-threshold="80" bindscrolltoupper="loadOlder">
+    <view wx:if="{{loading}}" class="loading">正在加载…</view>
+    <view wx:for="{{messages}}" wx:key="_id" class="message-row {{item.mine ? 'mine' : ''}}">
+      <view wx:if="{{item.type === 'system'}}" class="system-message">{{item.text}}</view>
+      <view wx:else class="bubble">{{item.text}}</view>
+    </view>
+    <view id="bottom-anchor"></view>
+  </scroll-view>
+  <text wx:if="{{error}}" class="error">{{error}}</text>
+  <view class="composer"><textarea value="{{draft}}" maxlength="500" auto-height placeholder="输入消息" bindinput="onDraft" /><button loading="{{sending}}" disabled="{{sending || !draft}}" bindtap="submit">发送</button></view>
+</view>

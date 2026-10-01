@@ -39,6 +39,10 @@
       {
         "type": "file",
         "value": "services/post-list-state.test.js"
+      },
+      {
+        "type": "file",
+        "value": "services/chat-state.test.js"
       }
     ],
     "include": []

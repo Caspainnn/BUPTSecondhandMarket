@@ -4,6 +4,8 @@
     "pages/post-detail/index",
     "pages/post-edit/index",
     "pages/publish/index",
+    "pages/messages/index",
+    "pages/conversation/index",
     "pages/home/index",
     "pages/profile/index",
     "pages/profile-edit/index"
@@ -24,6 +26,10 @@
       {
         "pagePath": "pages/discover/index",
         "text": "发现"
+      },
+      {
+        "pagePath": "pages/messages/index",
+        "text": "消息"
       },
       {
         "pagePath": "pages/profile/index",
