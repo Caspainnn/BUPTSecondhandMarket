@@ -75,7 +75,7 @@ test('image cards use corner removal, no move controls, and an equally sized tra
   for (const rule of [/width:calc\(\(100% - 32rpx\) \/ 3\)/, /height:0/, /padding-bottom:calc\(\(100% - 32rpx\) \/ 3\)/, /flex:0 0 calc\(\(100% - 32rpx\) \/ 3\)/, /box-sizing:border-box/, /margin:0/]) assert.match(tile, rule)
   assert.match(css, /\.image-item\{position:relative/)
   const remove = css.match(/\.remove-image\{([^}]*)\}/)?.[1] || ''
-  for (const rule of [/position:absolute/, /top:8rpx/, /right:8rpx/]) assert.match(remove, rule)
+  for (const rule of [/position:absolute/, /top:-12rpx/, /right:-12rpx/, /left:auto/]) assert.match(remove, rule)
 })
 
 test('corner removal forwards the tapped image index', () => {
@@ -93,5 +93,13 @@ test('corner removal forwards the tapped image index', () => {
 test('provided vector icons are stored and reused for removal and campus selection', () => {
   assert.match(read('miniprogram/assets/icons/close.svg'), /fill="#999999"/)
   assert.match(read('miniprogram/assets/icons/dropdown.svg'), /fill="#707070"/)
-  assert.match(read('miniprogram/components/post-form/index.wxml'), /class="picker campus-picker"[\s\S]*src="\/assets\/icons\/dropdown.svg"/)
+  assert.match(read('miniprogram/components/post-form/index.wxml'), /class="picker dropdown-picker"[\s\S]*src="\/assets\/icons\/dropdown.svg"/)
+})
+test('every picker reuses the dropdown vector instead of text glyphs', () => {
+  for (const file of ['components/post-form', 'pages/discover', 'pages/profile-edit', 'pages/transaction-create']) {
+    const wxml = read('miniprogram/' + file + '/index.wxml')
+    const pickers = [...wxml.matchAll(/<picker\b[\s\S]*?<\/picker>/g)]
+    assert.ok(pickers.length)
+    for (const picker of pickers) assert.match(picker[0], /src="\/assets\/icons\/dropdown.svg"/, file)
+  }
 })

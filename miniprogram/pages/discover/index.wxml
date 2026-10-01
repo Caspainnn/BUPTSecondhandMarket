@@ -1,7 +1,7 @@
 <view class="page discover-page">
   <view class="toolbar">
     <view><text class="heading">发现好物</text><text class="subheading">按发布时间从新到旧</text></view>
-    <picker range="{{campusOptions}}" range-key="name" bindchange="changeCampus"><view class="campus-picker">{{campusName}}⌄</view></picker>
+    <picker range="{{campusOptions}}" range-key="name" bindchange="changeCampus"><view class="campus-picker dropdown-picker"><text>{{campusName}}</text><image class="dropdown-icon" src="/assets/icons/dropdown.svg" mode="aspectFit" /></view></picker>
   </view>
   <view wx:if="{{loading && !posts.length}}" class="state-card">正在加载商品…</view>
   <view wx:elif="{{error && !posts.length}}" class="state-card error"><text>{{error}}</text><button bindtap="retry">重试</button></view>

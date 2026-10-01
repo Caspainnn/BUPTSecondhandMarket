@@ -22,9 +22,7 @@
     <label class="field">
       <text class="field-label">常驻校区</text>
       <picker range="{{campuses}}" range-key="name" value="{{campusIndex}}" bindchange="onCampusChange">
-        <view class="picker {{campusIndex < 0 ? 'placeholder' : ''}}">
-          {{campusIndex < 0 ? '请选择常驻校区' : campuses[campusIndex].name}}
-        </view>
+        <view class="picker {{campusIndex < 0 ? 'placeholder' : ''}} dropdown-picker"><text>{{campusIndex < 0 ? '请选择常驻校区' : campuses[campusIndex].name}}</text><image class="dropdown-icon" src="/assets/icons/dropdown.svg" mode="aspectFit" /></view>
       </picker>
     </label>
 

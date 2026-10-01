@@ -16,3 +16,5 @@
 .state-card button::after { border: 0; }
 .error { color: #c2413b; }
 .footer-note { padding: 36rpx 0 12rpx; color: #8896a3; font-size: 24rpx; text-align: center; }
+
+.dropdown-picker{display:flex;align-items:center;justify-content:space-between;gap:12rpx}.dropdown-icon{width:32rpx;height:32rpx;flex-shrink:0}

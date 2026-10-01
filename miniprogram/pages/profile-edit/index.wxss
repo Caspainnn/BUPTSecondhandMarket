@@ -109,3 +109,5 @@
 .retry-button::after {
   border: 0;
 }
+
+.dropdown-picker{display:flex;align-items:center;justify-content:space-between;gap:12rpx}.dropdown-icon{width:32rpx;height:32rpx;flex-shrink:0}
