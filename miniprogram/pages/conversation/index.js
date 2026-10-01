@@ -40,14 +40,19 @@ Page({
   apply(event) { this.state = reduceChatState(this.state, event); this.sync() },
   onDraft(event) { this.apply({ type: 'DRAFT_CHANGE', value: event.detail.value }) },
   async fetchLatest() {
+    if (this.fetchingLatest) return
+    this.fetchingLatest = true
     const conversationId = this.conversationId
     try {
       const result = await listMessages(conversationId, null, 50)
       this.apply({ type: 'MESSAGES_SUCCESS', conversationId, messages: result.messages, nextBefore: result.nextBefore })
-      const read = await markRead(conversationId)
-      this.apply({ type: 'MARK_READ_SUCCESS', conversationId, totalUnread: read.totalUnread })
-      syncMessageBadge(read.totalUnread)
-    } catch (error) { this.apply({ type: 'FAILURE', operation: 'load', message: error.message }) }
+      try {
+        const read = await markRead(conversationId)
+        this.apply({ type: 'MARK_READ_SUCCESS', conversationId, totalUnread: read.totalUnread })
+        syncMessageBadge(read.totalUnread)
+      } catch (error) { console.warn('Conversation read receipt failed', error) }
+    } catch (error) { console.warn('Conversation refresh failed', error); this.apply({ type: 'FAILURE', operation: 'load', message: '消息暂时未能刷新，请稍后重试' }) }
+    finally { this.fetchingLatest = false }
   },
   async loadOlder() {
     if (this.state.loading || this.state.exhausted) return
@@ -55,7 +60,7 @@ Page({
     try {
       const result = await listMessages(this.conversationId, this.state.nextBefore, 20)
       this.apply({ type: 'MESSAGES_SUCCESS', conversationId: this.conversationId, messages: result.messages, nextBefore: result.nextBefore })
-    } catch (error) { this.apply({ type: 'FAILURE', operation: 'load', message: error.message }) }
+    } catch (error) { console.warn('Conversation refresh failed', error); this.apply({ type: 'FAILURE', operation: 'load', message: '消息暂时未能刷新，请稍后重试' }) }
   },
   async submit() {
     if (this.state.sending || !this.state.draft.trim()) return
@@ -64,7 +69,7 @@ Page({
     try {
       const result = await sendMessage(this.conversationId, this.state.draft, this.state.requestId)
       this.apply({ type: 'SEND_SUCCESS', conversationId: this.conversationId, message: result.message })
-    } catch (error) { this.apply({ type: 'FAILURE', operation: 'send', message: error.message }) }
+    } catch (error) { console.warn('Conversation send failed', error); this.apply({ type: 'FAILURE', operation: 'send', message: '消息未发送，请重试' }); wx.showToast({ title: '消息未发送，请重试', icon: 'none' }) }
   },
   onImageError(event) { this.setData({ imageError: true }); console.warn('商品图片加载失败', event.detail.errMsg || '未知错误') },
   openPost() { if (this.data.conversation) wx.navigateTo({ url: '/pages/post-detail/index?postId=' + this.data.conversation.postId }) },

@@ -43,6 +43,6 @@
     </view>
     <view id="bottom-anchor"></view>
   </scroll-view>
-  <text wx:if="{{error}}" class="error">{{error}}</text>
+
   <view class="composer"><textarea value="{{draft}}" maxlength="500" placeholder="输入消息" bindinput="onDraft" /><button class="send-button" aria-label="发送消息" loading="{{sending}}" disabled="{{sending || !draft}}" bindtap="submit"><image class="send-icon" src="/assets/icons/send.svg" mode="aspectFit" /></button></view>
 </view>
