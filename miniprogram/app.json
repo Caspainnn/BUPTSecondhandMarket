@@ -29,23 +29,33 @@
     "list": [
       {
         "pagePath": "pages/discover/index",
-        "text": "发现"
+        "text": "发现",
+        "iconPath": "assets/icons/tabbar/discover.png",
+        "selectedIconPath": "assets/icons/tabbar/discover-selected.png"
       },
       {
         "pagePath": "pages/publish/index",
-        "text": "发布"
+        "text": "发布",
+        "iconPath": "assets/icons/tabbar/publish.png",
+        "selectedIconPath": "assets/icons/tabbar/publish-selected.png"
       },
       {
         "pagePath": "pages/messages/index",
-        "text": "消息"
+        "text": "消息",
+        "iconPath": "assets/icons/tabbar/messages.png",
+        "selectedIconPath": "assets/icons/tabbar/messages-selected.png"
       },
       {
         "pagePath": "pages/profile/index",
-        "text": "我的"
+        "text": "我的",
+        "iconPath": "assets/icons/tabbar/profile.png",
+        "selectedIconPath": "assets/icons/tabbar/profile-selected.png"
       }
     ]
   },
-  "usingComponents": { "cloud-image": "/components/cloud-image/index" },
+  "usingComponents": {
+    "cloud-image": "/components/cloud-image/index"
+  },
   "lazyCodeLoading": "requiredComponents",
   "style": "v2",
   "sitemapLocation": "sitemap.json"
