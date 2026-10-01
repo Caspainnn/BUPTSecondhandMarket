@@ -15,7 +15,7 @@ Page({
     await this.load(false)
   },
   sync() {
-    const posts = selectDiscoverablePosts(this.state.posts).map((post) => ({ ...post, priceLabel: formatPrice(post.unitPriceCents) }))
+    const posts = selectDiscoverablePosts(this.state.posts).map((post) => ({ ...post, priceLabel: formatPrice(post.unitPriceCents), campusName: (CAMPUSES.find(campus => campus.id === post.campusId) || {}).name || '校区未设置' }))
     const campus = campusOptions.find((item) => item.id === this.state.campusId) || campusOptions[0]
     this.setData({ campusName: campus.name, posts, loading: this.state.loading, loadingMore: this.state.loadingMore, exhausted: this.state.exhausted, error: this.state.error })
   },

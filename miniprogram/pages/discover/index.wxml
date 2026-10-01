@@ -9,7 +9,7 @@
   <view wx:else class="post-grid">
     <view wx:for="{{posts}}" wx:key="_id" class="post-card" data-id="{{item._id}}" bindtap="openPost">
       <cloud-image class="cover" src="{{item.imageFileIds[0]}}" mode="aspectFill" lazy-load />
-      <view class="post-body"><text class="post-title">{{item.title}}</text><text class="price">{{item.priceLabel}}</text><text class="meta">剩余 {{item.availableQuantity}} · {{item.campusId}}</text></view>
+      <view class="post-body"><text class="post-title">{{item.title}}</text><text class="price">{{item.priceLabel}}</text><text class="meta">剩余 {{item.availableQuantity}} · {{item.campusName}}</text></view>
     </view>
   </view>
   <view wx:if="{{loadingMore}}" class="footer-note">正在加载更多…</view>
