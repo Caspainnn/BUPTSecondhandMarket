@@ -86,7 +86,7 @@ async function respondTransaction({ actor, transactionId, decision, reason, requ
       return { transaction: updated, post: updatedPost }
     }
     const normalizedReason = normalizeReason(reason)
-    const updated = await tx.updateTransaction(transactionId, { status: 'cancelled', activeKey: undefined, cancelledBy: actor._id, cancelType: 'seller_rejected', cancelReason: normalizedReason, cancelledAt: now, updatedAt: now })
+    const updated = await tx.updateTransaction(transactionId, { status: 'cancelled', activeKey: `terminal:${transactionId}`, cancelledBy: actor._id, cancelType: 'seller_rejected', cancelReason: normalizedReason, cancelledAt: now, updatedAt: now })
     await tx.createEvent({ transactionId, actorId: actor._id, type: 'seller_rejected', reason: normalizedReason, requestId: requestId(request), requestKey: key, createdAt: now })
     await appendSystem(tx, updated, actor, normalizedReason ? `卖家已拒绝交易：${normalizedReason}` : '卖家已拒绝交易', key, now)
     return { transaction: updated, post }
@@ -104,7 +104,7 @@ async function withdrawTransaction({ actor, transactionId, reason, requestId: re
     if (transaction.buyerId !== actor._id) throw new TransactionError('BUYER_ONLY', '只能由买家撤回交易清单')
     if (transaction.status !== 'pending_seller') throw new TransactionError('STALE_STATUS', '交易状态已变化，请刷新')
     const normalizedReason = normalizeReason(reason)
-    const updated = await tx.updateTransaction(transactionId, { status: 'cancelled', activeKey: undefined, cancelledBy: actor._id, cancelType: 'buyer_withdrew', cancelReason: normalizedReason, cancelledAt: now, updatedAt: now })
+    const updated = await tx.updateTransaction(transactionId, { status: 'cancelled', activeKey: `terminal:${transactionId}`, cancelledBy: actor._id, cancelType: 'buyer_withdrew', cancelReason: normalizedReason, cancelledAt: now, updatedAt: now })
     await tx.createEvent({ transactionId, actorId: actor._id, type: 'buyer_withdrew', reason: normalizedReason, requestId: requestId(request), requestKey: key, createdAt: now })
     await appendSystem(tx, updated, actor, normalizedReason ? `买家已撤回交易：${normalizedReason}` : '买家已撤回交易', key, now)
     return { transaction: updated }
@@ -127,7 +127,7 @@ async function cancelTransaction({ actor, transactionId, reason, requestId: requ
     const inventory = releaseInventory(post, transaction.quantity, { transactionId, requestKey: key, now })
     const updatedPost = await tx.updatePost(post._id, { ...inventory.patch, updatedAt: now })
     await tx.createMovement(inventory.movement)
-    const updated = await tx.updateTransaction(transactionId, { status: 'cancelled', activeKey: undefined, cancelledBy: actor._id, cancelType: 'participant_cancelled', cancelReason: normalizedReason, cancelledAt: now, updatedAt: now })
+    const updated = await tx.updateTransaction(transactionId, { status: 'cancelled', activeKey: `terminal:${transactionId}`, cancelledBy: actor._id, cancelType: 'participant_cancelled', cancelReason: normalizedReason, cancelledAt: now, updatedAt: now })
     await tx.createEvent({ transactionId, actorId: actor._id, type: 'participant_cancelled', reason: normalizedReason, requestId: requestId(request), requestKey: key, createdAt: now })
     await appendSystem(tx, updated, actor, `交易已取消：${normalizedReason}`, key, now)
     return { transaction: updated, post: updatedPost }
@@ -171,7 +171,7 @@ async function submitTransactionResult({ actor, transactionId, result, requestId
       await tx.createMovement(inventory.movement)
     }
     const terminal = ['completed', 'failed', 'abnormal'].includes(status)
-    const updated = await tx.updateTransaction(transactionId, { [ownField]: result, [`${role}ResultAt`]: now, status, ...(terminal ? { activeKey: undefined } : {}), completedAt: status === 'completed' ? now : transaction.completedAt, failedAt: status === 'failed' ? (transaction.failedAt || now) : transaction.failedAt, abnormalAt: status === 'abnormal' ? now : transaction.abnormalAt, updatedAt: now })
+    const updated = await tx.updateTransaction(transactionId, { [ownField]: result, [`${role}ResultAt`]: now, status, ...(terminal ? { activeKey: `terminal:${transactionId}` } : {}), completedAt: status === 'completed' ? now : transaction.completedAt, failedAt: status === 'failed' ? (transaction.failedAt || now) : transaction.failedAt, abnormalAt: status === 'abnormal' ? now : transaction.abnormalAt, updatedAt: now })
     await tx.createEvent({ transactionId, actorId: actor._id, type: eventType, result, requestId: requestId(request), requestKey: key, createdAt: now })
     const statusText = status === 'completed' ? '双方均确认交接成功，交易已完成' : status === 'abnormal' ? '双方交接结果不一致，交易已标记异常' : result === 'failure' ? (transaction.status === 'failed' ? `${role === 'buyer' ? '买家' : '卖家'}也反馈交接失败` : `${role === 'buyer' ? '买家' : '卖家'}反馈交接失败，库存已释放`) : `${role === 'buyer' ? '买家' : '卖家'}已确认交接成功，等待另一方确认`
     await appendSystem(tx, updated, actor, statusText, key, now)

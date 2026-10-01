@@ -141,7 +141,7 @@
 | `messages` | `sender_request` | `senderId`、`requestId` 升序 | 唯一 |
 | `transactions` | `buyer_transactions` | `buyerId`、`status` 升序，`updatedAt` 降序 | 普通 |
 | `transactions` | `seller_transactions` | `sellerId`、`status` 升序，`updatedAt` 降序 | 普通 |
-| `transactions` | `active_conversation` | `conversationId`、`activeKey` 升序 | 唯一 |
+| `transactions` | `active_conversation` | `conversationId`、`activeKey` 升序 | 唯一；进行中固定为 `active`，终态写入 `terminal:<交易ID>` |
 | `transaction_events` | `transaction_events` | `transactionId` 升序、`createdAt` 降序 | 普通 |
 | `transaction_events` | `actor_request` | `actorId`、`requestId` 升序 | 唯一 |
 | `inventory_movements` | `post_movements` | `postId` 升序、`createdAt` 降序 | 普通 |

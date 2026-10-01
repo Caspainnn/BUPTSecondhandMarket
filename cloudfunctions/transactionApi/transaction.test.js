@@ -143,9 +143,18 @@ test('either participant can cancel before appointment and inventory is released
     await cancelTransaction({ actor, transactionId: 't1', reason: '临时无法交接', requestId: `cancel-${actor._id}`, transactions, now: NOW })
     await cancelTransaction({ actor, transactionId: 't1', reason: '临时无法交接', requestId: `cancel-${actor._id}`, transactions, now: NOW })
     assert.equal(transactions.state.transactions[0].status, 'cancelled')
+    assert.equal(transactions.state.transactions[0].activeKey, 'terminal:t1')
     assert.deepEqual([transactions.state.posts[0].availableQuantity, transactions.state.posts[0].reservedQuantity], [3, 0])
     assert.deepEqual([transactions.state.events.length, transactions.state.movements.length, transactions.state.messages.length], [1, 1, 1])
   }
+})
+
+test('terminal active keys remain unique so the same conversation can start a later transaction', async () => {
+  const transactions = repository(awaitingSeed())
+  await cancelTransaction({ actor: buyer, transactionId: 't1', reason: '本次先取消', requestId: 'cancel-old', transactions, now: NOW })
+  const later = await createTransaction({ actor: buyer, ...validInput(), quantity: 1, requestId: 'create-later', transactions, now: NOW })
+  assert.equal(later.transaction.activeKey, 'active')
+  assert.equal(transactions.state.transactions[0].activeKey, 'terminal:t1')
 })
 
 test('cancellation is rejected at appointment and results are rejected before appointment', async () => {
@@ -162,6 +171,7 @@ test('first success waits; both successes complete and move reserved stock to so
   assert.equal(transactions.state.movements.length, 0)
   await submitTransactionResult({ actor: seller, transactionId: 't1', result: 'success', requestId: 'seller-success', transactions, now: NOW + 1 })
   assert.equal(transactions.state.transactions[0].status, 'completed')
+  assert.equal(transactions.state.transactions[0].activeKey, 'terminal:t1')
   assert.deepEqual([transactions.state.posts[0].reservedQuantity, transactions.state.posts[0].soldQuantity], [0, 2])
   assert.equal(transactions.state.movements[0].type, 'sell')
 })
