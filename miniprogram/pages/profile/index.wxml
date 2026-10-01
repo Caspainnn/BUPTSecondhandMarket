@@ -1,22 +1,21 @@
-<view class="page">
-  <view wx:if="{{state === 'loading'}}" class="card profile-state">
-    <text class="state-title">个人资料</text>
-    <text class="muted">正在加载微信身份…</text>
-  </view>
-
-  <view wx:elif="{{state === 'error'}}" class="card profile-state">
-    <text class="state-title">暂时无法加载</text>
-    <text class="error-text">{{message}}</text>
-    <button class="secondary-button" bindtap="retry">重试</button>
-  </view>
-
-  <view wx:else class="card profile-state">
-    <image wx:if="{{user.avatarFileId}}" class="avatar" src="{{user.avatarFileId}}" mode="aspectFill" />
-    <view wx:else class="avatar avatar-empty">邮</view>
-    <text class="state-title">{{user.nickname || '尚未完善资料'}}</text>
-    <text class="muted">{{user.profileCompleted ? '资料已完善' : '完成头像、昵称和常驻校区后即可使用完整功能'}}</text>
-    <button class="secondary-button" bindtap="editProfile">{{user.profileCompleted ? '修改资料' : '完善资料'}}</button>
-    <button wx:if="{{user.profileCompleted}}" class="secondary-button" bindtap="openMyPosts">我的发布</button>
-    <button wx:if="{{user.profileCompleted}}" class="secondary-button" bindtap="openMyTransactions">我的交易</button>
-  </view>
+﻿<view class="page">
+  <view wx:if="{{state === 'loading'}}" class="card profile-state"><text class="state-title">个人资料</text><text class="muted">正在加载微信身份…</text></view>
+  <view wx:elif="{{state === 'error'}}" class="card profile-state"><text class="error-text">{{message}}</text><button class="secondary-button" bindtap="retry">重试</button></view>
+  <block wx:else>
+    <view class="card profile-state">
+      <view class="avatar-picker">
+        <image wx:if="{{form.avatarFileId}}" class="avatar" src="{{form.avatarFileId}}" mode="aspectFill" />
+        <view wx:else class="avatar avatar-empty">选择头像</view>
+        <button class="avatar-button" aria-label="修改头像" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar" disabled="{{busy}}"></button>
+      </view>
+      <text class="muted">点击头像、昵称或校区即可修改</text>
+      <label class="profile-field"><text>昵称</text><input class="profile-input" type="nickname" maxlength="20" value="{{form.nickname}}" placeholder="请输入昵称" bindinput="onNicknameInput" disabled="{{busy}}" /></label>
+      <label class="profile-field"><text>常驻校区</text><picker range="{{campuses}}" range-key="name" value="{{campusIndex}}" bindchange="onCampusChange" disabled="{{busy || !campuses.length}}"><view class="profile-picker"><text>{{campusIndex < 0 ? '请选择常驻校区' : campuses[campusIndex].name}}</text><image class="dropdown-icon" src="/assets/icons/dropdown.svg" mode="aspectFit" /></view></picker></label>
+      <text wx:if="{{!user.profileCompleted}}" class="muted">完成头像、昵称和常驻校区后即可使用完整功能</text>
+      <text wx:if="{{message}}" class="error-text">{{message}}</text>
+      <button wx:if="{{message && !campuses.length}}" class="secondary-button" bindtap="retry">重新加载校区</button>
+      <button wx:if="{{dirty || !user.profileCompleted}}" class="primary-button" loading="{{busy}}" disabled="{{busy}}" bindtap="save">保存资料</button>
+    </view>
+    <view wx:if="{{user.profileCompleted}}" class="card profile-links"><button class="secondary-button" bindtap="openMyPosts">我的发布</button><button class="secondary-button" bindtap="openMyTransactions">我的交易</button></view>
+  </block>
 </view>
