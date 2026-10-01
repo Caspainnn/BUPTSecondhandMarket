@@ -12,7 +12,6 @@
       <text class="stock">可预约 {{post.availableQuantity}} / 共 {{post.totalQuantity}}</text>
     </view>
     <view class="card seller"><image src="{{post.ownerAvatarFileId}}" mode="aspectFill" /><text>{{post.ownerNickname}}</text></view>
-    <view wx:if="{{post.isOwner}}" class="actions"><button bindtap="edit">编辑</button><button loading="{{busy}}" bindtap="toggleStatus">{{post.status === 'active' ? '下架' : '重新上架'}}</button></view>
-    <button wx:else class="contact" loading="{{busy}}" disabled="{{post.unavailable}}" bindtap="contactSeller">{{post.unavailable ? '暂不可预约' : '联系卖家'}}</button>
+    <button class="contact {{post.isOwner ? 'own-contact' : ''}}" loading="{{busy}}" disabled="{{!post.isOwner && post.unavailable}}" bindtap="contactSeller">{{!post.isOwner && post.unavailable ? '暂不可预约' : '聊一聊'}}</button>
   </block>
 </view>

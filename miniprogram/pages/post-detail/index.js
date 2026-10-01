@@ -1,7 +1,7 @@
 const { POST_CATEGORIES, POST_CONDITIONS, CAMPUSES } = require('../../config/market')
 const { callCloud } = require('../../services/cloud-result')
 const { formatPrice } = require('../../services/post-list-state')
-const { getPost, setPostStatus } = require('../../services/posts')
+const { getPost } = require('../../services/posts')
 const { consumeProtectedResume, requireCompletedProfile } = require('../../services/user')
 
 const nameOf = (items, id) => (items.find((item) => item.id === id) || {}).name || id
@@ -17,15 +17,12 @@ Page({
       this.setData({ state: 'ready', post: { ...post, priceLabel: formatPrice(post.unitPriceCents), categoryName: nameOf(POST_CATEGORIES, post.categoryId), conditionName: nameOf(POST_CONDITIONS, post.conditionId), campusName: nameOf(CAMPUSES, post.campusId), unavailable: post.status !== 'active' || post.availableQuantity <= 0 } })
     } catch (error) { this.setData({ state: 'error', error: error.message }) }
   },
-  edit() { wx.navigateTo({ url: `/pages/post-edit/index?postId=${this.postId}` }) },
-  async toggleStatus() {
-    if (this.data.busy) return
-    this.setData({ busy: true })
-    try { await setPostStatus(this.postId, this.data.post.status === 'active' ? 'offline' : 'active', `${Date.now()}`); await this.load() }
-    catch (error) { wx.showToast({ title: error.message, icon: 'none' }) }
-    finally { this.setData({ busy: false }) }
-  },
   async contactSeller() {
+    if (!this.data.post) return
+    if (this.data.post.isOwner) {
+      wx.showModal({ title: '提示', content: '这个商品是你自己想要卖的，所以不能和自己聊一聊。', showCancel: false })
+      return
+    }
     if (this.data.busy || this.data.post.unavailable) return
     this.setData({ busy: true })
     try {
