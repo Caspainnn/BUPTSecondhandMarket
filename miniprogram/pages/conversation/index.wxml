@@ -1,4 +1,4 @@
-<view class="chat-page">
+<view class="chat-page {{keyboardHeight > 0 ? 'keyboard-open' : ''}}" style="{{viewportHeight ? 'height: ' + (viewportHeight - keyboardHeight) + 'px;' : ''}}">
   <view class="seller-bar">
     <cloud-image class="seller-avatar" src="{{peer.avatarFileId}}" mode="aspectFill" />
     <view class="seller-details"><text class="seller-name">{{peer.nickname || peerRole}}</text><text class="seller-label">{{peerRole}}</text></view>
@@ -12,7 +12,7 @@
     <text wx:else class="product-title">正在获取商品信息</text>
     <view wx:if="{{canCreateTransaction}}" class="transaction-entry" aria-role="button" bindtap="createTransaction">预约购买</view>
   </view>
-  <scroll-view class="messages" scroll-y scroll-with-animation scroll-into-view="bottom-anchor" upper-threshold="80" bindscrolltoupper="loadOlder">
+  <scroll-view class="messages" scroll-y scroll-with-animation scroll-into-view="{{scrollTarget}}" bindscroll="onHistoryScroll" bindscrolltolower="onHistoryBottom" upper-threshold="80" bindscrolltoupper="loadOlder">
     <view wx:if="{{loading}}" class="loading">正在加载…</view>
     <view wx:for="{{messages}}" wx:key="_id" class="message-row {{item.mine ? 'mine' : ''}}">
       <view wx:if="{{item.transactionCard}}" class="transaction-card">
@@ -43,8 +43,8 @@
       <view wx:elif="{{item.type === 'system'}}" class="system-message">{{item.text}}</view>
       <view wx:else class="bubble">{{item.text}}</view>
     </view>
-    <view id="bottom-anchor"></view>
+    <view id="bottom-anchor" class="bottom-anchor"></view>
   </scroll-view>
 
-  <view class="composer"><textarea value="{{draft}}" maxlength="500" placeholder="输入消息" bindinput="onDraft" /><button class="send-button" aria-label="发送消息" loading="{{sending}}" disabled="{{sending || !draft}}" bindtap="submit"><image class="send-icon" src="/assets/icons/send.svg" mode="aspectFit" /></button></view>
+  <view class="composer"><textarea value="{{draft}}" maxlength="500" placeholder="输入消息" adjust-position="{{false}}" show-confirm-bar="{{false}}" disable-default-padding="{{true}}" hold-keyboard="{{true}}" bindkeyboardheightchange="onKeyboardHeight" bindfocus="onKeyboardHeight" bindblur="onInputBlur" bindinput="onDraft" /><button class="send-button" aria-label="发送消息" loading="{{sending}}" disabled="{{sending || !draft}}" bindtap="submit"><image class="send-icon" src="/assets/icons/send.svg" mode="aspectFit" /></button></view>
 </view>

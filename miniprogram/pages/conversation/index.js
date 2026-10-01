@@ -6,8 +6,8 @@ const { listMessages, markRead, sendMessage, syncMessageBadge } = require('../..
 const { requireCompletedProfile } = require('../../services/user')
 
 Page({
-  data: { messages: [], draft: '', loading: true, sending: false, error: '', canCreateTransaction: false, conversation: null, peer: null, peerRole: '', imageError: false, cardBusy: false, editingMessageId: '', editForm: {}, campuses: CAMPUSES },
-  onLoad(options) { this.conversationId = options.conversationId; this.state = createChatState(this.conversationId); this.sync() },
+  data: { viewportHeight: 0, keyboardHeight: 0, scrollTarget: '', messages: [], draft: '', loading: true, sending: false, error: '', canCreateTransaction: false, conversation: null, peer: null, peerRole: '', imageError: false, cardBusy: false, editingMessageId: '', editForm: {}, campuses: CAMPUSES },
+  onLoad(options) { const info = wx.getWindowInfo ? wx.getWindowInfo() : wx.getSystemInfoSync(); this.setData({ viewportHeight: info.windowHeight }); this.conversationId = options.conversationId; this.state = createChatState(this.conversationId); this.sync() },
   async onShow() {
     const user = await requireCompletedProfile()
     if (!user) return
@@ -19,7 +19,7 @@ Page({
     this.stopPolling()
     this.stop = startPolling(() => this.fetchLatest(), 3000)
   },
-  onHide() { this.stopPolling() },
+  onHide() { this.stopPolling(); this.setData({ keyboardHeight: 0 }) },
   onUnload() { this.stopPolling() },
   stopPolling() { if (this.stop) { this.stop(); this.stop = null } },
   sync() {
@@ -40,7 +40,24 @@ Page({
     })
     this.setData({ messages, draft: this.state.draft, loading: this.state.loading, sending: this.state.sending, error: this.state.error })
   },
-  apply(event) { this.state = reduceChatState(this.state, event); this.sync() },
+  apply(event) {
+    const previous = this.state.messages[this.state.messages.length - 1]
+    this.state = reduceChatState(this.state, event)
+    this.sync()
+    const latest = this.state.messages[this.state.messages.length - 1]
+    if (event.type === 'SEND_SUCCESS' || (event.type === 'MESSAGES_SUCCESS' && !this.loadingOlder && this.atBottom !== false && latest && (!previous || previous._id !== latest._id))) this.scrollToBottom()
+  },
+  scrollToBottom() {
+    this.atBottom = true
+    this.setData({ scrollTarget: '' }, () => this.setData({ scrollTarget: 'bottom-anchor' }))
+  },
+  onHistoryScroll(event) { if (event.detail.deltaY < 0) this.atBottom = false },
+  onHistoryBottom() { this.atBottom = true },
+  onKeyboardHeight(event) {
+    const keyboardHeight = Math.max(0, Number(event.detail.height) || 0)
+    this.setData({ keyboardHeight }, () => { if (keyboardHeight > 0) this.scrollToBottom() })
+  },
+  onInputBlur() { this.setData({ keyboardHeight: 0 }) },
   onDraft(event) { this.apply({ type: 'DRAFT_CHANGE', value: event.detail.value }) },
   async fetchLatest() {
     if (this.fetchingLatest) return
@@ -59,11 +76,13 @@ Page({
   },
   async loadOlder() {
     if (this.state.loading || this.state.exhausted) return
+    this.loadingOlder = true
     this.apply({ type: 'LOAD_START' })
     try {
       const result = await listMessages(this.conversationId, this.state.nextBefore, 20)
       this.apply({ type: 'MESSAGES_SUCCESS', conversationId: this.conversationId, messages: result.messages, nextBefore: result.nextBefore })
     } catch (error) { console.warn('Conversation refresh failed', error); this.apply({ type: 'FAILURE', operation: 'load', message: '消息暂时未能刷新，请稍后重试' }) }
+    finally { this.loadingOlder = false }
   },
   async submit() {
     if (this.state.sending || !this.state.draft.trim()) return

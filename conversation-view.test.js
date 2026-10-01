@@ -74,3 +74,36 @@ test('conversation header selects the other participant for buyer and seller',as
  await page.onShow();assert.equal(page.data.peer.nickname,'Seller');assert.equal(page.data.peer.avatarFileId,'seller-avatar');assert.equal(page.data.canCreateTransaction,true)
  actor='seller';await page.onShow();assert.equal(page.data.peer.nickname,'Buyer');assert.equal(page.data.peer.avatarFileId,'buyer-avatar');assert.equal(page.data.canCreateTransaction,false)
 })
+
+function conversationLayoutPage(){
+ const vm=require('node:vm'),path=require('node:path');let page;const patches=[]
+ vm.runInNewContext(fs.readFileSync('miniprogram/pages/conversation/index.js','utf8'),{
+ Page:value=>page=value,require:name=>require(path.resolve('miniprogram/pages/conversation',name)),wx:{getWindowInfo:()=>({windowHeight:700})},
+ })
+ page.setData=(patch,callback)=>{patches.push(patch);Object.assign(page.data,patch);if(callback)callback()}
+ page.onLoad({conversationId:'c'})
+ return {page,patches}
+}
+test('sending retriggers bottom positioning while polling respects reading older messages',()=>{
+ const {page,patches}=conversationLayoutPage()
+ page.state.messages=[{_id:'a',createdAt:1}];page.atBottom=false
+ page.apply({type:'SEND_SUCCESS',conversationId:'c',message:{_id:'b',createdAt:2}})
+ assert.equal(page.data.scrollTarget,'bottom-anchor')
+ assert.equal(patches[patches.length-2].scrollTarget,'')
+ page.onHistoryScroll({detail:{deltaY:-20}})
+ const before=patches.length
+ page.apply({type:'MESSAGES_SUCCESS',conversationId:'c',messages:[{_id:'d',createdAt:4}]})
+ assert.equal(patches.length,before+1)
+ page.onHistoryBottom();page.apply({type:'MESSAGES_SUCCESS',conversationId:'c',messages:[{_id:'e',createdAt:5}]})
+ assert.equal(page.data.scrollTarget,'bottom-anchor')
+})
+test('keyboard height uses the initial viewport and restores layout after blur',()=>{
+ const {page}=conversationLayoutPage()
+ page.onKeyboardHeight({detail:{height:300}})
+ assert.equal(page.data.viewportHeight,700);assert.equal(page.data.keyboardHeight,300)
+ page.onInputBlur();assert.equal(page.data.keyboardHeight,0)
+ const xml=fs.readFileSync('miniprogram/pages/conversation/index.wxml','utf8')
+ assert.match(xml,/adjust-position="\{\{false\}\}"/)
+ assert.match(xml,/viewportHeight - keyboardHeight/)
+ assert.match(xml,/scroll-into-view="\{\{scrollTarget\}\}"/)
+})
