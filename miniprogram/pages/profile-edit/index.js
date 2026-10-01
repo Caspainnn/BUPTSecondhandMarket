@@ -4,6 +4,7 @@ const {
   getCurrentUser,
   saveProfile,
   uploadAvatar,
+  prepareProtectedResume,
 } = require('../../services/user')
 
 Page({
@@ -100,6 +101,7 @@ Page({
         campusId: this.profileState.form.campusId,
       })
       this.applyEvent({ type: 'SAVE_SUCCESS', user })
+      prepareProtectedResume()
       wx.showToast({ title: '资料已保存', icon: 'success' })
       setTimeout(() => wx.navigateBack(), 600)
     } catch (error) {

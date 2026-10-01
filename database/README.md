@@ -1,5 +1,15 @@
 # 云数据库初始化
 
+## 阶段 1 推荐部署顺序
+
+1. 部署并云端测试一次 `setupStage1Database`，参数为 `{ "confirm": "INIT_STAGE_1" }`。
+2. 根据返回声明和本文第 7 节创建全部索引，将六个阶段 1 集合的客户端 `read/write` 均设为 `false`。
+3. 依次部署 `postApi`、`conversationApi`、`messageApi`、`transactionApi`，均选择云端安装依赖。
+4. 从云端删除一次性函数 `setupStage1Database`，清缓存后重新编译。
+5. 按 `docs/阶段1验收.md` 使用两个账号验收；重点核对并发确认、取消释放、双方成功、首次失败和相反结果异常时的库存恒等式。
+
+本地源码中的初始化函数保留用于复现环境；“删除”只指云端部署副本。
+
 目标环境：`cloud1-d1gi2dzcp1275d460`
 
 本目录只保存可公开、可重复导入的基础数据。不要在这里保存 OpenID、用户资料、AppSecret、云密钥或 Token。

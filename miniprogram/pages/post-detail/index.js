@@ -2,13 +2,14 @@ const { POST_CATEGORIES, POST_CONDITIONS, CAMPUSES } = require('../../config/mar
 const { callCloud } = require('../../services/cloud-result')
 const { formatPrice } = require('../../services/post-list-state')
 const { getPost, setPostStatus } = require('../../services/posts')
-const { requireCompletedProfile } = require('../../services/user')
+const { consumeProtectedResume, requireCompletedProfile } = require('../../services/user')
 
 const nameOf = (items, id) => (items.find((item) => item.id === id) || {}).name || id
 
 Page({
   data: { state: 'loading', error: '', post: null, busy: false },
   async onLoad(options) { this.postId = options.postId; await this.load() },
+  onShow() { if (this.postId && consumeProtectedResume('/pages/post-detail/index', 'contactSeller')) this.contactSeller() },
   async load() {
     this.setData({ state: 'loading', error: '' })
     try {
@@ -28,7 +29,7 @@ Page({
     if (this.data.busy || this.data.post.unavailable) return
     this.setData({ busy: true })
     try {
-      const user = await requireCompletedProfile()
+      const user = await requireCompletedProfile('contactSeller')
       if (!user) return
       const result = await callCloud('conversationApi', { action: 'open', postId: this.postId, requestId: `${Date.now()}` })
       getApp().globalData.currentConversation = result.conversation

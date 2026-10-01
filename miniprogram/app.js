@@ -3,6 +3,9 @@ const { ENV_ID } = require('./config/env')
 App({
   globalData: {
     user: null,
+    pendingProtected: null,
+    resumeProtected: null,
+    currentConversation: null,
   },
 
   onLaunch() {

@@ -4,7 +4,9 @@ const { requireCompletedProfile } = require('../../services/user')
 
 Page({
   data: { form: createPostFormState().form, status: 'loading', error: '' },
-  async onLoad() { const user = await requireCompletedProfile(); if (!user) return; this.userId = user._id; this.state = createPostFormState({ form: { campusId: user.campusId } }); this.sync() },
+  async initialize() { const user = await requireCompletedProfile(); if (!user) return; this.userId = user._id; this.state = createPostFormState({ form: { campusId: user.campusId } }); this.sync() },
+  onLoad() { this.initialize() },
+  onShow() { if (!this.state) this.initialize() },
   sync() { this.setData({ form: this.state.form, status: this.state.status, error: this.state.error }) },
   apply(event) { this.state = reducePostFormState(this.state, event); this.sync() },
   onPatch(e) { const patch = { ...e.detail.patch }; if (patch.totalQuantity !== undefined) patch.totalQuantity = Number(patch.totalQuantity); this.apply({ type: 'PATCH_FORM', patch }) },

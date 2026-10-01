@@ -32,6 +32,10 @@
         "text": "发现"
       },
       {
+        "pagePath": "pages/publish/index",
+        "text": "发布"
+      },
+      {
         "pagePath": "pages/messages/index",
         "text": "消息"
       },

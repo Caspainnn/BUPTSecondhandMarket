@@ -9,7 +9,7 @@ const listMessages = (conversationId, before, limit = 20) => messageAction('list
 const sendMessage = (conversationId, text, requestId) => messageAction('send', { conversationId, text, requestId })
 const markRead = (conversationId) => messageAction('markRead', { conversationId })
 
-function syncMessageBadge(totalUnread, tabIndex = 1) {
+function syncMessageBadge(totalUnread, tabIndex = 2) {
   if (totalUnread > 0) wx.setTabBarBadge({ index: tabIndex, text: String(Math.min(totalUnread, 99)) })
   else wx.removeTabBarBadge({ index: tabIndex })
 }
