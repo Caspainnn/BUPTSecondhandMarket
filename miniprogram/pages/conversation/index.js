@@ -71,6 +71,7 @@ Page({
     try {
       const result = await sendMessage(this.conversationId, this.state.draft, this.state.requestId)
       this.apply({ type: 'SEND_SUCCESS', conversationId: this.conversationId, message: result.message })
+      await this.fetchLatest()
     } catch (error) { console.warn('Conversation send failed', error); this.apply({ type: 'FAILURE', operation: 'send', message: '消息未发送，请重试' }); wx.showToast({ title: '消息未发送，请重试', icon: 'none' }) }
   },
   onImageError(event) { this.setData({ imageError: true }); console.warn('商品图片加载失败', event.detail.errMsg || '未知错误') },
