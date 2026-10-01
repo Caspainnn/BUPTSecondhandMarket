@@ -15,7 +15,7 @@ Page({
     const user = await requireCompletedProfile()
     if (!user) return
     this.conversationId = options.conversationId
-    const initial = localParts(Date.now() + 60 * 60 * 1000)
+    const initial = localParts(Date.now())
     this.state = createTransactionState({ conversationId: this.conversationId, campusId: user.campusId })
     this.state = reduceTransactionState(this.state, { type: 'PATCH_FORM', patch: { scheduledAt: `${initial.date} ${initial.time}` } })
     this.setData({ date: initial.date, time: initial.time, conversation: getApp().globalData.currentConversation || null })

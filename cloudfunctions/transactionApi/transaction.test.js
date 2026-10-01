@@ -63,9 +63,9 @@ test('only the buyer can create from their conversation with an authoritative po
 })
 
 test('accepts exact appointment boundaries and rejects outside them', async () => {
-  await createTransaction({ actor: buyer, ...validInput(), scheduledAt: NOW + 10 * 60 * 1000, transactions: repository(), now: NOW })
+  await createTransaction({ actor: buyer, ...validInput(), scheduledAt: Math.floor(NOW / 60000) * 60000, transactions: repository(), now: NOW })
   await createTransaction({ actor: buyer, ...validInput(), scheduledAt: NOW + 14 * 24 * 60 * 60 * 1000, transactions: repository(), now: NOW })
-  for (const scheduledAt of [NOW + 10 * 60 * 1000 - 1, NOW + 14 * 24 * 60 * 60 * 1000 + 1]) {
+  for (const scheduledAt of [Math.floor(NOW / 60000) * 60000 - 1, NOW + 14 * 24 * 60 * 60 * 1000 + 1]) {
     await assert.rejects(createTransaction({ actor: buyer, ...validInput(), scheduledAt, transactions: repository(), now: NOW }), (error) => error.code === 'INVALID_SCHEDULE')
   }
 })
@@ -241,7 +241,7 @@ test('revisions retain appointment boundaries and never reserve inventory', asyn
   const { reviseTransaction } = require('./transaction')
   const transactions = repository()
   const created = await createTransaction({ actor: buyer, ...validInput(), transactions, now: NOW })
-  for (const patch of [{ quantity: 4 }, { scheduledAt: NOW }, { campusId: 'invalid' }, { locationText: '' }]) {
+  for (const patch of [{ quantity: 4 }, { scheduledAt: Math.floor(NOW / 60000) * 60000 - 1 }, { campusId: 'invalid' }, { locationText: '' }]) {
     await assert.rejects(reviseTransaction({ actor: buyer, ...validInput(), transactionId: created.transaction._id, requestId: 'bad-revise', ...patch, transactions, now: NOW }))
   }
   assert.equal(transactions.state.transactions[0].quantity, 2)

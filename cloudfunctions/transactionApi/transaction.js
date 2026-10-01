@@ -23,7 +23,7 @@ function normalizeReason(value, required = false) {
 function validateInput({ quantity, scheduledAt, campusId, locationText }, post, now) {
   if (!Number.isInteger(quantity) || quantity < 1 || quantity > 99 || quantity > post.availableQuantity) throw new TransactionError('INVALID_QUANTITY', '预约数量无效')
   const time = typeof scheduledAt === 'number' ? scheduledAt : Date.parse(scheduledAt)
-  if (!Number.isFinite(time) || time < now + 10 * 60 * 1000 || time > now + 14 * 24 * 60 * 60 * 1000) throw new TransactionError('INVALID_SCHEDULE', '约定时间须晚于当前至少 10 分钟且不超过 14 天')
+  if (!Number.isFinite(time) || time < Math.floor(now / 60000) * 60000 || time > now + 14 * 24 * 60 * 60 * 1000) throw new TransactionError('INVALID_SCHEDULE', '约定时间不能早于当前分钟且不超过 14 天')
   if (!CAMPUSES.includes(campusId)) throw new TransactionError('INVALID_CAMPUS', '请选择有效校区')
   const location = typeof locationText === 'string' ? locationText.trim() : ''
   if (location.length < 2 || location.length > 50) throw new TransactionError('INVALID_LOCATION', '交接地点须为 2 至 50 个字符')
