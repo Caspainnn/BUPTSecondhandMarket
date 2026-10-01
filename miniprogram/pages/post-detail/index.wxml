@@ -2,7 +2,8 @@
   <view wx:if="{{state === 'loading'}}" class="card state">正在加载商品…</view>
   <view wx:elif="{{state === 'error'}}" class="card state error"><text>{{error}}</text><button bindtap="load">重试</button></view>
   <block wx:else>
-    <swiper class="gallery" indicator-dots circular><swiper-item wx:for="{{post.imageFileIds}}" wx:key="*this"><image src="{{item}}" mode="aspectFill" /></swiper-item></swiper>
+    <swiper class="gallery" indicator-dots circular><swiper-item wx:for="{{post.imageFileIds}}" wx:key="*this"><image src="{{item}}" mode="aspectFill" binderror="onImageError" /></swiper-item></swiper>
+    <view wx:if="{{imageError}}" class="card" bindtap="checkImages">图片未能加载，点此检查</view>
     <view class="card info-card">
       <view class="title-row"><text class="title">{{post.title}}</text><text class="price">{{post.priceLabel}}</text></view>
       <text wx:if="{{post.unavailable}}" class="unavailable">该商品当前不可预约，仅供查看历史信息</text>
@@ -11,7 +12,7 @@
       <text wx:if="{{post.defectDescription}}" class="defect">异常说明：{{post.defectDescription}}</text>
       <text class="stock">可预约 {{post.availableQuantity}} / 共 {{post.totalQuantity}}</text>
     </view>
-    <view class="card seller"><image src="{{post.ownerAvatarFileId}}" mode="aspectFill" /><text>{{post.ownerNickname}}</text></view>
+    <view class="card seller"><image src="{{post.ownerAvatarFileId}}" mode="aspectFill" binderror="onImageError" /><text>{{post.ownerNickname}}</text></view>
     <button class="contact {{post.isOwner ? 'own-contact' : ''}}" loading="{{busy}}" disabled="{{!post.isOwner && post.unavailable}}" bindtap="contactSeller">{{!post.isOwner && post.unavailable ? '暂不可预约' : '聊一聊'}}</button>
   </block>
 </view>

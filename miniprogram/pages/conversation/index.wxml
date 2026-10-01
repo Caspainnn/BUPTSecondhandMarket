@@ -1,5 +1,14 @@
 <view class="chat-page">
-  <button wx:if="{{canCreateTransaction}}" class="transaction-entry" bindtap="createTransaction">发起交易清单</button>
+  <view class="product-bar">
+    <view wx:if="{{conversation}}" class="product-info" bindtap="openPost">
+      <image wx:if="{{!imageError}}" class="product-cover" src="{{conversation.postSnapshot.coverFileId}}" mode="aspectFill" binderror="onImageError" />
+      <view wx:else class="product-cover image-placeholder">图片加载失败</view>
+      <view class="product-text"><text class="product-title">{{conversation.postSnapshot.title}}</text><text class="product-price">参考单价 ¥{{conversation.postSnapshot.unitPriceCents / 100}}</text></view>
+    </view>
+    <text wx:else class="product-title">正在获取商品信息</text>
+    <button wx:if="{{canCreateTransaction}}" class="transaction-entry" bindtap="createTransaction">发起交易清单</button>
+  </view>
+  <view wx:if="{{imageError}}" class="image-help" bindtap="checkImages">图片未能加载，点此检查</view>
   <scroll-view class="messages" scroll-y scroll-with-animation scroll-into-view="bottom-anchor" upper-threshold="80" bindscrolltoupper="loadOlder">
     <view wx:if="{{loading}}" class="loading">正在加载…</view>
     <view wx:for="{{messages}}" wx:key="_id" class="message-row {{item.mine ? 'mine' : ''}}">
@@ -9,5 +18,5 @@
     <view id="bottom-anchor"></view>
   </scroll-view>
   <text wx:if="{{error}}" class="error">{{error}}</text>
-  <view class="composer"><textarea value="{{draft}}" maxlength="500" auto-height placeholder="输入消息" bindinput="onDraft" /><button loading="{{sending}}" disabled="{{sending || !draft}}" bindtap="submit">发送</button></view>
+  <view class="composer"><textarea value="{{draft}}" maxlength="500" auto-height placeholder="输入消息" bindinput="onDraft" /><button class="send-button" aria-label="发送消息" loading="{{sending}}" disabled="{{sending || !draft}}" bindtap="submit"><image class="send-icon" src="/assets/icons/send.svg" mode="aspectFit" /></button></view>
 </view>

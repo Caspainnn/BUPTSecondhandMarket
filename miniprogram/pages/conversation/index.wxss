@@ -1,6 +1,6 @@
 .chat-page { min-height: 100vh; padding-bottom: 150rpx; background: #f4f8fb; }
-.transaction-entry { width: 320rpx; margin: 18rpx auto 0; border-radius: 999rpx; background: #e4f4ff; color: #2479b8; font-size: 24rpx; }.transaction-entry::after { border: 0; }
-.messages { box-sizing: border-box; height: calc(100vh - 150rpx); padding: 24rpx; }
+.transaction-entry { flex-shrink: 0; width: 210rpx; margin: 0; padding: 0 12rpx; border-radius: 999rpx; background: #e4f4ff; color: #2479b8; font-size: 24rpx; }.transaction-entry::after { border: 0; }
+.messages { box-sizing: border-box; height: calc(100vh - 290rpx - env(safe-area-inset-bottom)); padding: 24rpx; }
 .message-row { display: flex; margin: 16rpx 0; justify-content: flex-start; }
 .message-row.mine { justify-content: flex-end; }
 .bubble { max-width: 72%; padding: 18rpx 24rpx; border-radius: 24rpx 24rpx 24rpx 6rpx; background: #fff; color: #17324d; font-size: 28rpx; line-height: 1.55; word-break: break-all; }
@@ -11,3 +11,15 @@
 .composer button { width: 128rpx; margin: 0; border-radius: 999rpx; background: #83c7f4; font-size: 26rpx; }
 .composer button::after { border: 0; }
 .error, .loading { display: block; color: #c2413b; font-size: 23rpx; text-align: center; }
+
+.product-bar{box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;gap:16rpx;height:140rpx;padding:20rpx 24rpx;background:#fff;border-bottom:1rpx solid #dbeaf4}
+.product-info{display:flex;align-items:center;gap:16rpx;flex:1;min-width:0}
+.product-cover{width:96rpx;height:96rpx;flex-shrink:0;border-radius:14rpx;background:#e4f4ff}
+.product-text{display:flex;flex-direction:column;gap:12rpx;min-width:0}
+.product-title{font-size:28rpx;color:#17324d;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.product-price{font-size:24rpx;color:#e66b45}
+.image-placeholder{display:flex;align-items:center;justify-content:center;text-align:center;font-size:20rpx;color:#72808e}
+.composer .send-button{display:flex;align-items:center;justify-content:center;width:80rpx;height:80rpx;padding:0;border-radius:16rpx;background:transparent}
+.send-icon{width:56rpx;height:56rpx}
+.send-button[disabled] .send-icon{opacity:.35}
+.image-help{padding:12rpx 24rpx;color:#2479b8;font-size:24rpx;background:#edf8ff}

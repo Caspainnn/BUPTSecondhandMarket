@@ -1,0 +1,10 @@
+const fs=require('node:fs'),assert=require('node:assert/strict'),test=require('node:test')
+test('conversation has product context with buyer transaction action and reusable send icon',()=>{
+ const xml=fs.readFileSync('miniprogram/pages/conversation/index.wxml','utf8')
+ const bar=xml.slice(xml.indexOf('<view class="product-bar">'), xml.indexOf('<scroll-view'))
+ assert.match(bar,/postSnapshot.title/)
+ assert.match(bar,/postSnapshot.coverFileId/)
+ assert.match(bar,/bindtap="createTransaction"/)
+ assert.match(xml,/src="\/assets\/icons\/send.svg"/)
+ assert.doesNotMatch(xml,/>发送<\/button>/)
+})
