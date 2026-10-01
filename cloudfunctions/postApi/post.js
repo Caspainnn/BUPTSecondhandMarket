@@ -39,7 +39,7 @@ function validateQuantity(value) {
 
 function validatePostInput(input = {}) {
   const title = boundedText(input.title, 2, 30, 'INVALID_TITLE', '标题需为 2 至 30 个字符')
-  const description = boundedText(input.description, 10, 1000, 'INVALID_DESCRIPTION', '描述需为 10 至 1000 个字符')
+  const description = boundedText(input.description, 0, 1000, 'INVALID_DESCRIPTION', '描述不能超过 1000 个字符')
   const images = Array.isArray(input.imageFileIds) ? input.imageFileIds : []
   if (images.length < 1 || images.length > 6 || images.some((id) => typeof id !== 'string' || !/^cloud:\/\/.+\.(?:jpe?g|png|webp)$/i.test(id))) {
     throw new PostError('INVALID_IMAGES', '请上传 1 至 6 张 JPEG、PNG 或 WebP 图片')

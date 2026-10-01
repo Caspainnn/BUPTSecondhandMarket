@@ -52,7 +52,7 @@ test('normalizes a valid sale post', () => {
 test('enforces text, image, category, quantity, and campus boundaries', () => {
   const invalid = [
     { title: '一' },
-    { description: '太短' },
+    { description: '字'.repeat(1001) },
     { imageFileIds: [] },
     { imageFileIds: Array(7).fill('cloud://env/posts/a.jpg') },
     { imageFileIds: ['https://example.com/a.jpg'] },
@@ -93,4 +93,12 @@ test('prevents total inventory from dropping below reserved plus sold', () => {
     () => validateInventoryEdit({ totalQuantity: 4, reservedQuantity: 2, soldQuantity: 3 }),
     (error) => error.code === 'INVALID_QUANTITY',
   )
+})
+
+test('description is optional and accepts short text while retaining its maximum', () => {
+  for (const description of ['', '   ', undefined, '短', '字'.repeat(1000)]) {
+    assert.equal(validatePostInput({ ...validInput, description }).description, (description || '').trim())
+  }
+  assert.throws(() => validatePostInput({ ...validInput, description: '字'.repeat(1001) }),
+    (error) => error.code === 'INVALID_DESCRIPTION')
 })

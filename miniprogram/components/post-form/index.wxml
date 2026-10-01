@@ -7,7 +7,7 @@
     <view wx:if="{{form.images.length < 6}}" class="add-image" aria-role="button" aria-label="添加图片" bindtap="chooseImages"><view class="add-content"><text class="add-icon">+</text><text>添加图片</text></view></view>
   </view>
   <label class="field"><text>标题</text><input data-field="title" value="{{form.title}}" maxlength="30" placeholder="2～30 个字" bindinput="patch" /></label>
-  <label class="field"><text>详细描述</text><textarea data-field="description" value="{{form.description}}" maxlength="1000" placeholder="说明型号、状态和使用情况" bindinput="patch" /></label>
+  <label class="field"><text>详细描述（选填）</text><textarea data-field="description" value="{{form.description}}" maxlength="1000" placeholder="可补充型号、状态和使用情况，也可留空" bindinput="patch" /></label>
   <label class="field"><text>分类</text><picker range="{{categories}}" range-key="name" bindchange="pickCategory"><view class="picker dropdown-picker"><text>{{categoryName || '请选择分类'}}</text><image class="dropdown-icon" src="/assets/icons/dropdown.svg" mode="aspectFit" /></view></picker></label>
   <label class="field"><text>参考单价（元）</text><input data-field="price" value="{{form.price}}" type="digit" placeholder="0 表示免费赠送" bindinput="patch" /></label>
   <label class="field"><text>库存数量</text><input data-field="totalQuantity" value="{{form.totalQuantity}}" type="number" bindinput="patch" /></label>
