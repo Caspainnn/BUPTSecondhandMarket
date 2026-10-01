@@ -24,6 +24,10 @@ Page({
     wx.navigateTo({ url: '/pages/profile-edit/index' })
   },
 
+  openMyPosts() { wx.navigateTo({ url: '/pages/my-posts/index' }) },
+
+  openMyTransactions() { wx.navigateTo({ url: '/pages/my-transactions/index' }) },
+
   retry() {
     this.onShow()
   },

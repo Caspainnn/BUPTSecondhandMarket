@@ -1,4 +1,5 @@
 .chat-page { min-height: 100vh; padding-bottom: 150rpx; background: #f4f8fb; }
+.transaction-entry { width: 320rpx; margin: 18rpx auto 0; border-radius: 999rpx; background: #e4f4ff; color: #2479b8; font-size: 24rpx; }.transaction-entry::after { border: 0; }
 .messages { box-sizing: border-box; height: calc(100vh - 150rpx); padding: 24rpx; }
 .message-row { display: flex; margin: 16rpx 0; justify-content: flex-start; }
 .message-row.mine { justify-content: flex-end; }

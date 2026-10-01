@@ -18,6 +18,6 @@ Page({
       syncMessageBadge(result.totalUnread)
     } catch (error) { this.setData({ state: 'error', error: error.message || '消息加载失败' }) }
   },
-  openConversation(event) { wx.navigateTo({ url: `/pages/conversation/index?conversationId=${event.currentTarget.dataset.id}` }) },
+  openConversation(event) { const conversation = this.data.conversations.find((item) => item._id === event.currentTarget.dataset.id); getApp().globalData.currentConversation = conversation; wx.navigateTo({ url: `/pages/conversation/index?conversationId=${event.currentTarget.dataset.id}` }) },
   retry() { this.onShow() },
 })

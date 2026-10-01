@@ -1,0 +1,6 @@
+<view class="page">
+  <view wx:if="{{state === 'loading'}}" class="card state">正在加载交易…</view><view wx:elif="{{state === 'error'}}" class="card state error">{{error}}</view>
+  <block wx:else><view class="card detail"><view class="headline"><text>{{transaction.postSnapshot.title}}</text><text class="status status-{{transaction.status}}">{{statusLabel}}</text></view><text>数量：{{transaction.quantity}}</text><text>参考单价：¥{{transaction.postSnapshot.unitPriceCents / 100}}</text><text>约定时间：{{scheduledText}}</text><text>交接地点：{{transaction.locationText}}</text><text>买家结果：{{transaction.buyerResult || '未提交'}}</text><text>卖家结果：{{transaction.sellerResult || '未提交'}}</text></view>
+  <view wx:if="{{actions.length}}" class="actions"><button wx:for="{{actions}}" wx:key="*this" data-action="{{item}}" loading="{{busy}}" bindtap="act">{{item === 'withdraw' ? '撤回' : item === 'confirm' ? '确认并锁定库存' : item === 'reject' ? '拒绝' : item === 'cancel' ? '取消交易' : item === 'success' ? '交接成功' : '交接失败'}}</button></view>
+  <view class="card timeline"><text class="section-title">状态记录</text><view wx:for="{{events}}" wx:key="_id" class="event"><text>{{item.type}}</text></view></view></block>
+</view>

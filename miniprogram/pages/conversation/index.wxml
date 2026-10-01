@@ -1,4 +1,5 @@
 <view class="chat-page">
+  <button wx:if="{{canCreateTransaction}}" class="transaction-entry" bindtap="createTransaction">发起交易清单</button>
   <scroll-view class="messages" scroll-y scroll-with-animation scroll-into-view="bottom-anchor" upper-threshold="80" bindscrolltoupper="loadOlder">
     <view wx:if="{{loading}}" class="loading">正在加载…</view>
     <view wx:for="{{messages}}" wx:key="_id" class="message-row {{item.mine ? 'mine' : ''}}">

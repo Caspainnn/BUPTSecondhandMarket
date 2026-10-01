@@ -31,6 +31,7 @@ Page({
       const user = await requireCompletedProfile()
       if (!user) return
       const result = await callCloud('conversationApi', { action: 'open', postId: this.postId, requestId: `${Date.now()}` })
+      getApp().globalData.currentConversation = result.conversation
       wx.navigateTo({ url: `/pages/conversation/index?conversationId=${result.conversation._id}` })
     } catch (error) { wx.showToast({ title: error.message || '暂时无法联系卖家', icon: 'none' }) }
     finally { this.setData({ busy: false }) }

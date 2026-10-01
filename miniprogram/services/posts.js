@@ -5,6 +5,7 @@ const createPost = (input, requestId) => postAction('create', { input, requestId
 const updatePost = (postId, input, requestId) => postAction('update', { postId, input, requestId }).then((data) => data.post)
 const getPost = (postId) => postAction('detail', { postId }).then((data) => data.post)
 const listPosts = (campusId, cursor, limit = 20) => postAction('list', { campusId, cursor, limit })
+const listMyPosts = (status, cursor, limit = 20) => postAction('listMine', { status, cursor, limit })
 const setPostStatus = (postId, status, requestId) => postAction('setStatus', { postId, status, requestId }).then((data) => data.post)
 
 function compressImage(src) {
@@ -32,4 +33,4 @@ async function uploadPostImages(images, ownerId) {
   return fileIds
 }
 
-module.exports = { createPost, getPost, listPosts, setPostStatus, updatePost, uploadPostImages }
+module.exports = { createPost, getPost, listMyPosts, listPosts, setPostStatus, updatePost, uploadPostImages }

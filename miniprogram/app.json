@@ -6,6 +6,10 @@
     "pages/publish/index",
     "pages/messages/index",
     "pages/conversation/index",
+    "pages/transaction-create/index",
+    "pages/transaction-detail/index",
+    "pages/my-posts/index",
+    "pages/my-transactions/index",
     "pages/home/index",
     "pages/profile/index",
     "pages/profile-edit/index"

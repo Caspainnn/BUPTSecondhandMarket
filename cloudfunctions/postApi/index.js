@@ -15,18 +15,19 @@ async function currentUser() {
 function repository() {
   const collection = db.collection('posts')
   const list = async (query, ownerId) => {
+    const timeField = ownerId ? 'updatedAt' : 'publishedAt'
     const conditions = ownerId
       ? [{ ownerId }, ...(query.status ? [{ status: query.status }] : [])]
       : [{ status: 'active' }, { availableQuantity: _.gt(0) }, ...(query.campusId ? [{ campusId: query.campusId }] : [])]
     if (query.cursor) {
       conditions.push(_.or([
-        { publishedAt: _.lt(query.cursor.publishedAt) },
-        { publishedAt: _.eq(query.cursor.publishedAt), _id: _.lt(query.cursor.id) },
+        { [timeField]: _.lt(query.cursor[timeField]) },
+        { [timeField]: _.eq(query.cursor[timeField]), _id: _.lt(query.cursor.id) },
       ]))
     }
-    const result = await collection.where(_.and(conditions)).orderBy(ownerId ? 'updatedAt' : 'publishedAt', 'desc').orderBy('_id', 'desc').limit(query.limit).get()
+    const result = await collection.where(_.and(conditions)).orderBy(timeField, 'desc').orderBy('_id', 'desc').limit(query.limit).get()
     const last = result.data[result.data.length - 1]
-    return { rows: result.data, nextCursor: result.data.length === query.limit && last ? { publishedAt: last.publishedAt, id: last._id } : null }
+    return { rows: result.data, nextCursor: result.data.length === query.limit && last ? { [timeField]: last[timeField], id: last._id } : null }
   }
   return {
     async findByCreateRequest(ownerId, createRequestId) { const result = await collection.where({ ownerId, createRequestId }).limit(1).get(); return result.data[0] || null },

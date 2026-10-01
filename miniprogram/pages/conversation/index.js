@@ -3,12 +3,14 @@ const { listMessages, markRead, sendMessage, syncMessageBadge } = require('../..
 const { requireCompletedProfile } = require('../../services/user')
 
 Page({
-  data: { messages: [], draft: '', loading: true, sending: false, error: '' },
+  data: { messages: [], draft: '', loading: true, sending: false, error: '', canCreateTransaction: false },
   onLoad(options) { this.conversationId = options.conversationId; this.state = createChatState(this.conversationId); this.sync() },
   async onShow() {
     const user = await requireCompletedProfile()
     if (!user) return
     this.userId = user._id
+    const conversation = getApp().globalData.currentConversation
+    this.setData({ canCreateTransaction: Boolean(conversation && conversation._id === this.conversationId && conversation.buyerId === user._id) })
     this.stopPolling()
     this.stop = startPolling(() => this.fetchLatest(), 3000)
   },
@@ -45,4 +47,5 @@ Page({
       this.apply({ type: 'SEND_SUCCESS', conversationId: this.conversationId, message: result.message })
     } catch (error) { this.apply({ type: 'FAILURE', operation: 'send', message: error.message }) }
   },
+  createTransaction() { wx.navigateTo({ url: `/pages/transaction-create/index?conversationId=${this.conversationId}` }) },
 })
