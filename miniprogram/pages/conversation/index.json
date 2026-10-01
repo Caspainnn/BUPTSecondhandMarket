@@ -1,5 +1,6 @@
 {
   "navigationBarTitleText": "商品会话",
+  "disableScroll": true,
   "usingComponents": {
     "cloud-image": "/components/cloud-image/index"
   }

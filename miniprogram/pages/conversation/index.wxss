@@ -1,18 +1,19 @@
-.chat-page { min-height: 100vh; padding-bottom: 150rpx; background: #f4f8fb; }
+page { height: 100%; overflow: hidden; background: #fff; }
+.chat-page { box-sizing: border-box; display: flex; flex-direction: column; height: 100vh; overflow: hidden; background: #fff; }
 .transaction-entry { flex-shrink: 0; align-self: flex-end; box-sizing: border-box; width: 200rpx; min-width: 0; max-width: 200rpx; text-align: center; height: 45rpx; line-height: 45rpx; margin: 0; padding: 0 4rpx; white-space: nowrap; border-radius: 999rpx; background: #e4f4ff; color: #2479b8; font-size: 25rpx; }.transaction-entry::after { border: 0; }
-.messages { box-sizing: border-box; height: calc(100vh - 402rpx - env(safe-area-inset-bottom)); padding: 24rpx; }
+.messages { box-sizing: border-box; flex: 1; height: 0; min-height: 0; padding: 24rpx; background: #f4f8fb; }
 .message-row { display: flex; margin: 16rpx 0; justify-content: flex-start; }
 .message-row.mine { justify-content: flex-end; }
 .bubble { max-width: 72%; padding: 18rpx 24rpx; border-radius: 24rpx 24rpx 24rpx 6rpx; background: #fff; color: #17324d; font-size: 28rpx; line-height: 1.55; word-break: break-all; }
 .mine .bubble { border-radius: 24rpx 24rpx 6rpx 24rpx; background: #83c7f4; }
 .system-message { width: 100%; color: #72808e; font-size: 23rpx; text-align: center; }
-.composer { position: fixed; right: 0; bottom: 0; left: 0; display: flex; align-items: center; gap: 16rpx; padding: 18rpx 24rpx calc(18rpx + env(safe-area-inset-bottom)); background: #fff; box-shadow: 0 -4rpx 18rpx rgba(0,0,0,.05); }
+.composer { flex-shrink: 0; display: flex; align-items: center; gap: 16rpx; padding: 18rpx 24rpx calc(18rpx + env(safe-area-inset-bottom)); background: #fff; }
 .composer textarea { box-sizing: border-box; height: 80rpx; min-height: 80rpx; max-height: 80rpx; line-height: 36rpx; flex: 1; padding: 22rpx 18rpx; border-radius: 18rpx; background: #f0f5f8; font-size: 27rpx; }
 .composer button { width: 128rpx; margin: 0; border-radius: 999rpx; background: #83c7f4; font-size: 26rpx; }
 .composer button::after { border: 0; }
 .error, .loading { display: block; color: #c2413b; font-size: 23rpx; text-align: center; }
 
-.product-bar{box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;gap:16rpx;height:140rpx;padding:20rpx 24rpx;background:#fff;border-bottom:1rpx solid #dbeaf4}
+.product-bar{flex-shrink:0;box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;gap:16rpx;height:140rpx;padding:20rpx 24rpx;background:#fff;border-bottom:1rpx solid #dbeaf4}
 .product-info{display:flex;align-items:center;gap:16rpx;flex:1;min-width:0}
 .product-cover{width:96rpx;height:96rpx;flex-shrink:0;border-radius:14rpx;background:#e4f4ff}
 .product-text{display:flex;flex-direction:column;gap:12rpx;min-width:0}
@@ -23,7 +24,7 @@
 .send-icon{width:56rpx;height:56rpx}
 .send-button[disabled] .send-icon{opacity:.35}
 
-.seller-bar{box-sizing:border-box;display:flex;align-items:center;gap:16rpx;height:112rpx;padding:20rpx 24rpx;background:#fff;border-bottom:1rpx solid #edf3f7}
+.seller-bar{flex-shrink:0;box-sizing:border-box;display:flex;align-items:center;gap:16rpx;height:112rpx;padding:20rpx 24rpx;background:#fff;border-bottom:1rpx solid #edf3f7}
 .seller-avatar{width:72rpx;height:72rpx;flex-shrink:0;border-radius:50%;background:#e4f4ff}
 .seller-details{display:flex;flex-direction:column;gap:6rpx;min-width:0}
 .seller-name{font-size:28rpx;color:#17324d;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
