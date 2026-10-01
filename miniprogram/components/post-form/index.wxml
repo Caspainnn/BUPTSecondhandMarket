@@ -2,13 +2,9 @@
   <view class="images">
     <view wx:for="{{form.images}}" wx:key="tempPath" class="image-item">
       <image class="preview" src="{{item.fileId || item.tempPath}}" mode="aspectFill" />
-      <button class="mini danger" data-index="{{index}}" bindtap="remove">删除</button>
-      <view class="move-row">
-        <button wx:if="{{index > 0}}" class="mini" data-from="{{index}}" data-to="{{index - 1}}" bindtap="move">左移</button>
-        <button wx:if="{{index < form.images.length - 1}}" class="mini" data-from="{{index}}" data-to="{{index + 1}}" bindtap="move">右移</button>
-      </view>
+      <button class="remove-image" aria-label="删除第{{index + 1}}张图片" data-index="{{index}}" bindtap="remove">×</button>
     </view>
-    <button wx:if="{{form.images.length < 6}}" class="add-image" bindtap="chooseImages">+ 添加图片</button>
+    <button wx:if="{{form.images.length < 6}}" class="add-image" bindtap="chooseImages"><text class="add-icon">+</text><text>添加图片</text></button>
   </view>
   <label class="field"><text>标题</text><input data-field="title" value="{{form.title}}" maxlength="30" placeholder="2～30 个字" bindinput="patch" /></label>
   <label class="field"><text>详细描述</text><textarea data-field="description" value="{{form.description}}" maxlength="1000" placeholder="说明型号、状态和使用情况" bindinput="patch" /></label>

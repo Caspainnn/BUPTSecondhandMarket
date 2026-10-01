@@ -63,3 +63,29 @@ test('single-line fields and pickers share a centered height while textarea keep
   assert.match(textarea, /padding:\s*22rpx/)
   assert.match(textarea, /line-height:\s*1\.5/)
 })
+
+test('image cards use corner removal, no move controls, and an equally sized trailing add tile', () => {
+  const wxml = read('miniprogram/components/post-form/index.wxml')
+  const css = read('miniprogram/components/post-form/index.wxss')
+  assert.match(wxml, /class="remove-image"[^>]*data-index="{{index}}"[^>]*bindtap="remove"[^>]*>×<\/button>/)
+  assert.doesNotMatch(wxml, /左移|右移|move-row|bindtap="move"/)
+  assert.ok(wxml.indexOf('class="add-image"') > wxml.indexOf('class="remove-image"'))
+  assert.match(wxml, /form.images.length < 6/)
+  const tile = css.match(/\.image-item,\.add-image\{([^}]*)\}/)?.[1] || ''
+  for (const rule of [/width:200rpx/, /height:200rpx/, /flex:0 0 200rpx/, /box-sizing:border-box/, /margin:0/]) assert.match(tile, rule)
+  assert.match(css, /\.image-item\{position:relative/)
+  const remove = css.match(/\.remove-image\{([^}]*)\}/)?.[1] || ''
+  for (const rule of [/position:absolute/, /top:8rpx/, /right:8rpx/]) assert.match(remove, rule)
+})
+
+test('corner removal forwards the tapped image index', () => {
+  let component
+  vm.runInNewContext(read('miniprogram/components/post-form/index.js'), {
+    require: (name) => require(require('node:path').resolve('miniprogram/components/post-form', name)),
+    Component: (definition) => { component = definition },
+  })
+  let event
+  component.methods.remove.call({ triggerEvent: (name, detail) => { event = { name, index: detail.index } } },
+    { currentTarget: { dataset: { index: '1' } } })
+  assert.deepEqual(event, { name: 'removeimage', index: 1 })
+})
