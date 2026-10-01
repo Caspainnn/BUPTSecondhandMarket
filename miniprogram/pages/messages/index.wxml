@@ -4,7 +4,7 @@
   <view wx:elif="{{!conversations.length}}" class="card empty"><text>还没有商品会话</text><text class="muted">从商品详情联系卖家后，会话会出现在这里</text></view>
   <view wx:else class="conversation-list">
     <view wx:for="{{conversations}}" wx:key="_id" class="conversation" data-id="{{item._id}}" bindtap="openConversation">
-      <image class="avatar" src="{{item.peer.avatarFileId}}" mode="aspectFill" />
+      <cloud-image class="avatar" src="{{item.peer.avatarFileId}}" mode="aspectFill" />
       <view class="content"><view class="top"><text class="name">{{item.peer.nickname}}</text><text class="post-title">{{item.postSnapshot.title}}</text></view><text class="preview">{{item.lastMessageText || '开始聊聊这件商品吧'}}</text></view>
       <text wx:if="{{item.unread}}" class="unread">{{item.unread > 99 ? '99+' : item.unread}}</text>
     </view>

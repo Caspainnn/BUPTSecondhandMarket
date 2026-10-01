@@ -8,7 +8,7 @@
   <view wx:elif="{{!posts.length}}" class="state-card"><text>当前校区暂无可预约商品</text><text class="muted">可以切换校区看看</text></view>
   <view wx:else class="post-grid">
     <view wx:for="{{posts}}" wx:key="_id" class="post-card" data-id="{{item._id}}" bindtap="openPost">
-      <image class="cover" src="{{item.imageFileIds[0]}}" mode="aspectFill" lazy-load />
+      <cloud-image class="cover" src="{{item.imageFileIds[0]}}" mode="aspectFill" lazy-load />
       <view class="post-body"><text class="post-title">{{item.title}}</text><text class="price">{{item.priceLabel}}</text><text class="meta">剩余 {{item.availableQuantity}} · {{item.campusId}}</text></view>
     </view>
   </view>

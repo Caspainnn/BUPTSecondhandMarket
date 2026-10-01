@@ -1,0 +1,1 @@
+<image wx:if="{{resolvedSrc}}" src="{{resolvedSrc}}" mode="{{mode}}" lazy-load="{{lazyLoad}}" binderror="onError" bindload="onLoad" />

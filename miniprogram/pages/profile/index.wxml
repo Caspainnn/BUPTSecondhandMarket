@@ -1,10 +1,10 @@
-﻿<view class="page">
+<view class="page">
   <view wx:if="{{state === 'loading'}}" class="card profile-state"><text class="state-title">个人资料</text><text class="muted">正在加载微信身份…</text></view>
   <view wx:elif="{{state === 'error'}}" class="card profile-state"><text class="error-text">{{message}}</text><button class="secondary-button" bindtap="retry">重试</button></view>
   <block wx:else>
     <view class="card profile-state">
       <view class="avatar-picker">
-        <image wx:if="{{form.avatarFileId}}" class="avatar" src="{{form.avatarFileId}}" mode="aspectFill" />
+        <cloud-image wx:if="{{form.avatarFileId}}" class="avatar" src="{{form.avatarFileId}}" mode="aspectFill" />
         <view wx:else class="avatar avatar-empty">选择头像</view>
         <button class="avatar-button" aria-label="修改头像" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar" disabled="{{busy}}"></button>
       </view>

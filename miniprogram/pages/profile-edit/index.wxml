@@ -9,7 +9,7 @@
     <text class="muted">头像、昵称和常驻校区均为必填。</text>
 
     <view class="avatar-picker">
-      <image wx:if="{{form.avatarPreview}}" class="avatar-visual" src="{{form.avatarPreview}}" mode="aspectFill" />
+      <cloud-image wx:if="{{form.avatarPreview}}" class="avatar-visual" src="{{form.avatarPreview}}" mode="aspectFill" />
       <view wx:else class="avatar-visual avatar-empty">选择头像</view>
       <button class="avatar-button" aria-label="选择头像" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar" disabled="{{status === 'uploading' || status === 'saving'}}"></button>
     </view>

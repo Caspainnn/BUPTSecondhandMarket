@@ -1,5 +1,5 @@
 <view class="page"><view class="card form-card">
-  <view wx:if="{{conversation}}" class="snapshot"><image src="{{conversation.postSnapshot.coverFileId}}" mode="aspectFill" /><view><text>{{conversation.postSnapshot.title}}</text><text class="price">参考单价 ¥{{conversation.postSnapshot.unitPriceCents / 100}}</text></view></view>
+  <view wx:if="{{conversation}}" class="snapshot"><cloud-image src="{{conversation.postSnapshot.coverFileId}}" mode="aspectFill" /><view><text>{{conversation.postSnapshot.title}}</text><text class="price">参考单价 ¥{{conversation.postSnapshot.unitPriceCents / 100}}</text></view></view>
   <label><text>数量</text><input data-field="quantity" type="number" value="{{form.quantity}}" bindinput="patch" /></label>
   <label><text>校区</text><picker range="{{campuses}}" range-key="name" bindchange="pickCampus"><view class="picker dropdown-picker"><text>{{campusName}}</text><image class="dropdown-icon" src="/assets/icons/dropdown.svg" mode="aspectFit" /></view></picker></label>
   <label><text>具体交接地点</text><input data-field="locationText" maxlength="50" value="{{form.locationText}}" placeholder="例如：图书馆南门" bindinput="patch" /></label>

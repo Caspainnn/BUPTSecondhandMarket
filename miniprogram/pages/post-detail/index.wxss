@@ -1,6 +1,6 @@
 .detail-page { padding: 0 0 160rpx; }
 .gallery { width: 100%; height: 750rpx; background: #dfeef7; }
-.gallery image { width: 100%; height: 100%; }
+.gallery cloud-image { width: 100%; height: 100%; }
 .info-card, .seller { margin: 24rpx; }
 .title-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 24rpx; }
 .title { flex: 1; font-size: 38rpx; font-weight: 700; line-height: 1.4; }
@@ -12,7 +12,7 @@
 .defect { display: block; margin-top: 20rpx; color: #c2413b; }
 .stock { display: block; margin-top: 24rpx; color: #72808e; font-size: 24rpx; }
 .seller { display: flex; align-items: center; gap: 20rpx; }
-.seller image { width: 72rpx; height: 72rpx; border-radius: 50%; background: #dfeef7; }
+.seller cloud-image { width: 72rpx; height: 72rpx; border-radius: 50%; background: #dfeef7; }
 .contact { position: fixed; right: 24rpx; bottom: 36rpx; left: 24rpx; z-index: 2; }
 .contact { flex: 1; border-radius: 999rpx; background: #83c7f4; color: #17324d; font-size: 28rpx; }
 .contact::after { border: 0; }

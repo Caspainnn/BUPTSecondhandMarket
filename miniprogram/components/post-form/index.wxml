@@ -1,7 +1,7 @@
 <view class="post-form">
   <view class="images">
     <view wx:for="{{form.images}}" wx:key="tempPath" class="image-item">
-      <image class="preview" src="{{item.fileId || item.tempPath}}" mode="aspectFill" />
+      <cloud-image class="preview" src="{{item.fileId || item.tempPath}}" mode="aspectFill" />
       <view class="remove-image" aria-role="button" aria-label="删除第{{index + 1}}张图片" data-index="{{index}}" bindtap="remove"><image class="remove-icon" src="/assets/icons/close.svg" mode="aspectFit" /></view>
     </view>
     <view wx:if="{{form.images.length < 6}}" class="add-image" aria-role="button" aria-label="添加图片" bindtap="chooseImages"><view class="add-content"><text class="add-icon">+</text><text>添加图片</text></view></view>
