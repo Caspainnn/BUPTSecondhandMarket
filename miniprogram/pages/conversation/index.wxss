@@ -28,3 +28,9 @@
 .seller-details{display:flex;flex-direction:column;gap:6rpx;min-width:0}
 .seller-name{font-size:28rpx;color:#17324d;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .seller-label{font-size:22rpx;color:#72808e}
+.transaction-card{box-sizing:border-box;display:flex;flex-direction:column;gap:14rpx;width:100%;padding:24rpx;border:1rpx solid #dbeaf4;border-radius:20rpx;background:#fff;color:#3f5568;font-size:25rpx;line-height:1.5}
+.transaction-card-heading{display:flex;align-items:center;justify-content:space-between;gap:16rpx;color:#17324d;font-size:28rpx;font-weight:600}
+.transaction-card-status{font-size:23rpx;color:#2479b8}
+.transaction-card-title{font-weight:600;color:#17324d}
+.transaction-card-event{color:#72808e;font-size:23rpx}
+.transaction-card-link{padding-top:12rpx;border-top:1rpx solid #edf3f7;color:#2479b8;font-size:24rpx}

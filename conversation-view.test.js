@@ -25,3 +25,11 @@ test('conversation header shows seller first, product second, then message histo
  const seller=xml.indexOf('class="seller-bar"'),product=xml.indexOf('class="product-bar"'),messages=xml.indexOf('<scroll-view')
  assert.ok(seller>=0 && seller<product && product<messages)
 })
+
+test('appointments render structured cards with a transaction detail entry',()=>{
+ const xml=fs.readFileSync('miniprogram/pages/conversation/index.wxml','utf8')
+ assert.match(xml,/item.transactionCard/)
+ assert.match(xml,/class="transaction-card"/)
+ for(const field of ['quantity','locationText','scheduledText','statusLabel'])assert.ok(xml.includes('item.transactionCard.'+field))
+ assert.match(xml,/bindtap="openTransaction"/)
+})

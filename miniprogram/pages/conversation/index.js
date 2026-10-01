@@ -1,3 +1,5 @@
+const { getTransactionStatusLabel } = require('../../services/transaction-state')
+const { CAMPUSES } = require('../../config/market')
 const { createChatState, reduceChatState, startPolling } = require('../../services/chat-state')
 const { listMessages, markRead, sendMessage, syncMessageBadge } = require('../../services/conversations')
 const { requireCompletedProfile } = require('../../services/user')
@@ -17,7 +19,7 @@ Page({
   onHide() { this.stopPolling() },
   onUnload() { this.stopPolling() },
   stopPolling() { if (this.stop) { this.stop(); this.stop = null } },
-  sync() { this.setData({ messages: this.state.messages.map((item) => ({ ...item, mine: item.senderId === this.userId })), draft: this.state.draft, loading: this.state.loading, sending: this.state.sending, error: this.state.error }) },
+  sync() { this.setData({ messages: this.state.messages.map((item) => ({ ...item, mine: item.senderId === this.userId, transactionCard: item.transactionCard ? { ...item.transactionCard, statusLabel: getTransactionStatusLabel(item.transactionCard.status), campusName: (CAMPUSES.find(campus => campus.id === item.transactionCard.campusId) || {}).name || '', scheduledText: this.formatAppointment(item.transactionCard.scheduledAt) } : null })), draft: this.state.draft, loading: this.state.loading, sending: this.state.sending, error: this.state.error }) },
   apply(event) { this.state = reduceChatState(this.state, event); this.sync() },
   onDraft(event) { this.apply({ type: 'DRAFT_CHANGE', value: event.detail.value }) },
   async fetchLatest() {
@@ -49,5 +51,11 @@ Page({
   },
   onImageError(event) { this.setData({ imageError: true }); console.warn('商品图片加载失败', event.detail.errMsg || '未知错误') },
   openPost() { if (this.data.conversation) wx.navigateTo({ url: '/pages/post-detail/index?postId=' + this.data.conversation.postId }) },
+  formatAppointment(timestamp) {
+    const date = new Date(timestamp)
+    const pad = value => String(value).padStart(2, '0')
+    return date.getFullYear() + '-' + pad(date.getMonth() + 1) + '-' + pad(date.getDate()) + ' ' + pad(date.getHours()) + ':' + pad(date.getMinutes())
+  },
+  openTransaction(event) { wx.navigateTo({ url: '/pages/transaction-detail/index?transactionId=' + event.currentTarget.dataset.id }) },
   createTransaction() { if (!this.data.canCreateTransaction) return; wx.navigateTo({ url: `/pages/transaction-create/index?conversationId=${this.conversationId}` }) },
 })

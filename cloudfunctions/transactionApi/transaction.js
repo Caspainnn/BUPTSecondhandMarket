@@ -32,7 +32,7 @@ function validateInput({ quantity, scheduledAt, campusId, locationText }, post, 
 
 async function appendSystem(tx, transaction, actor, text, requestKeyValue, now) {
   const recipientId = actor._id === transaction.buyerId ? transaction.sellerId : transaction.buyerId
-  await tx.createSystemMessage({ conversationId: transaction.conversationId, transactionId: transaction._id, senderId: 'system', recipientId, type: 'system', text, requestKey: requestKeyValue, createdAt: now })
+  await tx.createSystemMessage({ conversationId: transaction.conversationId, transactionId: transaction._id, senderId: 'system', recipientId, type: 'system', text, transactionCard: { postSnapshot: transaction.postSnapshot, quantity: transaction.quantity, scheduledAt: transaction.scheduledAt, campusId: transaction.campusId, locationText: transaction.locationText, status: transaction.status }, requestKey: requestKeyValue, createdAt: now })
   const conversation = await tx.getConversation(transaction.conversationId)
   const patch = { lastMessageText: text, lastMessageType: 'system', lastMessageAt: now, updatedAt: now, buyerUnread: Number(conversation.buyerUnread || 0), sellerUnread: Number(conversation.sellerUnread || 0) }
   if (recipientId === transaction.buyerId) patch.buyerUnread += 1
@@ -60,6 +60,7 @@ async function createTransaction({ actor, conversationId, quantity, scheduledAt,
       ...input, status: 'pending_seller', activeKey: 'active', buyerResult: '', sellerResult: '', createRequestKey: key, createdAt: now, updatedAt: now,
     })
     await tx.createEvent({ transactionId: transaction._id, actorId: actor._id, type: 'created', requestId: requestId(request), requestKey: key, createdAt: now })
+    await appendSystem(tx, transaction, actor, '买家发起预约购买，等待卖家确认', key, now)
     return { transaction, created: true }
   })
 }

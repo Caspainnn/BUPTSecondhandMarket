@@ -86,7 +86,7 @@ test('create and seller response retries are deterministic without duplicate rec
   assert.equal(repeated.transaction._id, first.transaction._id)
   await respondTransaction({ actor: seller, transactionId: first.transaction._id, decision: 'confirm', requestId: 'confirm-1', transactions, now: NOW + 2 })
   await respondTransaction({ actor: seller, transactionId: first.transaction._id, decision: 'confirm', requestId: 'confirm-1', transactions, now: NOW + 3 })
-  assert.deepEqual([transactions.state.events.length, transactions.state.movements.length, transactions.state.messages.length], [2, 1, 1])
+  assert.deepEqual([transactions.state.events.length, transactions.state.movements.length, transactions.state.messages.length], [2, 1, 2])
 })
 
 test('concurrent seller confirmations atomically reserve inventory and cannot oversell', async () => {
@@ -202,4 +202,20 @@ test('submitted results are immutable and result retries append nothing', async 
   await submitTransactionResult({ actor: buyer, transactionId: 't1', result: 'success', requestId: 'same', transactions, now: NOW + 1 })
   assert.equal(transactions.state.events.length, 1)
   await assert.rejects(submitTransactionResult({ actor: buyer, transactionId: 't1', result: 'failure', requestId: 'different', transactions, now: NOW + 2 }), (error) => error.code === 'RESULT_IMMUTABLE')
+})
+
+test('creating an appointment atomically posts one structured card and increments seller unread once', async () => {
+  const transactions = repository()
+  const input = { actor: buyer, ...validInput(), transactions, now: NOW }
+  const result = await createTransaction(input)
+  await createTransaction(input)
+  assert.equal(transactions.state.messages.length, 1)
+  const message = transactions.state.messages[0]
+  assert.equal(message.transactionId, result.transaction._id)
+  assert.equal(message.transactionCard.quantity, 2)
+  assert.equal(message.transactionCard.locationText, '教学楼门口')
+  assert.equal(message.transactionCard.scheduledAt, validInput().scheduledAt)
+  assert.equal(message.transactionCard.status, 'pending_seller')
+  assert.equal(message.transactionCard.postSnapshot.title, '教材')
+  assert.equal(transactions.state.conversations[0].sellerUnread, 1)
 })

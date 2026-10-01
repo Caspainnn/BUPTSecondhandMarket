@@ -15,7 +15,16 @@
   <scroll-view class="messages" scroll-y scroll-with-animation scroll-into-view="bottom-anchor" upper-threshold="80" bindscrolltoupper="loadOlder">
     <view wx:if="{{loading}}" class="loading">正在加载…</view>
     <view wx:for="{{messages}}" wx:key="_id" class="message-row {{item.mine ? 'mine' : ''}}">
-      <view wx:if="{{item.type === 'system'}}" class="system-message">{{item.text}}</view>
+      <view wx:if="{{item.transactionCard}}" class="transaction-card" data-id="{{item.transactionId}}" bindtap="openTransaction">
+        <view class="transaction-card-heading"><text>预约清单</text><text class="transaction-card-status">{{item.transactionCard.statusLabel}}</text></view>
+        <text class="transaction-card-title">{{item.transactionCard.postSnapshot.title}}</text>
+        <text>数量：{{item.transactionCard.quantity}} 件</text>
+        <text>地点：{{item.transactionCard.campusName}} · {{item.transactionCard.locationText}}</text>
+        <text>时间：{{item.transactionCard.scheduledText}}</text>
+        <text class="transaction-card-event">{{item.text}}</text>
+        <text class="transaction-card-link">查看预约详情 ›</text>
+      </view>
+      <view wx:elif="{{item.type === 'system'}}" class="system-message">{{item.text}}</view>
       <view wx:else class="bubble">{{item.text}}</view>
     </view>
     <view id="bottom-anchor"></view>

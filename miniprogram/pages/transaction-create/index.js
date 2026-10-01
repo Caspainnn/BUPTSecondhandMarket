@@ -35,7 +35,7 @@ Page({
       const scheduledAt = new Date(this.state.form.scheduledAt.replace(/-/g, '/')).getTime()
       const transaction = await createTransaction({ conversationId: this.conversationId, ...this.state.form, scheduledAt }, this.state.requestId)
       this.apply({ type: 'SUBMIT_SUCCESS', transaction })
-      wx.redirectTo({ url: `/pages/transaction-detail/index?transactionId=${transaction._id}` })
+      wx.navigateBack()
     } catch (error) { this.apply({ type: 'FAILURE', message: error.message }) }
   },
 })
