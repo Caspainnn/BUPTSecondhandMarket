@@ -13,3 +13,5 @@
 .empty button { width: 220rpx; border-radius: 999rpx; background: #83c7f4; }
 .empty button::after { border: 0; }
 .error { color: #c2413b; }
+
+.unread-single { box-sizing: border-box; display: flex; align-items: center; justify-content: center; width: 36rpx; height: 36rpx; min-width: 36rpx; padding: 0; border-radius: 50%; }

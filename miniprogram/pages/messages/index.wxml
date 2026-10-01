@@ -6,7 +6,7 @@
     <view wx:for="{{conversations}}" wx:key="_id" class="conversation" data-id="{{item._id}}" bindtap="openConversation">
       <cloud-image class="avatar" src="{{item.peer.avatarFileId}}" mode="aspectFill" />
       <view class="content"><view class="top"><text class="name">{{item.peer.nickname}}</text><text class="post-title">{{item.postSnapshot.title}}</text></view><text class="preview">{{item.lastMessageText || '开始聊聊这件商品吧'}}</text></view>
-      <text wx:if="{{item.unread}}" class="unread">{{item.unread > 99 ? '99+' : item.unread}}</text>
+      <text wx:if="{{item.unread}}" class="unread {{item.unread < 10 ? 'unread-single' : ''}}">{{item.unread > 99 ? '99+' : item.unread}}</text>
     </view>
   </view>
 </view>
