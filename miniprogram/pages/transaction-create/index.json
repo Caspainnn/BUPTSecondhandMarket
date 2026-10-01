@@ -1,1 +1,6 @@
-{ "navigationBarTitleText": "发起交易清单" }
+{
+  "navigationBarTitleText": "发起交易清单",
+  "usingComponents": {
+    "cloud-image": "/components/cloud-image/index"
+  }
+}

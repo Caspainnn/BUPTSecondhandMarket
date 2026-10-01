@@ -1,1 +1,6 @@
-{ "component": true }
+{
+  "component": true,
+  "usingComponents": {
+    "cloud-image": "/components/cloud-image/index"
+  }
+}

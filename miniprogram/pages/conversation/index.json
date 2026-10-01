@@ -1,3 +1,6 @@
 {
-  "navigationBarTitleText": "商品会话"
+  "navigationBarTitleText": "商品会话",
+  "usingComponents": {
+    "cloud-image": "/components/cloud-image/index"
+  }
 }

@@ -29,3 +29,13 @@ test('all dynamic image sources use global cloud image component',()=>{
  assert.doesNotMatch(fs.readFileSync(f,'utf8'),/<image\b[^>]*src="{{/,f)
  }
 })
+
+test('each cloud image user explicitly declares the component dependency',()=>{
+ const walk=dir=>fs.readdirSync(dir,{withFileTypes:true}).flatMap(e=>e.isDirectory()?walk(dir+'/'+e.name):[dir+'/'+e.name])
+ for(const f of walk('miniprogram').filter(f=>f.endsWith('.wxml')&&!f.includes('/cloud-image/'))){
+  if(!fs.readFileSync(f,'utf8').includes('<cloud-image'))continue
+  const config=JSON.parse(fs.readFileSync(f.replace('.wxml','.json'),'utf8'))
+  assert.equal(config.usingComponents?.['cloud-image'],'/components/cloud-image/index',f)
+  for(const ext of ['js','json','wxml','wxss'])assert.ok(fs.existsSync('miniprogram/components/cloud-image/index.'+ext))
+ }
+})

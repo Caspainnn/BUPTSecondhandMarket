@@ -1,3 +1,6 @@
 {
-  "navigationBarTitleText": "完善资料"
+  "navigationBarTitleText": "完善资料",
+  "usingComponents": {
+    "cloud-image": "/components/cloud-image/index"
+  }
 }
