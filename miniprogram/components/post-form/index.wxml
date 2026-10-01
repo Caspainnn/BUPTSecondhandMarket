@@ -2,9 +2,9 @@
   <view class="images">
     <view wx:for="{{form.images}}" wx:key="tempPath" class="image-item">
       <image class="preview" src="{{item.fileId || item.tempPath}}" mode="aspectFill" />
-      <button class="remove-image" aria-label="删除第{{index + 1}}张图片" data-index="{{index}}" bindtap="remove">×</button>
+      <button class="remove-image" aria-label="删除第{{index + 1}}张图片" data-index="{{index}}" bindtap="remove"><image class="remove-icon" src="/assets/icons/close.svg" mode="aspectFit" /></button>
     </view>
-    <button wx:if="{{form.images.length < 6}}" class="add-image" bindtap="chooseImages"><text class="add-icon">+</text><text>添加图片</text></button>
+    <button wx:if="{{form.images.length < 6}}" class="add-image" bindtap="chooseImages"><view class="add-content"><text class="add-icon">+</text><text>添加图片</text></view></button>
   </view>
   <label class="field"><text>标题</text><input data-field="title" value="{{form.title}}" maxlength="30" placeholder="2～30 个字" bindinput="patch" /></label>
   <label class="field"><text>详细描述</text><textarea data-field="description" value="{{form.description}}" maxlength="1000" placeholder="说明型号、状态和使用情况" bindinput="patch" /></label>
@@ -13,7 +13,7 @@
   <label class="field"><text>库存数量</text><input data-field="totalQuantity" value="{{form.totalQuantity}}" type="number" bindinput="patch" /></label>
   <label class="field"><text>新旧程度</text><picker range="{{conditions}}" range-key="name" bindchange="pickCondition"><view class="picker">{{conditionName || '请选择新旧程度'}}</view></picker></label>
   <label wx:if="{{form.conditionId === 'partially_faulty'}}" class="field"><text>故障说明</text><textarea data-field="defectDescription" value="{{form.defectDescription}}" maxlength="200" bindinput="patch" /></label>
-  <label class="field"><text>校区</text><picker range="{{campuses}}" range-key="name" bindchange="pickCampus"><view class="picker">{{campusName || '请选择校区'}}</view></picker></label>
+  <label class="field"><text>校区</text><picker range="{{campuses}}" range-key="name" bindchange="pickCampus"><view class="picker campus-picker"><text>{{campusName || '请选择校区'}}</text><image class="dropdown-icon" src="/assets/icons/dropdown.svg" mode="aspectFit" /></view></picker></label>
   <text wx:if="{{error}}" class="error">{{error}}</text>
   <button class="submit" loading="{{status === 'saving' || status === 'uploading'}}" disabled="{{status === 'saving' || status === 'uploading'}}" bindtap="submit">{{status === 'uploading' ? '正在上传图片' : submitText}}</button>
 </view>

@@ -67,12 +67,12 @@ test('single-line fields and pickers share a centered height while textarea keep
 test('image cards use corner removal, no move controls, and an equally sized trailing add tile', () => {
   const wxml = read('miniprogram/components/post-form/index.wxml')
   const css = read('miniprogram/components/post-form/index.wxss')
-  assert.match(wxml, /class="remove-image"[^>]*data-index="{{index}}"[^>]*bindtap="remove"[^>]*>×<\/button>/)
+  assert.match(wxml, /class="remove-image"[^>]*data-index="{{index}}"[^>]*bindtap="remove"[^>]*><image[^>]*src="\/assets\/icons\/close.svg"[^>]*\/><\/button>/)
   assert.doesNotMatch(wxml, /左移|右移|move-row|bindtap="move"/)
   assert.ok(wxml.indexOf('class="add-image"') > wxml.indexOf('class="remove-image"'))
   assert.match(wxml, /form.images.length < 6/)
   const tile = css.match(/\.image-item,\.add-image\{([^}]*)\}/)?.[1] || ''
-  for (const rule of [/width:200rpx/, /height:200rpx/, /flex:0 0 200rpx/, /box-sizing:border-box/, /margin:0/]) assert.match(tile, rule)
+  for (const rule of [/width:calc\(\(100% - 32rpx\) \/ 3\)/, /height:0/, /padding-bottom:calc\(\(100% - 32rpx\) \/ 3\)/, /flex:0 0 calc\(\(100% - 32rpx\) \/ 3\)/, /box-sizing:border-box/, /margin:0/]) assert.match(tile, rule)
   assert.match(css, /\.image-item\{position:relative/)
   const remove = css.match(/\.remove-image\{([^}]*)\}/)?.[1] || ''
   for (const rule of [/position:absolute/, /top:8rpx/, /right:8rpx/]) assert.match(remove, rule)
@@ -88,4 +88,10 @@ test('corner removal forwards the tapped image index', () => {
   component.methods.remove.call({ triggerEvent: (name, detail) => { event = { name, index: detail.index } } },
     { currentTarget: { dataset: { index: '1' } } })
   assert.deepEqual(event, { name: 'removeimage', index: 1 })
+})
+
+test('provided vector icons are stored and reused for removal and campus selection', () => {
+  assert.match(read('miniprogram/assets/icons/close.svg'), /fill="#999999"/)
+  assert.match(read('miniprogram/assets/icons/dropdown.svg'), /fill="#707070"/)
+  assert.match(read('miniprogram/components/post-form/index.wxml'), /class="picker campus-picker"[\s\S]*src="\/assets\/icons\/dropdown.svg"/)
 })
