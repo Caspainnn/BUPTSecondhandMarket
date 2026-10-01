@@ -1,7 +1,7 @@
 {
   "navigationBarTitleText": "我的",
   "usingComponents": {
-    "order-card": "/components/order-card/index",
+    "order-card": "../../components/order-card/index",
     "cloud-image": "/components/cloud-image/index"
   }
 }

@@ -54,6 +54,7 @@
     ]
   },
   "usingComponents": {
+    "order-card": "/components/order-card/index",
     "cloud-image": "/components/cloud-image/index"
   },
   "lazyCodeLoading": "requiredComponents",

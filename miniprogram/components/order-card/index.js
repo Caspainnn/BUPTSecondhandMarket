@@ -1,4 +1,4 @@
-﻿const { getTransactionActions, getTransactionStatusLabel } = require('../../services/transaction-state')
+const { getTransactionActions, getTransactionStatusLabel } = require('../../services/transaction-state')
 const { respondTransaction, withdrawTransaction, cancelTransaction, submitResult, reviseTransaction } = require('../../services/transactions')
 const { CAMPUSES } = require('../../config/market')
 function parts(timestamp) {

@@ -33,3 +33,15 @@ test('my transactions queries only completed orders while all orders includes ev
  await page.load();assert.equal(queries[0],'completed')
  page.onLoad({mode:'all'});await page.load();assert.equal(queries[1],'')
 })
+
+test('profile order card registration resolves to complete BOM-free component files',()=>{
+ const config=JSON.parse(fs.readFileSync('miniprogram/pages/profile/index.json','utf8'))
+ const base=path.resolve('miniprogram/pages/profile',config.usingComponents['order-card'])
+ const app=JSON.parse(fs.readFileSync('miniprogram/app.json','utf8'))
+ assert.equal(app.usingComponents['order-card'],'/components/order-card/index')
+ for(const ext of ['js','json','wxml','wxss']){
+  const data=fs.readFileSync(base+'.'+ext)
+  assert.notEqual(data.subarray(0,3).toString('hex'),'efbbbf')
+ }
+ assert.equal(JSON.parse(fs.readFileSync(base+'.json','utf8')).component,true)
+})

@@ -1,4 +1,4 @@
-﻿<view class="order-card">
+<view class="order-card">
   <view class="heading"><text>{{transaction.postSnapshot.title}}</text><text class="status">{{statusLabel}}</text></view>
   <text class="role">{{transaction.buyerId === userId ? '我买的' : '我卖的'}}</text>
   <text class="key">数量：{{transaction.quantity}} 件</text>
