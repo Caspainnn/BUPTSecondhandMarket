@@ -40,3 +40,8 @@ test('keeps every Stage 1 cloud function under the configured cloud root', () =>
     assert.equal(fs.existsSync(`${config.cloudfunctionRoot}${name}/index.js`), true, `${name} is deployable`)
   }
 })
+
+test('enables required-component lazy injection for upload quality checks', () => {
+  const app = JSON.parse(fs.readFileSync('miniprogram/app.json', 'utf8'))
+  assert.equal(app.lazyCodeLoading, 'requiredComponents')
+})
