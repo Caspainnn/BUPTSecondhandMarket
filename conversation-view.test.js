@@ -17,3 +17,11 @@ test('customer pages do not expose image diagnostics or technical failure text',
   assert.doesNotMatch(js,/diagnosePostImages|async checkImages/)
  }
 })
+
+test('conversation header shows seller first, product second, then message history',()=>{
+ const xml=fs.readFileSync('miniprogram/pages/conversation/index.wxml','utf8')
+ assert.match(xml,/conversation.sellerSnapshot.avatarFileId/)
+ assert.match(xml,/conversation.sellerSnapshot.nickname/)
+ const seller=xml.indexOf('class="seller-bar"'),product=xml.indexOf('class="product-bar"'),messages=xml.indexOf('<scroll-view')
+ assert.ok(seller>=0 && seller<product && product<messages)
+})

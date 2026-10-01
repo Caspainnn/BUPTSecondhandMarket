@@ -1,4 +1,8 @@
 <view class="chat-page">
+  <view class="seller-bar">
+    <cloud-image class="seller-avatar" src="{{conversation.sellerSnapshot.avatarFileId}}" mode="aspectFill" />
+    <view class="seller-details"><text class="seller-name">{{conversation.sellerSnapshot.nickname || '卖家'}}</text><text class="seller-label">卖家</text></view>
+  </view>
   <view class="product-bar">
     <view wx:if="{{conversation}}" class="product-info" bindtap="openPost">
       <cloud-image wx:if="{{!imageError}}" class="product-cover" src="{{conversation.postSnapshot.coverFileId}}" mode="aspectFill" binderror="onImageError" />
