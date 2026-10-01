@@ -1,11 +1,11 @@
-const { getTransactionActions, getTransactionStatusLabel } = require('../../services/transaction-state')
-const { respondTransaction, withdrawTransaction, cancelTransaction, submitResult, reviseTransaction } = require('../../services/transactions')
-const { CAMPUSES } = require('../../config/market')
+const { getTransactionActions, getTransactionStatusLabel } = require('./transaction-state')
+const { respondTransaction, withdrawTransaction, cancelTransaction, submitResult, reviseTransaction } = require('./transactions')
+const { CAMPUSES } = require('../config/market')
 function parts(timestamp) {
   const date = new Date(timestamp), pad = value => String(value).padStart(2, '0')
   return { date: `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`, time: `${pad(date.getHours())}:${pad(date.getMinutes())}` }
 }
-Component({
+const definition = {
   properties: { transaction: { type: Object, value: null }, userId: String },
   data: { actions: [], canResult: false, successDisabled: true, canEdit: false, busy: false, editing: false, form: {}, campuses: CAMPUSES },
   observers: { 'transaction,userId': function () { this.sync() } },
@@ -67,4 +67,6 @@ Component({
     },
     open() { wx.navigateTo({ url: '/pages/transaction-detail/index?transactionId=' + this.data.transaction._id }) },
   },
-})
+}
+
+module.exports = definition

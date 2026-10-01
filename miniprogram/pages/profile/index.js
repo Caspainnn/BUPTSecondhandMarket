@@ -1,8 +1,9 @@
+const orderCard = require('../../services/order-card-controller')
 const { listOngoingTransactions } = require('../../services/transactions')
 const { getCurrentUser, getCampuses, saveProfile, uploadAvatar } = require('../../services/user')
 
 Page({
-  data: { state: 'loading', message: '', user: null, form: { nickname: '', avatarFileId: '', campusId: '' }, campuses: [], campusIndex: -1, dirty: false, busy: false, ongoing: [], ongoingCursor: null, ongoingLoading: false, ongoingError: '' },
+  data: { state: 'loading', message: '', user: null, form: { nickname: '', avatarFileId: '', campusId: '' }, campuses: [], campusIndex: -1, dirty: false, busy: false, ongoing: [], ongoingViews: [], ongoingCursor: null, ongoingLoading: false, ongoingError: '' },
   async onShow() {
     this.onHide()
     this.ongoingToken = {}
@@ -60,12 +61,47 @@ Page({
       const result = await listOngoingTransactions()
       if (this.ongoingToken !== token) return
       const rows = result.transactions
+      this.updateOrderCards(rows)
       this.setData({ ongoing: rows.filter((item, index) => rows.findIndex(row => row._id === item._id) === index), ongoingCursor: result.nextCursor, ongoingError: '' })
     } catch (error) {
       console.warn('Ongoing orders refresh failed', error)
       if (this.ongoingToken === token && !this.data.ongoing.length) this.setData({ ongoingError: '暂时未能加载，点击重试' })
     } finally { this.loadingOngoing = false; if (this.ongoingToken === token) this.setData({ ongoingLoading: false }) }
   },
+  updateOrderCards(rows) {
+    this.orderControllers = this.orderControllers || {}
+    this.buildingOrderViews = true
+    try {
+      const next = {}
+      for (const row of rows) {
+        let controller = this.orderControllers[row._id]
+        if (!controller) {
+          controller = { ...orderCard.methods, data: { ...orderCard.data, form: {} } }
+          controller.setData = patch => {
+            Object.assign(controller.data, patch)
+            if (!this.buildingOrderViews) this.publishOrderViews()
+          }
+          controller.triggerEvent = () => this.loadOngoing()
+        }
+        controller.data.transaction = row
+        controller.data.userId = this.data.user._id
+        controller.sync()
+        next[row._id] = controller
+      }
+      this.orderControllers = next
+    } finally { this.buildingOrderViews = false }
+    this.publishOrderViews()
+  },
+  publishOrderViews() {
+    if (!this.ongoingToken) return
+    this.setData({ ongoingViews: Object.values(this.orderControllers || {}).map(controller => ({ ...controller.data, id: controller.data.transaction._id })) })
+  },
+  orderAct(event) { const controller = this.orderControllers[event.currentTarget.dataset.id]; if (controller) return controller.act(event) },
+  orderEdit(event) { const controller = this.orderControllers[event.currentTarget.dataset.id]; if (controller) controller.edit() },
+  orderPatch(event) { const controller = this.orderControllers[event.currentTarget.dataset.id]; if (controller) controller.patch(event) },
+  orderCloseEdit(event) { const controller = this.orderControllers[event.currentTarget.dataset.id]; if (controller) controller.closeEdit() },
+  orderSave(event) { const controller = this.orderControllers[event.currentTarget.dataset.id]; if (controller) return controller.save() },
+  orderOpen(event) { const controller = this.orderControllers[event.currentTarget.dataset.id]; if (controller) controller.open() },
   openAllOrders() { wx.navigateTo({ url: '/pages/my-transactions/index?mode=all' }) },
   openMyPosts() { wx.navigateTo({ url: '/pages/my-posts/index' }) },
   openMyTransactions() { wx.navigateTo({ url: '/pages/my-transactions/index' }) },

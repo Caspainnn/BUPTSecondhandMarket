@@ -1,3 +1,4 @@
+<import src="order-card.wxml" />
 <view class="page">
   <view wx:if="{{state === 'loading'}}" class="card profile-state"><text class="state-title">个人资料</text><text class="muted">正在加载微信身份…</text></view>
   <view wx:elif="{{state === 'error'}}" class="card profile-state"><text class="error-text">{{message}}</text><button class="secondary-button" bindtap="retry">重试</button></view>
@@ -21,7 +22,7 @@
       <view class="ongoing-heading"><text>正在进行</text><text class="all-orders" bindtap="openAllOrders">全部订单 ›</text></view>
       <text wx:if="{{ongoingError}}" class="ongoing-empty" bindtap="loadOngoing">{{ongoingError}}</text>
       <text wx:elif="{{!ongoing.length}}" class="ongoing-empty">{{ongoingLoading ? '正在加载交易…' : '暂无正在进行的交易'}}</text>
-      <order-card wx:for="{{ongoing}}" wx:key="_id" transaction="{{item}}" user-id="{{user._id}}" bindchanged="loadOngoing" />
+      <block wx:for="{{ongoingViews}}" wx:key="id"><template is="ongoing-order" data="{{...item}}" /></block>
       <view wx:if="{{ongoingCursor}}" class="ongoing-empty" data-more="true" bindtap="loadOngoing">查看更多正在进行的交易</view>
     </block>
   </block>

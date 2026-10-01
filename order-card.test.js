@@ -1,12 +1,13 @@
 const fs=require('node:fs'),vm=require('node:vm'),path=require('node:path'),assert=require('node:assert/strict'),test=require('node:test')
 const state=require('./miniprogram/services/transaction-state')
 function card() {
- let component,submitted=[]
- vm.runInNewContext(fs.readFileSync('miniprogram/components/order-card/index.js','utf8'),{
-  Component:value=>component=value,
-  require:name=>name.endsWith('/transactions')?{submitResult:async(id,result)=>submitted.push({id,result})}:require(path.resolve('miniprogram/components/order-card',name)),
+ let component,submitted=[];const context={module:{exports:{}}}
+ vm.runInNewContext(fs.readFileSync('miniprogram/services/order-card-controller.js','utf8'),{
+  module:context.module,
+  require:name=>name.endsWith('/transactions')?{submitResult:async(id,result)=>submitted.push({id,result})}:require(path.resolve('miniprogram/services',name)),
   wx:{showModal:options=>options.success({confirm:true}),showToast(){}},console:{warn(){}},
  })
+ component=context.module.exports
  const instance={...component.methods,data:{...component.data,userId:'buyer'},setData(patch){Object.assign(this.data,patch)},triggerEvent(){this.changed=true}}
  return {instance,submitted}
 }
@@ -34,18 +35,6 @@ test('my transactions queries only completed orders while all orders includes ev
  page.onLoad({mode:'all'});await page.load();assert.equal(queries[1],'')
 })
 
-test('profile order card registration resolves to complete BOM-free component files',()=>{
- const config=JSON.parse(fs.readFileSync('miniprogram/pages/profile/index.json','utf8'))
- const base=path.resolve('miniprogram/pages/profile',config.usingComponents['order-card'])
- const app=JSON.parse(fs.readFileSync('miniprogram/app.json','utf8'))
- assert.equal(app.usingComponents['order-card'],'/components/order-card/index')
- for(const ext of ['js','json','wxml','wxss']){
-  const data=fs.readFileSync(base+'.'+ext)
-  assert.notEqual(data.subarray(0,3).toString('hex'),'efbbbf')
- }
- assert.equal(JSON.parse(fs.readFileSync(base+'.json','utf8')).component,true)
-})
-
 test('ongoing orders use persisted statuses across both roles and follow every page',async()=>{
  let service,requests=[]
  const context={module:{exports:{}},require:()=>({callCloud:async(name,input)=>{
@@ -59,4 +48,23 @@ test('ongoing orders use persisted statuses across both roles and follow every p
  const result=await service.listOngoingTransactions()
  assert.deepEqual(Array.from(result.transactions,row=>row._id),['seller-handover','buyer-pending','older-handover'])
  assert.equal(requests.length,3)
+})
+
+test('profile renders fetched ongoing orders through native templates and preserves each editing draft',async()=>{
+ let page
+ vm.runInNewContext(fs.readFileSync('miniprogram/pages/profile/index.js','utf8'),{
+ Page:value=>page=value,
+ require:name=>name.endsWith('/order-card-controller')?require('./miniprogram/services/order-card-controller'):name.endsWith('/transactions')?{listOngoingTransactions:async()=>({transactions:[{_id:'t',buyerId:'buyer',sellerId:'seller',status:'pending_seller',scheduledAt:Date.now()+3600000,campusId:'bupt-shahe',quantity:1,locationText:'Gate',postSnapshot:{title:'Item'}}],nextCursor:null})}:{},
+ })
+ page.setData=patch=>Object.assign(page.data,patch);page.ongoingToken={};page.data.user={_id:'buyer',profileCompleted:true}
+ await page.loadOngoing()
+ assert.equal(page.data.ongoing.length,1);assert.equal(page.data.ongoingViews.length,1);assert.equal(page.data.ongoingViews[0].canEdit,true)
+ page.orderEdit({currentTarget:{dataset:{id:'t'}}})
+ page.orderPatch({currentTarget:{dataset:{id:'t',field:'locationText'}},detail:{value:'New gate'}})
+ await page.loadOngoing()
+ assert.equal(page.data.ongoingViews[0].editing,true);assert.equal(page.data.ongoingViews[0].form.locationText,'New gate')
+ const xml=fs.readFileSync('miniprogram/pages/profile/index.wxml','utf8')
+ assert.doesNotMatch(xml,/<order-card\b/);assert.match(xml,/template is="ongoing-order"/)
+ const config=JSON.parse(fs.readFileSync('miniprogram/pages/profile/index.json','utf8'))
+ assert.equal(config.usingComponents['order-card'],undefined)
 })
