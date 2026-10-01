@@ -65,6 +65,25 @@ async function createTransaction({ actor, conversationId, quantity, scheduledAt,
   })
 }
 
+async function reviseTransaction({ actor, transactionId, quantity, scheduledAt, campusId, locationText, requestId: request, transactions, now }) {
+  requireActor(actor)
+  const key = requestKey(actor, 'revise', request)
+  return transactions.runTransaction(async tx => {
+    const repeated = await tx.findRequest(key)
+    if (repeated) return { transaction: repeated }
+    const current = await tx.getTransaction(transactionId)
+    if (!current) throw new TransactionError('TRANSACTION_NOT_FOUND', '预约不存在')
+    if (current.buyerId !== actor._id) throw new TransactionError('BUYER_ONLY', '只能由买家修改预约')
+    if (current.status !== 'pending_seller') throw new TransactionError('STALE_STATUS', '卖家已处理预约，不能再修改')
+    const post = await tx.getPost(current.postId)
+    if (!post || post.status !== 'active' || post.availableQuantity <= 0) throw new TransactionError('POST_UNAVAILABLE', '商品当前不可预约')
+    const input = validateInput({ quantity, scheduledAt, campusId, locationText }, post, now)
+    const updated = await tx.updateTransaction(transactionId, { ...input, updatedAt: now })
+    await tx.createEvent({ transactionId, actorId: actor._id, type: 'modified', requestId: requestId(request), requestKey: key, createdAt: now })
+    await appendSystem(tx, updated, actor, '买家修改了预约清单，等待卖家确认', key, now)
+    return { transaction: updated }
+  })
+}
 async function respondTransaction({ actor, transactionId, decision, reason, requestId: request, transactions, now }) {
   requireActor(actor)
   if (!['confirm', 'reject'].includes(decision)) throw new TransactionError('INVALID_DECISION', '卖家处理结果无效')
@@ -195,4 +214,4 @@ async function getTransactionDetail({ actor, transactionId, transactions }) {
   return { transaction, events: await transactions.getEvents(transactionId) }
 }
 
-module.exports = { ACTIVE_STATUSES, TransactionError, cancelTransaction, createTransaction, getTransactionDetail, listTransactions, respondTransaction, submitTransactionResult, withdrawTransaction }
+module.exports = { reviseTransaction, ACTIVE_STATUSES, TransactionError, cancelTransaction, createTransaction, getTransactionDetail, listTransactions, respondTransaction, submitTransactionResult, withdrawTransaction }

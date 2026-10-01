@@ -53,7 +53,10 @@ async function listMessages({ actor, conversationId, before, limit, messages }) 
   requireParticipant(actor, await messages.getConversation(conversationId))
   const pageSize = Math.min(Math.max(Number(limit) || 20, 1), 50)
   const result = await messages.listMessages({ conversationId, before: before || null, limit: pageSize })
-  return { messages: [...result.rows].reverse(), nextBefore: result.nextBefore || null }
+  const ids = [...new Set(result.rows.filter(row => row.transactionId).map(row => row.transactionId))]
+  const transactions = ids.length && messages.getTransactions ? await messages.getTransactions(ids) : []
+  const authorized = transactions.filter(row => row.conversationId === conversationId && (row.buyerId === actor._id || row.sellerId === actor._id))
+  return { messages: [...result.rows].reverse().map(row => row.transactionId ? { ...row, currentTransaction: authorized.find(item => item._id === row.transactionId) || null } : row), nextBefore: result.nextBefore || null }
 }
 
 async function markConversationRead({ actor, conversationId, messages, now }) {

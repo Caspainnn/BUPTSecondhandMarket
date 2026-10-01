@@ -33,3 +33,31 @@ test('appointments render structured cards with a transaction detail entry',()=>
  for(const field of ['quantity','locationText','scheduledText','statusLabel'])assert.ok(xml.includes('item.transactionCard.'+field))
  assert.match(xml,/bindtap="openTransaction"/)
 })
+
+test('appointment cards offer inline role actions and editing with emphasized key fields',()=>{
+ const xml=fs.readFileSync('miniprogram/pages/conversation/index.wxml','utf8')
+ assert.match(xml,/catchtap="actOnCard"/)
+ assert.match(xml,/catchtap="editCard"/)
+ assert.match(xml,/catchtap="saveCardEdit"/)
+ for(const text of ['接受','拒绝','撤回','修改'])assert.ok(xml.includes(text))
+ assert.match(xml,/class="transaction-key"/)
+})
+
+test('pending cards expose only the latest message actions for the correct participant',()=>{
+ const vm=require('node:vm'),path=require('node:path');let page
+ vm.runInNewContext(fs.readFileSync('miniprogram/pages/conversation/index.js','utf8'),{
+ Page:value=>page=value,
+ require:name=>require(path.resolve('miniprogram/pages/conversation',name)),
+ })
+ page.setData=patch=>Object.assign(page.data,patch)
+ const transaction={_id:'t',buyerId:'buyer',sellerId:'seller',status:'pending_seller',scheduledAt:Date.now()+3600000,campusId:'bupt-shahe'}
+ page.state={messages:[{_id:'old',transactionId:'t',transactionCard:transaction,currentTransaction:transaction},{_id:'latest',transactionId:'t',transactionCard:transaction,currentTransaction:transaction}]}
+ page.userId='buyer';page.sync()
+ assert.equal(page.data.messages[0].canRevise,false)
+ assert.equal(page.data.messages[1].canRevise,true)
+ assert.equal(page.data.messages[1].canRespond,false)
+ page.userId='seller';page.sync()
+ assert.equal(page.data.messages[1].canRespond,true)
+ transaction.status='cancelled';page.sync()
+ assert.equal(page.data.messages[1].canRespond,false)
+})

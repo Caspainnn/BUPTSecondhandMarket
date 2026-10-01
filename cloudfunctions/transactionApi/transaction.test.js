@@ -219,3 +219,32 @@ test('creating an appointment atomically posts one structured card and increment
   assert.equal(message.transactionCard.postSnapshot.title, '教材')
   assert.equal(transactions.state.conversations[0].sellerUnread, 1)
 })
+
+test('buyer revises pending appointment in place with one event/card and no inventory change', async () => {
+  const { reviseTransaction } = require('./transaction')
+  const transactions = repository()
+  const created = await createTransaction({ actor: buyer, ...validInput(), transactions, now: NOW })
+  const input = { actor: buyer, transactionId: created.transaction._id, quantity: 1, scheduledAt: NOW + 3600000, campusId: 'bupt-shahe', locationText: '图书馆门口', requestId: 'revise-1', transactions, now: NOW }
+  await reviseTransaction(input)
+  await reviseTransaction(input)
+  assert.equal(transactions.state.transactions.length, 1)
+  assert.equal(transactions.state.transactions[0].quantity, 1)
+  assert.equal(transactions.state.messages.length, 2)
+  assert.equal(transactions.state.movements.length, 0)
+  assert.equal(transactions.state.events.filter(event => event.type === 'modified').length, 1)
+  await assert.rejects(reviseTransaction({ ...input, actor: seller, requestId: 'seller-revise' }), error => error.code === 'BUYER_ONLY')
+  await respondTransaction({ actor: seller, transactionId: created.transaction._id, decision: 'confirm', requestId: 'confirm', transactions, now: NOW })
+  await assert.rejects(reviseTransaction({ ...input, requestId: 'too-late' }), error => error.code === 'STALE_STATUS')
+})
+
+test('revisions retain appointment boundaries and never reserve inventory', async () => {
+  const { reviseTransaction } = require('./transaction')
+  const transactions = repository()
+  const created = await createTransaction({ actor: buyer, ...validInput(), transactions, now: NOW })
+  for (const patch of [{ quantity: 4 }, { scheduledAt: NOW }, { campusId: 'invalid' }, { locationText: '' }]) {
+    await assert.rejects(reviseTransaction({ actor: buyer, ...validInput(), transactionId: created.transaction._id, requestId: 'bad-revise', ...patch, transactions, now: NOW }))
+  }
+  assert.equal(transactions.state.transactions[0].quantity, 2)
+  assert.equal(transactions.state.movements.length, 0)
+  assert.equal(transactions.state.messages.length, 1)
+})

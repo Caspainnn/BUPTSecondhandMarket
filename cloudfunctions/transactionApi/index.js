@@ -80,6 +80,7 @@ exports.main = async (event = {}) => {
     const now = Date.now()
     const actions = {
       create: () => service.createTransaction({ actor, ...event, transactions, now }),
+      revise: () => service.reviseTransaction({ actor, ...event, transactions, now }),
       withdraw: () => service.withdrawTransaction({ actor, ...event, transactions, now }),
       respond: () => service.respondTransaction({ actor, ...event, transactions, now }),
       cancel: () => service.cancelTransaction({ actor, ...event, transactions, now }),

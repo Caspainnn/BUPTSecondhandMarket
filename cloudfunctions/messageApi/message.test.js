@@ -101,3 +101,13 @@ test('sender-side sends do not erase the sender existing unread messages', async
   assert.equal(conversation.buyerUnread, 2)
   assert.equal(conversation.sellerUnread, 1)
 })
+
+test('transaction messages include fresh authorized state rather than old snapshot actions',async()=>{
+ const messages=repository()
+ messages.state.messages.push({_id:'m1',conversationId:'c1',transactionId:'t1',type:'system',createdAt:1,transactionCard:{status:'pending_seller'}})
+ messages.getTransactions=async()=>[{_id:'t1',conversationId:'c1',buyerId:'buyer',sellerId:'seller',status:'cancelled'}]
+ const result=await listMessages({actor:buyer,conversationId:'c1',messages})
+ assert.equal(result.messages[0].currentTransaction.status,'cancelled')
+ messages.getTransactions=async()=>[{_id:'t1',conversationId:'other',buyerId:'other',status:'pending_seller'}]
+ assert.equal((await listMessages({actor:buyer,conversationId:'c1',messages})).messages[0].currentTransaction,null)
+})
