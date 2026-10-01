@@ -4,6 +4,8 @@ const postAction = (action, data = {}) => callCloud('postApi', { action, ...data
 const createPost = (input, requestId) => postAction('create', { input, requestId }).then((data) => data.post)
 const updatePost = (postId, input, requestId) => postAction('update', { postId, input, requestId }).then((data) => data.post)
 const getPost = (postId) => postAction('detail', { postId }).then((data) => data.post)
+const listPosts = (campusId, cursor, limit = 20) => postAction('list', { campusId, cursor, limit })
+const setPostStatus = (postId, status, requestId) => postAction('setStatus', { postId, status, requestId }).then((data) => data.post)
 
 function compressImage(src) {
   return new Promise((resolve, reject) => wx.compressImage({ src, quality: 80, success: (result) => resolve(result.tempFilePath), fail: reject }))
@@ -30,4 +32,4 @@ async function uploadPostImages(images, ownerId) {
   return fileIds
 }
 
-module.exports = { createPost, getPost, updatePost, uploadPostImages }
+module.exports = { createPost, getPost, listPosts, setPostStatus, updatePost, uploadPostImages }

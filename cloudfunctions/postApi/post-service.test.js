@@ -92,11 +92,13 @@ test('owner listing requires identity and returns lifecycle states', async () =>
   await assert.rejects(listMyPosts({ actor: null, posts }))
 })
 
-test('detail returns public fields without private idempotency data', async () => {
+test('detail returns public fields, an owner flag, and no private identity data', async () => {
   const posts = repository([{ _id: 'p', ownerId: 'user-a', status: 'active', availableQuantity: 1, title: 'A', createRequestId: 'secret' }])
-  const { post } = await getPostDetail({ postId: 'p', posts })
+  const { post } = await getPostDetail({ actor, postId: 'p', posts })
   assert.equal(post.title, 'A')
+  assert.equal(post.isOwner, true)
   assert.equal(post.createRequestId, undefined)
   assert.equal(post.ownerId, undefined)
+  assert.equal((await getPostDetail({ actor: { _id: 'another-user' }, postId: 'p', posts })).post.isOwner, false)
   await assert.rejects(getPostDetail({ postId: 'missing', posts }))
 })

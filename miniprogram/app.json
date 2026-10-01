@@ -1,5 +1,9 @@
 {
   "pages": [
+    "pages/discover/index",
+    "pages/post-detail/index",
+    "pages/post-edit/index",
+    "pages/publish/index",
     "pages/home/index",
     "pages/profile/index",
     "pages/profile-edit/index"
@@ -18,8 +22,8 @@
     "borderStyle": "white",
     "list": [
       {
-        "pagePath": "pages/home/index",
-        "text": "首页"
+        "pagePath": "pages/discover/index",
+        "text": "发现"
       },
       {
         "pagePath": "pages/profile/index",

@@ -81,10 +81,10 @@ async function listMyPosts({ actor, status, cursor, limit, posts }) {
   return { posts: result.rows, nextCursor: result.nextCursor }
 }
 
-async function getPostDetail({ postId, posts }) {
+async function getPostDetail({ actor, postId, posts }) {
   const post = await posts.findById(postId)
   if (!post) throw new PostError('POST_NOT_FOUND', '商品不存在')
-  return { post: publicPost(post) }
+  return { post: { ...publicPost(post), isOwner: Boolean(actor && actor._id === post.ownerId) } }
 }
 
 module.exports = { createPost, getPostDetail, listMyPosts, listPosts, setPostStatus, updatePost }

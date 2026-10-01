@@ -1,0 +1,17 @@
+<view class="page discover-page">
+  <view class="toolbar">
+    <view><text class="heading">发现好物</text><text class="subheading">按发布时间从新到旧</text></view>
+    <picker range="{{campusOptions}}" range-key="name" bindchange="changeCampus"><view class="campus-picker">{{campusName}}⌄</view></picker>
+  </view>
+  <view wx:if="{{loading && !posts.length}}" class="state-card">正在加载商品…</view>
+  <view wx:elif="{{error && !posts.length}}" class="state-card error"><text>{{error}}</text><button bindtap="retry">重试</button></view>
+  <view wx:elif="{{!posts.length}}" class="state-card"><text>当前校区暂无可预约商品</text><text class="muted">可以切换校区看看</text></view>
+  <view wx:else class="post-grid">
+    <view wx:for="{{posts}}" wx:key="_id" class="post-card" data-id="{{item._id}}" bindtap="openPost">
+      <image class="cover" src="{{item.imageFileIds[0]}}" mode="aspectFill" lazy-load />
+      <view class="post-body"><text class="post-title">{{item.title}}</text><text class="price">{{item.priceLabel}}</text><text class="meta">剩余 {{item.availableQuantity}} · {{item.campusId}}</text></view>
+    </view>
+  </view>
+  <view wx:if="{{loadingMore}}" class="footer-note">正在加载更多…</view>
+  <view wx:if="{{exhausted && posts.length}}" class="footer-note">已经到底了</view>
+</view>

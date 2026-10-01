@@ -41,14 +41,14 @@ function repository() {
 exports.main = async (event = {}) => {
   try {
     const posts = repository()
-    const actor = ['create', 'update', 'setStatus', 'listMine'].includes(event.action) ? await currentUser() : null
+    const actor = ['create', 'update', 'setStatus', 'listMine', 'detail'].includes(event.action) ? await currentUser() : null
     const actions = {
       create: () => service.createPost({ actor, input: event.input, requestId: event.requestId, posts, now: db.serverDate() }),
       update: () => service.updatePost({ actor, postId: event.postId, input: event.input, posts, now: db.serverDate() }),
       setStatus: () => service.setPostStatus({ actor, postId: event.postId, status: event.status, posts, now: db.serverDate() }),
       list: () => service.listPosts({ campusId: event.campusId, cursor: event.cursor, limit: event.limit, posts }),
       listMine: () => service.listMyPosts({ actor, status: event.status, cursor: event.cursor, limit: event.limit, posts }),
-      detail: () => service.getPostDetail({ postId: event.postId, posts }),
+      detail: () => service.getPostDetail({ actor, postId: event.postId, posts }),
     }
     if (!actions[event.action]) throw Object.assign(new Error('不支持的商品操作'), { code: 'INVALID_ACTION' })
     return { ok: true, data: await actions[event.action]() }

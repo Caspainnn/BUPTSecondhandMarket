@@ -1,0 +1,18 @@
+.discover-page { padding: 32rpx 24rpx 48rpx; }
+.toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28rpx; }
+.heading, .subheading { display: block; }
+.heading { font-size: 42rpx; font-weight: 700; }
+.subheading { margin-top: 6rpx; color: #72808e; font-size: 24rpx; }
+.campus-picker { padding: 16rpx 22rpx; border-radius: 999rpx; background: #e4f4ff; color: #2479b8; font-size: 26rpx; }
+.post-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20rpx; }
+.post-card { overflow: hidden; border-radius: 24rpx; background: #fff; box-shadow: 0 8rpx 28rpx rgba(37, 104, 151, .08); }
+.cover { width: 100%; height: 300rpx; background: #dfeef7; }
+.post-body { display: flex; flex-direction: column; gap: 10rpx; padding: 20rpx; }
+.post-title { overflow: hidden; font-size: 28rpx; font-weight: 600; line-height: 1.45; text-overflow: ellipsis; white-space: nowrap; }
+.price { color: #e66b45; font-size: 30rpx; font-weight: 700; }
+.meta { color: #72808e; font-size: 22rpx; }
+.state-card { display: flex; flex-direction: column; align-items: center; gap: 20rpx; padding: 80rpx 24rpx; border-radius: 24rpx; background: #fff; color: #53677a; text-align: center; }
+.state-card button { width: 220rpx; border-radius: 999rpx; background: #83c7f4; font-size: 26rpx; }
+.state-card button::after { border: 0; }
+.error { color: #c2413b; }
+.footer-note { padding: 36rpx 0 12rpx; color: #8896a3; font-size: 24rpx; text-align: center; }
