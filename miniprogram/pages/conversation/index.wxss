@@ -6,8 +6,8 @@
 .bubble { max-width: 72%; padding: 18rpx 24rpx; border-radius: 24rpx 24rpx 24rpx 6rpx; background: #fff; color: #17324d; font-size: 28rpx; line-height: 1.55; word-break: break-all; }
 .mine .bubble { border-radius: 24rpx 24rpx 6rpx 24rpx; background: #83c7f4; }
 .system-message { width: 100%; color: #72808e; font-size: 23rpx; text-align: center; }
-.composer { position: fixed; right: 0; bottom: 0; left: 0; display: flex; align-items: flex-end; gap: 16rpx; padding: 18rpx 24rpx calc(18rpx + env(safe-area-inset-bottom)); background: #fff; box-shadow: 0 -4rpx 18rpx rgba(0,0,0,.05); }
-.composer textarea { min-height: 68rpx; max-height: 180rpx; flex: 1; padding: 14rpx 18rpx; border-radius: 18rpx; background: #f0f5f8; font-size: 27rpx; }
+.composer { position: fixed; right: 0; bottom: 0; left: 0; display: flex; align-items: center; gap: 16rpx; padding: 18rpx 24rpx calc(18rpx + env(safe-area-inset-bottom)); background: #fff; box-shadow: 0 -4rpx 18rpx rgba(0,0,0,.05); }
+.composer textarea { box-sizing: border-box; height: 56rpx; min-height: 56rpx; max-height: 56rpx; line-height: 36rpx; flex: 1; padding: 10rpx 18rpx; border-radius: 18rpx; background: #f0f5f8; font-size: 27rpx; }
 .composer button { width: 128rpx; margin: 0; border-radius: 999rpx; background: #83c7f4; font-size: 26rpx; }
 .composer button::after { border: 0; }
 .error, .loading { display: block; color: #c2413b; font-size: 23rpx; text-align: center; }
