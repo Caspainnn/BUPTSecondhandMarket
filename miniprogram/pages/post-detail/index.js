@@ -1,4 +1,3 @@
-const { diagnosePostImages } = require('../../services/image-diagnostics')
 const { POST_CATEGORIES, POST_CONDITIONS, CAMPUSES } = require('../../config/market')
 const { callCloud } = require('../../services/cloud-result')
 const { formatPrice } = require('../../services/post-list-state')
@@ -8,7 +7,7 @@ const { consumeProtectedResume, requireCompletedProfile } = require('../../servi
 const nameOf = (items, id) => (items.find((item) => item.id === id) || {}).name || id
 
 Page({
-  data: { state: 'loading', error: '', post: null, busy: false, imageError: false },
+  data: { state: 'loading', error: '', post: null, busy: false },
   async onLoad(options) { this.postId = options.postId; await this.load() },
   onShow() { if (this.postId && consumeProtectedResume('/pages/post-detail/index', 'contactSeller')) this.contactSeller() },
   async load() {
@@ -17,15 +16,6 @@ Page({
       const post = await getPost(this.postId)
       this.setData({ state: 'ready', post: { ...post, priceLabel: formatPrice(post.unitPriceCents), categoryName: nameOf(POST_CATEGORIES, post.categoryId), conditionName: nameOf(POST_CONDITIONS, post.conditionId), campusName: nameOf(CAMPUSES, post.campusId), unavailable: post.status !== 'active' || post.availableQuantity <= 0 } })
     } catch (error) { this.setData({ state: 'error', error: error.message }) }
-  },
-  onImageError() { this.setData({ imageError: true }) },
-  async checkImages() {
-    if (this.checkingImages) return
-    this.checkingImages = true
-    wx.showLoading({ title: '检查图片中' })
-    try { const content = await diagnosePostImages(this.postId); wx.showModal({ title: '图片检查结果', content, showCancel: false }) }
-    catch (error) { wx.showModal({ title: '检查未完成', content: error.message || '请先部署 diagnoseImages 云函数', showCancel: false }) }
-    finally { this.checkingImages = false; wx.hideLoading() }
   },
   async contactSeller() {
     if (!this.data.post) return

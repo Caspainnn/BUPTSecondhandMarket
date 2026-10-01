@@ -22,4 +22,3 @@
 .composer .send-button{display:flex;align-items:center;justify-content:center;width:80rpx;height:80rpx;padding:0;border-radius:16rpx;background:transparent}
 .send-icon{width:56rpx;height:56rpx}
 .send-button[disabled] .send-icon{opacity:.35}
-.image-help{padding:12rpx 24rpx;color:#2479b8;font-size:24rpx;background:#edf8ff}

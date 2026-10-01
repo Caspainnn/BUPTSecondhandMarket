@@ -1,4 +1,3 @@
-const { diagnosePostImages } = require('../../services/image-diagnostics')
 const { createChatState, reduceChatState, startPolling } = require('../../services/chat-state')
 const { listMessages, markRead, sendMessage, syncMessageBadge } = require('../../services/conversations')
 const { requireCompletedProfile } = require('../../services/user')
@@ -50,13 +49,5 @@ Page({
   },
   onImageError(event) { this.setData({ imageError: true }); console.warn('商品图片加载失败', event.detail.errMsg || '未知错误') },
   openPost() { if (this.data.conversation) wx.navigateTo({ url: '/pages/post-detail/index?postId=' + this.data.conversation.postId }) },
-  async checkImages() {
-    if (this.checkingImages) return
-    this.checkingImages = true
-    wx.showLoading({ title: '检查图片中' })
-    try { const content = await diagnosePostImages(this.data.conversation && this.data.conversation.postId); wx.showModal({ title: '图片检查结果', content, showCancel: false }) }
-    catch (error) { wx.showModal({ title: '检查未完成', content: error.message || '请先部署 diagnoseImages 云函数', showCancel: false }) }
-    finally { this.checkingImages = false; wx.hideLoading() }
-  },
   createTransaction() { if (!this.data.canCreateTransaction) return; wx.navigateTo({ url: `/pages/transaction-create/index?conversationId=${this.conversationId}` }) },
 })
