@@ -1,7 +1,7 @@
 <view class="chat-page">
   <view class="seller-bar">
-    <cloud-image class="seller-avatar" src="{{conversation.sellerSnapshot.avatarFileId}}" mode="aspectFill" />
-    <view class="seller-details"><text class="seller-name">{{conversation.sellerSnapshot.nickname || '卖家'}}</text><text class="seller-label">卖家</text></view>
+    <cloud-image class="seller-avatar" src="{{peer.avatarFileId}}" mode="aspectFill" />
+    <view class="seller-details"><text class="seller-name">{{peer.nickname || peerRole}}</text><text class="seller-label">{{peerRole}}</text></view>
   </view>
   <view class="product-bar">
     <view wx:if="{{conversation}}" class="product-info" bindtap="openPost">

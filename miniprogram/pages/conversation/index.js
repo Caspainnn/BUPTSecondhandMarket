@@ -6,14 +6,16 @@ const { listMessages, markRead, sendMessage, syncMessageBadge } = require('../..
 const { requireCompletedProfile } = require('../../services/user')
 
 Page({
-  data: { messages: [], draft: '', loading: true, sending: false, error: '', canCreateTransaction: false, conversation: null, imageError: false, cardBusy: false, editingMessageId: '', editForm: {}, campuses: CAMPUSES },
+  data: { messages: [], draft: '', loading: true, sending: false, error: '', canCreateTransaction: false, conversation: null, peer: null, peerRole: '', imageError: false, cardBusy: false, editingMessageId: '', editForm: {}, campuses: CAMPUSES },
   onLoad(options) { this.conversationId = options.conversationId; this.state = createChatState(this.conversationId); this.sync() },
   async onShow() {
     const user = await requireCompletedProfile()
     if (!user) return
     this.userId = user._id
     const conversation = getApp().globalData.currentConversation
-    this.setData({ conversation: conversation && conversation._id === this.conversationId ? conversation : null, imageError: false, canCreateTransaction: Boolean(conversation && conversation._id === this.conversationId && conversation.buyerId === user._id) })
+    const active = conversation && conversation._id === this.conversationId ? conversation : null
+    const isBuyer = Boolean(active && active.buyerId === user._id)
+    this.setData({ peer: active ? (isBuyer ? active.sellerSnapshot : active.buyerSnapshot) : null, peerRole: active ? (isBuyer ? '卖家' : '买家') : '', conversation: conversation && conversation._id === this.conversationId ? conversation : null, imageError: false, canCreateTransaction: Boolean(conversation && conversation._id === this.conversationId && conversation.buyerId === user._id) })
     this.stopPolling()
     this.stop = startPolling(() => this.fetchLatest(), 3000)
   },

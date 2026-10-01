@@ -18,10 +18,10 @@ test('customer pages do not expose image diagnostics or technical failure text',
  }
 })
 
-test('conversation header shows seller first, product second, then message history',()=>{
+test('conversation header shows the peer first, product second, then message history',()=>{
  const xml=fs.readFileSync('miniprogram/pages/conversation/index.wxml','utf8')
- assert.match(xml,/conversation.sellerSnapshot.avatarFileId/)
- assert.match(xml,/conversation.sellerSnapshot.nickname/)
+ assert.match(xml,/peer.avatarFileId/)
+ assert.match(xml,/peer.nickname/)
  const seller=xml.indexOf('class="seller-bar"'),product=xml.indexOf('class="product-bar"'),messages=xml.indexOf('<scroll-view')
  assert.ok(seller>=0 && seller<product && product<messages)
 })
@@ -60,4 +60,17 @@ test('pending cards expose only the latest message actions for the correct parti
  assert.equal(page.data.messages[1].canRespond,true)
  transaction.status='cancelled';page.sync()
  assert.equal(page.data.messages[1].canRespond,false)
+})
+
+test('conversation header selects the other participant for buyer and seller',async()=>{
+ const vm=require('node:vm');let page,actor='buyer'
+ const conversation={_id:'c',buyerId:'buyer',sellerId:'seller',buyerSnapshot:{nickname:'Buyer',avatarFileId:'buyer-avatar'},sellerSnapshot:{nickname:'Seller',avatarFileId:'seller-avatar'}}
+ vm.runInNewContext(fs.readFileSync('miniprogram/pages/conversation/index.js','utf8'),{
+  Page:value=>page=value,
+  getApp:()=>({globalData:{currentConversation:conversation}}),
+  require:name=>name.endsWith('/user')?{requireCompletedProfile:async()=>({_id:actor})}:name.endsWith('/chat-state')?{startPolling:()=>()=>{}}:{},
+ })
+ page.conversationId='c';page.setData=patch=>Object.assign(page.data,patch)
+ await page.onShow();assert.equal(page.data.peer.nickname,'Seller');assert.equal(page.data.peer.avatarFileId,'seller-avatar');assert.equal(page.data.canCreateTransaction,true)
+ actor='seller';await page.onShow();assert.equal(page.data.peer.nickname,'Buyer');assert.equal(page.data.peer.avatarFileId,'buyer-avatar');assert.equal(page.data.canCreateTransaction,false)
 })
