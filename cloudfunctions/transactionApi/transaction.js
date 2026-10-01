@@ -166,7 +166,7 @@ async function submitTransactionResult({ actor, transactionId, result, requestId
     const role = transaction.buyerId === actor._id ? 'buyer' : transaction.sellerId === actor._id ? 'seller' : ''
     if (!role) throw new TransactionError('FORBIDDEN', '你无权提交该交易结果')
     if (!['awaiting_handover', 'failed'].includes(transaction.status)) throw new TransactionError('STALE_STATUS', '当前交易不可提交结果')
-    if (now < Number(transaction.scheduledAt)) throw new TransactionError('RESULT_NOT_OPEN', '到达约定时间后才能提交交接结果')
+    if (result === 'success' && now < Number(transaction.scheduledAt)) throw new TransactionError('RESULT_NOT_OPEN', '到达约定时间后才能提交交接结果')
     const ownField = `${role}Result`
     const otherField = role === 'buyer' ? 'sellerResult' : 'buyerResult'
     if (transaction[ownField]) throw new TransactionError('RESULT_IMMUTABLE', '交接结果提交后不可修改')

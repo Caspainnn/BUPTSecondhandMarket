@@ -53,3 +53,4 @@
 .primary-button::after{border:0}
 .profile-links{margin-top:24rpx}
 .avatar-empty{font-size:24rpx}
+.profile-links{display:flex;justify-content:space-around;padding:24rpx}.profile-entry{display:flex;flex:1;flex-direction:column;align-items:center;gap:12rpx;font-size:25rpx;color:#53677a}.profile-entry image{width:72rpx;height:72rpx}.ongoing-heading{display:flex;justify-content:space-between;align-items:center;margin:32rpx 0 12rpx;font-size:30rpx;font-weight:600}.all-orders{font-size:24rpx;font-weight:400;color:#2479b8}.ongoing-empty{display:block;text-align:center;padding:24rpx;color:#72808e;font-size:25rpx}

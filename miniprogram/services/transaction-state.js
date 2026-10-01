@@ -25,8 +25,8 @@ function getTransactionActions(transaction, userId, now) {
   const role = transaction.buyerId === userId ? 'buyer' : transaction.sellerId === userId ? 'seller' : ''
   if (!role) return []
   if (transaction.status === 'pending_seller') return role === 'buyer' ? ['withdraw'] : ['confirm', 'reject']
-  if (transaction.status === 'awaiting_handover' && now < Number(transaction.scheduledAt)) return ['cancel']
-  if (['awaiting_handover', 'failed'].includes(transaction.status) && now >= Number(transaction.scheduledAt) && !transaction[`${role}Result`]) return ['success', 'failure']
+  if (transaction.status === 'awaiting_handover' && now < Number(transaction.scheduledAt)) return transaction[role + 'Result'] ? [] : ['cancel', 'failure']
+  if (['awaiting_handover', 'failed'].includes(transaction.status) && !transaction[role + 'Result']) return now >= Number(transaction.scheduledAt) ? ['success', 'failure'] : ['failure']
   return []
 }
 

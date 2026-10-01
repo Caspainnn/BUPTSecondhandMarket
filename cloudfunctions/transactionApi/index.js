@@ -57,7 +57,7 @@ function repository() {
     async list({ userId, role, status, cursor, limit }) {
       const participant = role ? { [`${role}Id`]: userId } : _.or([{ buyerId: userId }, { sellerId: userId }])
       const conditions = [participant]
-      if (status) conditions.push({ status })
+      if (status) conditions.push({ status: status === 'ongoing' ? _.in(service.ACTIVE_STATUSES) : status })
       if (cursor) conditions.push(_.or([{ updatedAt: _.lt(cursor.updatedAt) }, { updatedAt: _.eq(cursor.updatedAt), _id: _.lt(cursor.id) }]))
       const result = await transactions.where(_.and(conditions)).orderBy('updatedAt', 'desc').orderBy('_id', 'desc').limit(limit).get()
       const last = result.data[result.data.length - 1]

@@ -15,7 +15,7 @@ test('shows role-based pending actions', () => {
 
 test('allows cancellation before appointment and locks results until appointment', () => {
   const waiting = { ...base, status: 'awaiting_handover' }
-  assert.deepEqual(getTransactionActions(waiting, 'buyer', Date.now()), ['cancel'])
+  assert.deepEqual(getTransactionActions(waiting, 'buyer', Date.now()), ['cancel', 'failure'])
   assert.deepEqual(getTransactionActions({ ...waiting, scheduledAt: past }, 'buyer', Date.now()), ['success', 'failure'])
 })
 

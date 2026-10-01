@@ -248,3 +248,14 @@ test('revisions retain appointment boundaries and never reserve inventory', asyn
   assert.equal(transactions.state.movements.length, 0)
   assert.equal(transactions.state.messages.length, 1)
 })
+
+test('failure before the appointment releases inventory once and remains idempotent', async () => {
+  const transactions = repository(awaitingSeed())
+  const input = { actor: buyer, transactionId: 't1', result: 'failure', requestId: 'early-failure', transactions, now: NOW }
+  const result = await submitTransactionResult(input)
+  assert.equal(result.transaction.status, 'failed')
+  await submitTransactionResult(input)
+  assert.equal(transactions.state.movements.length, 1)
+  assert.equal(transactions.state.posts[0].reservedQuantity, 0)
+  assert.equal(transactions.state.posts[0].availableQuantity, 3)
+})

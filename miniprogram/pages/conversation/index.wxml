@@ -36,6 +36,8 @@
           <label><text>时间</text><picker mode="time" value="{{editForm.time}}" data-field="time" disabled="{{cardBusy}}" bindchange="patchCardEdit"><view>{{editForm.time}}<image class="card-dropdown" src="/assets/icons/dropdown.svg" /></view></picker></label>
           <view class="card-actions"><button loading="{{cardBusy}}" disabled="{{cardBusy}}" catchtap="saveCardEdit">保存修改</button><button class="card-secondary" disabled="{{cardBusy}}" catchtap="cancelCardEdit">取消修改</button></view>
         </view>
+        <view wx:if="{{item.canResult}}" class="card-actions"><button data-id="{{item.transactionId}}" data-action="success" disabled="{{cardBusy || item.successDisabled}}" catchtap="actOnCard">交接成功</button><button class="card-secondary" data-id="{{item.transactionId}}" data-action="failure" disabled="{{cardBusy}}" catchtap="actOnCard">交接失败</button></view>
+        <text wx:if="{{item.canResult && item.successDisabled}}" class="transaction-card-event">到约定时间后可确认交接成功</text>
         <text class="transaction-card-link" data-id="{{item.transactionId}}" bindtap="openTransaction">查看预约详情 ›</text>
       </view>
       <view wx:elif="{{item.type === 'system'}}" class="system-message">{{item.text}}</view>

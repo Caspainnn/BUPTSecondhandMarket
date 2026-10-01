@@ -5,8 +5,9 @@ function setup(fail=false){
  const user={nickname:'旧昵称',avatarFileId:'cloud://avatar.jpg',campusId:'campus',profileCompleted:true}
  vm.runInNewContext(fs.readFileSync(path+'.js','utf8'),{
  Page:x=>page=x,
+ setInterval:()=>1,clearInterval:()=>{},console:{warn(){}},
  require:()=>({
- getCurrentUser:async()=>user,getCampuses:async()=>[{campusId:'campus',name:'沙河'}],
+ listTransactions:async()=>({transactions:[],nextCursor:null}),getCurrentUser:async()=>user,getCampuses:async()=>[{campusId:'campus',name:'沙河'}],
  uploadAvatar:async()=> 'cloud://new.jpg',
  saveProfile:async input=>{saved=input;if(fail)throw Error('保存失败');return {...input,profileCompleted:true}},
  }),

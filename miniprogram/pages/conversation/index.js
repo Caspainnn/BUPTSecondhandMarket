@@ -1,5 +1,5 @@
-const { respondTransaction, withdrawTransaction, reviseTransaction } = require('../../services/transactions')
-const { getTransactionStatusLabel } = require('../../services/transaction-state')
+const { respondTransaction, withdrawTransaction, reviseTransaction, submitResult } = require('../../services/transactions')
+const { getTransactionActions, getTransactionStatusLabel } = require('../../services/transaction-state')
 const { CAMPUSES } = require('../../config/market')
 const { createChatState, reduceChatState, startPolling } = require('../../services/chat-state')
 const { listMessages, markRead, sendMessage, syncMessageBadge } = require('../../services/conversations')
@@ -30,7 +30,8 @@ Page({
       const isLatest = latest.get(item.transactionId) === item._id
       const card = isLatest && current ? current : item.transactionCard
       const pending = isLatest && current && current.status === 'pending_seller'
-      return { ...item, mine: item.senderId === this.userId,
+      const actions = isLatest && current ? getTransactionActions(current, this.userId, Date.now()) : []
+      return { ...item, canResult: actions.includes('success') || actions.includes('failure'), successDisabled: !actions.includes('success'), mine: item.senderId === this.userId,
         canRespond: Boolean(pending && current.sellerId === this.userId),
         canRevise: Boolean(pending && current.buyerId === this.userId),
         transactionCard: card ? { ...card, statusLabel: getTransactionStatusLabel(card.status),
@@ -84,6 +85,23 @@ Page({
   async actOnCard(event) {
     if (this.data.cardBusy) return
     const { id, action } = event.currentTarget.dataset
+    if (['success', 'failure'].includes(action)) {
+      const message = this.data.messages.find(item => item.transactionId === id && item.canResult)
+      if (!message || (action === 'success' && message.successDisabled)) return
+      this.setData({ cardBusy: true })
+      try {
+        const confirmed = await new Promise(resolve => wx.showModal({ title: action === 'success' ? '确认交接成功' : '确认交接失败', content: action === 'success' ? '请确认商品已完成交接，提交后不可修改。' : '提交失败后将释放预留库存，结果不可修改。', success: result => resolve(result.confirm), fail: () => resolve(false) }))
+        if (!confirmed) return
+        this.cardRequestIds = this.cardRequestIds || {}
+        const key = id + ':' + action
+        const requestId = this.cardRequestIds[key] || (this.cardRequestIds[key] = Date.now() + '-' + Math.random().toString(36).slice(2))
+        await submitResult(id, action, requestId)
+        delete this.cardRequestIds[key]
+        await this.fetchLatest()
+      } catch (error) { console.warn('Handover result failed', error); wx.showToast({ title: '操作未完成，请刷新后重试', icon: 'none' }); await this.fetchLatest() }
+      finally { this.setData({ cardBusy: false }) }
+      return
+    }
     const message = this.data.messages.find(item => item.transactionId === id && ((action === 'confirm' || action === 'reject') ? item.canRespond : item.canRevise))
     if (!message || !['confirm', 'reject', 'withdraw'].includes(action)) return
     this.setData({ cardBusy: true })

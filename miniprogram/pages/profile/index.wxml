@@ -16,6 +16,13 @@
       <button wx:if="{{message && !campuses.length}}" class="secondary-button" bindtap="retry">重新加载校区</button>
       <button wx:if="{{dirty || !user.profileCompleted}}" class="primary-button" loading="{{busy}}" disabled="{{busy}}" bindtap="save">保存资料</button>
     </view>
-    <view wx:if="{{user.profileCompleted}}" class="card profile-links"><button class="secondary-button" bindtap="openMyPosts">我的发布</button><button class="secondary-button" bindtap="openMyTransactions">我的交易</button></view>
+    <block wx:if="{{user.profileCompleted}}">
+      <view class="card profile-links"><view class="profile-entry" bindtap="openMyPosts"><image src="/assets/icons/my-posts.svg" mode="aspectFit" /><text>我的发布</text></view><view class="profile-entry" bindtap="openMyTransactions"><image src="/assets/icons/my-transactions.png" mode="aspectFit" /><text>我的交易</text></view></view>
+      <view class="ongoing-heading"><text>正在进行</text><text class="all-orders" bindtap="openAllOrders">全部订单 ›</text></view>
+      <text wx:if="{{ongoingError}}" class="ongoing-empty" bindtap="loadOngoing">{{ongoingError}}</text>
+      <text wx:elif="{{!ongoing.length}}" class="ongoing-empty">{{ongoingLoading ? '正在加载交易…' : '暂无正在进行的交易'}}</text>
+      <order-card wx:for="{{ongoing}}" wx:key="_id" transaction="{{item}}" user-id="{{user._id}}" bindchanged="loadOngoing" />
+      <view wx:if="{{ongoingCursor}}" class="ongoing-empty" data-more="true" bindtap="loadOngoing">查看更多正在进行的交易</view>
+    </block>
   </block>
 </view>
