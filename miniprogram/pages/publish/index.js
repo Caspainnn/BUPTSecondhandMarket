@@ -3,8 +3,9 @@ const { createPost, uploadPostImages } = require('../../services/posts')
 const { requireCompletedProfile } = require('../../services/user')
 
 Page({
-  data: { form: createPostFormState().form, status: 'loading', error: '' },
+  data: { activeTab: 'sell', form: createPostFormState().form, status: 'loading', error: '' },
   async initialize() { const user = await requireCompletedProfile(); if (!user) return; this.userId = user._id; this.state = createPostFormState({ form: { campusId: user.campusId } }); this.sync() },
+  switchTab(e) { const tab = e.currentTarget.dataset.tab; if (['sell', 'wanted'].includes(tab)) this.setData({ activeTab: tab }) },
   onLoad() { this.initialize() },
   onShow() { if (!this.state) this.initialize() },
   sync() { this.setData({ form: this.state.form, status: this.state.status, error: this.state.error }) },
@@ -15,7 +16,7 @@ Page({
   onMoveImage(e) { this.apply({ type: 'MOVE_IMAGE', ...e.detail }) },
   onFailure(e) { this.apply({ type: 'FAILURE', message: e.detail.message }) },
   async submit() {
-    if (!this.state || ['saving', 'uploading'].includes(this.state.status)) return
+    if (this.data.activeTab !== 'sell' || !this.state || ['saving', 'uploading'].includes(this.state.status)) return
     const requestId = this.state.requestId || `${Date.now()}-${Math.random().toString(36).slice(2)}`
     try {
       this.apply({ type: 'UPLOAD_START' })

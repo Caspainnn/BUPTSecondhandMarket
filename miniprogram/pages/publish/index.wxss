@@ -1,1 +1,7 @@
 .card{margin-bottom:40rpx}
+.publish-tabs{display:flex;gap:12rpx;padding:8rpx;margin-bottom:28rpx;border:1rpx solid #dbeaf4;border-radius:24rpx;background:#edf8ff}
+.publish-tab{flex:1;margin:0;padding:0;border-radius:18rpx;background:transparent;color:#72808e;font-size:30rpx;line-height:80rpx}
+.publish-tab.active{background:#83c7f4;color:#17324d;font-weight:600}
+.publish-tab::after{border:0}
+.wanted-placeholder{display:flex;flex-direction:column;gap:20rpx;font-size:28rpx;line-height:1.6}
+.wanted-title{font-size:32rpx;font-weight:600}
