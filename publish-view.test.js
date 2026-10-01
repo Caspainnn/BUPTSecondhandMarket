@@ -67,7 +67,7 @@ test('single-line fields and pickers share a centered height while textarea keep
 test('image cards use corner removal, no move controls, and an equally sized trailing add tile', () => {
   const wxml = read('miniprogram/components/post-form/index.wxml')
   const css = read('miniprogram/components/post-form/index.wxss')
-  assert.match(wxml, /class="remove-image"[^>]*data-index="{{index}}"[^>]*bindtap="remove"[^>]*><image[^>]*src="\/assets\/icons\/close.svg"[^>]*\/><\/button>/)
+  assert.match(wxml, /class="remove-image"[^>]*data-index="{{index}}"[^>]*bindtap="remove"[^>]*><image[^>]*src="\/assets\/icons\/close.svg"[^>]*\/><\/view>/)
   assert.doesNotMatch(wxml, /左移|右移|move-row|bindtap="move"/)
   assert.ok(wxml.indexOf('class="add-image"') > wxml.indexOf('class="remove-image"'))
   assert.match(wxml, /form.images.length < 6/)
@@ -102,4 +102,11 @@ test('every picker reuses the dropdown vector instead of text glyphs', () => {
     assert.ok(pickers.length)
     for (const picker of pickers) assert.match(picker[0], /src="\/assets\/icons\/dropdown.svg"/, file)
   }
+})
+test('image actions avoid native button defaults that override positioning and margins', () => {
+  const wxml = read('miniprogram/components/post-form/index.wxml')
+  const images = wxml.slice(0, wxml.indexOf('<label'))
+  assert.doesNotMatch(images, /<button\b/)
+  assert.match(images, /<view class="remove-image" aria-role="button"/)
+  assert.match(images, /<view wx:if="{{form.images.length < 6}}" class="add-image" aria-role="button"/)
 })
