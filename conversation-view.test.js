@@ -97,13 +97,13 @@ test('sending retriggers bottom positioning while polling respects reading older
  page.onHistoryBottom();page.apply({type:'MESSAGES_SUCCESS',conversationId:'c',messages:[{_id:'e',createdAt:5}]})
  assert.equal(page.data.scrollTarget,'bottom-anchor')
 })
-test('keyboard height uses the initial viewport and restores layout after blur',()=>{
+test('keyboard layout uses current viewport units and restores full height after blur',()=>{
  const {page}=conversationLayoutPage()
  page.onKeyboardHeight({detail:{height:300}})
- assert.equal(page.data.viewportHeight,700);assert.equal(page.data.keyboardHeight,300)
+ assert.equal(page.data.keyboardHeight,300)
  page.onInputBlur();assert.equal(page.data.keyboardHeight,0)
  const xml=fs.readFileSync('miniprogram/pages/conversation/index.wxml','utf8')
  assert.match(xml,/adjust-position="\{\{false\}\}"/)
- assert.match(xml,/viewportHeight - keyboardHeight/)
+ assert.match(xml,/height: calc\(100vh - /);assert.doesNotMatch(xml,/viewportHeight/)
  assert.match(xml,/scroll-into-view="\{\{scrollTarget\}\}"/)
 })

@@ -6,8 +6,8 @@ const { listMessages, markRead, sendMessage, syncMessageBadge } = require('../..
 const { requireCompletedProfile } = require('../../services/user')
 
 Page({
-  data: { viewportHeight: 0, keyboardHeight: 0, scrollTarget: '', messages: [], draft: '', loading: true, sending: false, error: '', canCreateTransaction: false, conversation: null, peer: null, peerRole: '', imageError: false, cardBusy: false, editingMessageId: '', editForm: {}, campuses: CAMPUSES },
-  onLoad(options) { const info = wx.getWindowInfo ? wx.getWindowInfo() : wx.getSystemInfoSync(); this.setData({ viewportHeight: info.windowHeight }); this.conversationId = options.conversationId; this.state = createChatState(this.conversationId); this.sync() },
+  data: { keyboardHeight: 0, scrollTarget: '', messages: [], draft: '', loading: true, sending: false, error: '', canCreateTransaction: false, conversation: null, peer: null, peerRole: '', imageError: false, cardBusy: false, editingMessageId: '', editForm: {}, campuses: CAMPUSES },
+  onLoad(options) { this.conversationId = options.conversationId; this.state = createChatState(this.conversationId); this.sync() },
   async onShow() {
     const user = await requireCompletedProfile()
     if (!user) return

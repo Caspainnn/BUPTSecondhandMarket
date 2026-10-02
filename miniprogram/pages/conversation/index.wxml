@@ -1,4 +1,4 @@
-<view class="chat-page {{keyboardHeight > 0 ? 'keyboard-open' : ''}}" style="{{viewportHeight ? 'height: ' + (viewportHeight - keyboardHeight) + 'px;' : ''}}">
+<view class="chat-page {{keyboardHeight > 0 ? 'keyboard-open' : ''}}" style="{{keyboardHeight > 0 ? 'height: calc(100vh - ' + keyboardHeight + 'px);' : ''}}">
   <view class="seller-bar">
     <cloud-image class="seller-avatar" src="{{peer.avatarFileId}}" mode="aspectFill" />
     <view class="seller-details"><text class="seller-name">{{peer.nickname || peerRole}}</text><text class="seller-label">{{peerRole}}</text></view>
