@@ -1,4 +1,4 @@
-﻿const { listConversations, syncMessageBadge } = require('../../services/conversations')
+const { listConversations, syncMessageBadge } = require('../../services/conversations')
 const { requireCompletedProfile } = require('../../services/user')
 
 Page({
@@ -27,7 +27,8 @@ Page({
     try {
       const result = await listConversations(null, 20)
       if (this.visibleToken !== token) return
-      const conversations = result.conversations.map(item => ({
+      const messageTime = item => { const value = item.lastMessageAt === undefined ? item.createdAt : item.lastMessageAt; const time = typeof value === 'number' ? value : new Date(value).getTime(); return Number.isFinite(time) ? time : 0 }
+      const conversations = [...result.conversations].sort((a, b) => messageTime(b) - messageTime(a) || (a._id < b._id ? 1 : a._id > b._id ? -1 : 0)).map(item => ({
         ...item,
         peer: item.buyerId === this.userId ? item.sellerSnapshot : item.buyerSnapshot,
         unread: item.buyerId === this.userId ? item.buyerUnread : item.sellerUnread,

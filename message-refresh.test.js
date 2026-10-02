@@ -43,3 +43,25 @@ test('application refreshes badges every fifteen seconds, skips chat pages, and 
   route = 'pages/conversation/index'; await timer.fn(); assert.equal(calls, 1)
   app.onHide(); assert.equal(timer, null); await app.refreshUnread(); assert.equal(calls, 1)
 })
+
+test('message list moves the latest appointment or text conversation to the top regardless of timestamp type',async()=>{
+ const {page}=messagePage(async()=>({conversations:[{_id:'older',buyerId:'buyer',lastMessageAt:'2026-10-01T10:00:00Z',sellerSnapshot:{}},{_id:'latest-card',buyerId:'buyer',lastMessageAt:Date.parse('2026-10-02T10:00:00Z'),sellerSnapshot:{}}],totalUnread:1}))
+ await page.onShow()
+ assert.deepEqual(Array.from(page.data.conversations,item=>item._id),['latest-card','older'])
+ page.onHide()
+})
+
+test('cloud conversation listing sorts mixed legacy timestamps before paging',async()=>{
+ const fs=require('node:fs'),vm=require('node:vm');let reads=0
+ const rows=Array.from({length:105},(_,index)=>({_id:String(index).padStart(3,'0'),buyerId:'buyer',lastMessageAt:index===104?Date.parse('2026-10-02T10:00:00Z'):'2026-10-01T10:00:00Z'}))
+ const command={or:value=>({or:value}),and:value=>({and:value}),gt:value=>({gt:value})}
+ const collection={where(query){let after='';for(const condition of query.and||[])if(condition._id)after=condition._id.gt;return {orderBy(){return this},limit(limit){this.limitValue=limit;return this},async get(){reads++;return {data:rows.filter(row=>row._id>after).slice(0,this.limitValue)}}}}}
+ const db={command,collection:()=>collection}
+ const context={exports:{},require:name=>name==='wx-server-sdk'?{init(){},database:()=>db}:{} }
+ vm.runInNewContext(fs.readFileSync('cloudfunctions/conversationApi/index.js','utf8')+'\n;globalThis.testRepository=repository',context)
+ const repository=context.testRepository()
+ const first=await repository.list({userId:'buyer',cursor:null,limit:2})
+ assert.equal(first.rows[0]._id,'104');assert.equal(reads,2)
+ const second=await repository.list({userId:'buyer',cursor:first.nextCursor,limit:2})
+ assert.ok(second.rows.every(row=>!first.rows.some(previous=>previous._id===row._id)))
+})
