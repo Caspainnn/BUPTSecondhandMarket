@@ -107,3 +107,14 @@ test('keyboard layout uses current viewport units and restores full height after
  assert.match(xml,/height: calc\(100vh - /);assert.doesNotMatch(xml,/viewportHeight/)
  assert.match(xml,/scroll-into-view="\{\{scrollTarget\}\}"/)
 })
+
+test('appointment cards distinguish the event actor including legacy system cards',()=>{
+ const {page}=conversationLayoutPage()
+ page.userId='buyer'
+ const current={buyerId:'buyer',sellerId:'seller',status:'cancelled',scheduledAt:Date.now()}
+ page.state.messages=[{_id:'own',transactionId:'t',senderId:'buyer',actorId:'buyer',transactionCard:current,currentTransaction:current},{_id:'peer',transactionId:'t',senderId:'system',recipientId:'buyer',transactionCard:current,currentTransaction:current}]
+ page.sync();assert.equal(page.data.messages[0].mine,true);assert.equal(page.data.messages[1].mine,false)
+ assert.equal(page.data.messages[0].senderLabel,'\u4f60\uff08\u4e70\u5bb6\uff09');assert.equal(page.data.messages[1].senderLabel,'\u5356\u5bb6')
+ const css=fs.readFileSync('miniprogram/pages/conversation/index.wxss','utf8')
+ assert.match(css,/\.mine \.transaction-card\{background:#2479b8/)
+})

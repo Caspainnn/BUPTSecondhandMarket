@@ -259,3 +259,19 @@ test('failure before the appointment releases inventory once and remains idempot
   assert.equal(transactions.state.posts[0].reservedQuantity, 0)
   assert.equal(transactions.state.posts[0].availableQuantity, 3)
 })
+
+test('appointment changes carry their actor and notify only the other participant once',async()=>{
+ const {reviseTransaction}=require('./transaction')
+ const transactions=repository()
+ const created=await createTransaction({actor:buyer,...validInput(),transactions,now:NOW})
+ const id=created.transaction._id
+ await reviseTransaction({actor:buyer,...validInput(),transactionId:id,quantity:1,requestId:'notify-revise',transactions,now:NOW})
+ await respondTransaction({actor:seller,transactionId:id,decision:'confirm',requestId:'notify-confirm',transactions,now:NOW})
+ const failure={actor:buyer,transactionId:id,result:'failure',requestId:'notify-failure',transactions,now:NOW}
+ await submitTransactionResult(failure);await submitTransactionResult(failure)
+ assert.deepEqual(transactions.state.messages.map(row=>row.senderId),['buyer','buyer','seller','buyer'])
+ assert.deepEqual(transactions.state.messages.map(row=>row.recipientId),['seller','seller','buyer','seller'])
+ assert.equal(transactions.state.conversations[0].sellerUnread,3)
+ assert.equal(transactions.state.conversations[0].buyerUnread,1)
+ assert.ok(transactions.state.messages.every(row=>row.actorId===row.senderId && row.transactionCard))
+})

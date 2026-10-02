@@ -15,7 +15,7 @@
   <scroll-view class="messages" scroll-y scroll-with-animation scroll-into-view="{{scrollTarget}}" bindscroll="onHistoryScroll" bindscrolltolower="onHistoryBottom" upper-threshold="80" bindscrolltoupper="loadOlder">
     <view wx:if="{{loading}}" class="loading">正在加载…</view>
     <view wx:for="{{messages}}" wx:key="_id" class="message-row {{item.mine ? 'mine' : ''}}">
-      <view wx:if="{{item.transactionCard}}" class="transaction-card">
+      <view wx:if="{{item.transactionCard}}" class="transaction-card"><text class="transaction-card-sender">{{item.senderLabel}}</text>
         <view class="transaction-card-heading"><text>预约清单</text><text class="transaction-card-status">{{item.transactionCard.statusLabel}}</text></view>
         <text class="transaction-card-title">{{item.transactionCard.postSnapshot.title}}</text>
         <text class="transaction-key">数量：{{item.transactionCard.quantity}} 件</text>

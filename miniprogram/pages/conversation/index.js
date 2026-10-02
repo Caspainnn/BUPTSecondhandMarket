@@ -31,7 +31,11 @@ Page({
       const card = isLatest && current ? current : item.transactionCard
       const pending = isLatest && current && current.status === 'pending_seller'
       const actions = isLatest && current ? getTransactionActions(current, this.userId, Date.now()) : []
-      return { ...item, canResult: actions.includes('success') || actions.includes('failure'), successDisabled: !actions.includes('success'), mine: item.senderId === this.userId,
+      const participants = current || this.data.conversation || {}
+      const actorId = item.actorId || (item.senderId !== 'system' ? item.senderId : item.recipientId === participants.buyerId ? participants.sellerId : item.recipientId === participants.sellerId ? participants.buyerId : '')
+      const roleLabel = actorId === participants.buyerId ? '买家' : actorId === participants.sellerId ? '卖家' : ''
+      const senderLabel = actorId === this.userId ? (roleLabel ? '你（' + roleLabel + '）' : '你') : roleLabel || '预约动态'
+      return { ...item, senderLabel, canResult: actions.includes('success') || actions.includes('failure'), successDisabled: !actions.includes('success'), mine: actorId === this.userId,
         canRespond: Boolean(pending && current.sellerId === this.userId),
         canRevise: Boolean(pending && current.buyerId === this.userId),
         transactionCard: card ? { ...card, statusLabel: getTransactionStatusLabel(card.status),

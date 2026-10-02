@@ -32,7 +32,7 @@ function validateInput({ quantity, scheduledAt, campusId, locationText }, post, 
 
 async function appendSystem(tx, transaction, actor, text, requestKeyValue, now) {
   const recipientId = actor._id === transaction.buyerId ? transaction.sellerId : transaction.buyerId
-  await tx.createSystemMessage({ conversationId: transaction.conversationId, transactionId: transaction._id, senderId: 'system', recipientId, type: 'system', text, transactionCard: { postSnapshot: transaction.postSnapshot, quantity: transaction.quantity, scheduledAt: transaction.scheduledAt, campusId: transaction.campusId, locationText: transaction.locationText, status: transaction.status }, requestKey: requestKeyValue, createdAt: now })
+  await tx.createSystemMessage({ conversationId: transaction.conversationId, transactionId: transaction._id, senderId: actor._id, actorId: actor._id, recipientId, type: 'system', text, transactionCard: { postSnapshot: transaction.postSnapshot, quantity: transaction.quantity, scheduledAt: transaction.scheduledAt, campusId: transaction.campusId, locationText: transaction.locationText, status: transaction.status }, requestKey: requestKeyValue, createdAt: now })
   const conversation = await tx.getConversation(transaction.conversationId)
   const patch = { lastMessageText: text, lastMessageType: 'system', lastMessageAt: now, updatedAt: now, buyerUnread: Number(conversation.buyerUnread || 0), sellerUnread: Number(conversation.sellerUnread || 0) }
   if (recipientId === transaction.buyerId) patch.buyerUnread += 1
