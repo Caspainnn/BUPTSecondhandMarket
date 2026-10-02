@@ -4,11 +4,25 @@ const { requireCompletedProfile } = require('../../services/user')
 
 Page({
   data: { activeTab: 'sell', form: createPostFormState().form, status: 'loading', error: '' },
-  async initialize() { const user = await requireCompletedProfile(); if (!user) return; this.userId = user._id; this.state = createPostFormState({ form: { campusId: user.campusId } }); this.sync() },
+  async initialize() {
+    if (this.initializing || this.state) return
+    this.initializing = true
+    try {
+      const user = await requireCompletedProfile()
+      if (!user) return
+      this.userId = user._id
+      this.defaultCampusId = user.campusId
+      this.state = createPostFormState({ form: { campusId: user.campusId } })
+      this.sync()
+    } finally { this.initializing = false }
+  },
   switchTab(e) { const tab = e.currentTarget.dataset.tab; if (['sell', 'wanted'].includes(tab)) this.setData({ activeTab: tab }) },
   onLoad() { this.initialize() },
   onShow() { if (!this.state) this.initialize() },
-  sync() { this.setData({ form: this.state.form, status: this.state.status, error: this.state.error }) },
+  sync() {
+    if (!this.state.form.campusId && this.defaultCampusId) this.state = { ...this.state, form: { ...this.state.form, campusId: this.defaultCampusId } }
+    this.setData({ form: this.state.form, status: this.state.status, error: this.state.error })
+  },
   apply(event) { this.state = reducePostFormState(this.state, event); this.sync() },
   onPatch(e) { const patch = { ...e.detail.patch }; if (patch.totalQuantity !== undefined) patch.totalQuantity = Number(patch.totalQuantity); this.apply({ type: 'PATCH_FORM', patch }) },
   onAddImages(e) { this.apply({ type: 'ADD_IMAGES', images: e.detail.images }) },

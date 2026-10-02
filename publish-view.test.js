@@ -110,3 +110,13 @@ test('image actions avoid native button defaults that override positioning and m
   assert.match(images, /<view class="remove-image" aria-role="button"/)
   assert.match(images, /<view wx:if="{{form.images.length < 6}}" class="add-image" aria-role="button"/)
 })
+test('new publish forms restore the profile campus after saving without overriding a selected draft campus',()=>{
+ const page=loadPage()
+ const {createPostFormState}=require('./miniprogram/services/post-form-state')
+ page.defaultCampusId='bupt-shahe';page.state=createPostFormState();page.sync()
+ assert.equal(page.data.form.campusId,'bupt-shahe')
+ page.apply({type:'PATCH_FORM',patch:{campusId:'bupt-xitucheng',title:'Draft'}})
+ page.sync();assert.equal(page.data.form.campusId,'bupt-xitucheng')
+ page.apply({type:'SAVE_SUCCESS',post:{_id:'post'}})
+ assert.equal(page.data.form.campusId,'bupt-shahe');assert.equal(page.data.form.title,'')
+})
