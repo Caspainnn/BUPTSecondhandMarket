@@ -48,9 +48,9 @@ page { height: 100%; overflow: hidden; background: #fff; }
 .keyboard-open .composer{padding-bottom:18rpx}
 .keyboard-open .composer textarea{height:144rpx;min-height:144rpx;max-height:144rpx;padding:18rpx;line-height:36rpx}
 .bottom-anchor{height:1rpx}
-.transaction-card-sender{font-size:23rpx;font-weight:600;color:#72808e}
-.mine .transaction-card{background:#2479b8;border-color:#2479b8;color:#fff}
+.transaction-card{border-radius:20rpx 20rpx 20rpx 0}
+.mine .transaction-card{background:#2479b8;border-color:#2479b8;color:#fff;border-radius:20rpx 20rpx 0 20rpx}
 .mine .transaction-card-heading,.mine .transaction-card-status,.mine .transaction-card-title,.mine .transaction-key,.mine .transaction-card-link{color:#fff}
-.mine .transaction-card-event,.mine .transaction-card-sender{color:#e4f4ff}
+.mine .transaction-card-event{color:#e4f4ff}
 .mine .transaction-card-link{border-top-color:rgba(255,255,255,.25)}
 .mine .card-editor{color:#17324d}
