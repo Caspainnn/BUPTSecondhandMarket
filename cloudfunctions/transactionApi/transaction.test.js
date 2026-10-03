@@ -58,7 +58,7 @@ test('only the buyer can create from their conversation with an authoritative po
   assert.equal(transaction.status, 'pending_seller')
   assert.equal(transaction.buyerId, 'buyer')
   assert.equal(transaction.sellerId, 'seller')
-  assert.deepEqual(transaction.postSnapshot, { postId: 'post', title: '教材', coverFileId: 'cloud://cover.jpg', unitPriceCents: 1000 })
+  assert.deepEqual(transaction.postSnapshot, { direction: 'provide', contentType: 'item', postId: 'post', title: '教材', coverFileId: 'cloud://cover.jpg', unitPriceCents: 1000 })
   await assert.rejects(createTransaction({ actor: seller, ...validInput(), requestId: 'seller-create', transactions, now: NOW }), (error) => error.code === 'BUYER_ONLY')
 })
 

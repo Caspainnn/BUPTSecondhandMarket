@@ -38,31 +38,37 @@ function validateQuantity(value) {
 }
 
 function validatePostInput(input = {}) {
+  const direction = input.direction || 'provide'
+  const contentType = input.contentType || 'item'
+  if (!['provide', 'need'].includes(direction) || !['item', 'service'].includes(contentType)) throw new PostError('INVALID_TYPE', '请选择有效的信息类型')
+  const goods = direction === 'provide' && contentType === 'item'
   const title = boundedText(input.title, 2, 30, 'INVALID_TITLE', '标题需为 2 至 30 个字符')
   const description = boundedText(input.description, 0, 1000, 'INVALID_DESCRIPTION', '描述不能超过 1000 个字符')
   const images = Array.isArray(input.imageFileIds) ? input.imageFileIds : []
-  if (images.length < 1 || images.length > 6 || images.some((id) => typeof id !== 'string' || !/^cloud:\/\/.+\.(?:jpe?g|png|webp)$/i.test(id))) {
-    throw new PostError('INVALID_IMAGES', '请上传 1 至 6 张 JPEG、PNG 或 WebP 图片')
+  if (images.length > 6 || images.some((id) => typeof id !== 'string' || !/^cloud:\/\/.+\.(?:jpe?g|png|webp)$/i.test(id))) {
+    throw new PostError('INVALID_IMAGES', '最多上传 6 张 JPEG、PNG 或 WebP 图片')
   }
-  if (!CATEGORY_IDS.has(input.categoryId)) throw new PostError('INVALID_CATEGORY', '请选择有效分类')
-  if (!CONDITION_IDS.has(input.conditionId)) throw new PostError('INVALID_CONDITION', '请选择有效的新旧程度')
-  if (!CAMPUS_IDS.has(input.campusId)) throw new PostError('INVALID_CAMPUS', '请选择有效校区')
+  const categoryId = contentType === 'service' ? 'service' : input.categoryId
+  if (contentType === 'item' && !CATEGORY_IDS.has(categoryId)) throw new PostError('INVALID_CATEGORY', '请选择有效分类')
+  if (goods && !CONDITION_IDS.has(input.conditionId)) throw new PostError('INVALID_CONDITION', '请选择有效的新旧程度')
+  if (!CAMPUS_IDS.has(input.campusId) && !(contentType === 'service' && input.campusId === '')) throw new PostError('INVALID_CAMPUS', '请选择有效校区')
 
-  const defect = typeof input.defectDescription === 'string' ? input.defectDescription.trim() : ''
-  if (input.conditionId === 'partially_faulty') {
+  const defect = goods && typeof input.defectDescription === 'string' ? input.defectDescription.trim() : ''
+  if (goods && input.conditionId === 'partially_faulty') {
     boundedText(defect, 2, 200, 'INVALID_DEFECT_DESCRIPTION', '请填写 2 至 200 个字符的故障说明')
   } else if (defect) {
     throw new PostError('INVALID_DEFECT_DESCRIPTION', '只有部分功能异常商品需要故障说明')
   }
 
   return {
+    direction,
+    contentType,
     title,
     description,
     imageFileIds: [...images],
-    categoryId: input.categoryId,
-    unitPriceCents: parsePriceToCents(input.price),
-    totalQuantity: validateQuantity(input.totalQuantity),
-    conditionId: input.conditionId,
+    categoryId,
+    unitPriceCents: direction === 'need' && (input.price === '' || input.price == null) ? null : parsePriceToCents(input.price),
+    ...(goods ? { totalQuantity: validateQuantity(input.totalQuantity), conditionId: input.conditionId } : {}),
     defectDescription: defect,
     schoolId: 'bupt',
     campusId: input.campusId,

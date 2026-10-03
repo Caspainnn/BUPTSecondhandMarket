@@ -3,19 +3,11 @@
   <view wx:if="{{state === 'loading'}}" class="card profile-state"><text class="state-title">个人资料</text><text class="muted">正在加载微信身份…</text></view>
   <view wx:elif="{{state === 'error'}}" class="card profile-state"><text class="error-text">{{message}}</text><button class="secondary-button" bindtap="retry">重试</button></view>
   <block wx:else>
-    <view class="card profile-state">
-      <view class="avatar-picker">
-        <cloud-image wx:if="{{form.avatarFileId}}" class="avatar" src="{{form.avatarFileId}}" mode="aspectFill" />
-        <view wx:else class="avatar avatar-empty">选择头像</view>
-        <button class="avatar-button" aria-label="修改头像" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar" disabled="{{busy}}"></button>
-      </view>
-      <text class="muted">点击头像、昵称或校区即可修改</text>
-      <label class="profile-field"><text>昵称</text><input class="profile-input" type="nickname" maxlength="20" value="{{form.nickname}}" placeholder="请输入昵称" bindinput="onNicknameInput" disabled="{{busy}}" /></label>
-      <label class="profile-field"><text>常驻校区</text><picker range="{{campuses}}" range-key="name" value="{{campusIndex}}" bindchange="onCampusChange" disabled="{{busy || !campuses.length}}"><view class="profile-picker"><text>{{campusIndex < 0 ? '请选择常驻校区' : campuses[campusIndex].name}}</text><image class="dropdown-icon" src="/assets/icons/dropdown.svg" mode="aspectFit" /></view></picker></label>
-      <text wx:if="{{!user.profileCompleted}}" class="muted">完成头像、昵称和常驻校区后即可使用完整功能</text>
-      <text wx:if="{{message}}" class="error-text">{{message}}</text>
-      <button wx:if="{{message && !campuses.length}}" class="secondary-button" bindtap="retry">重新加载校区</button>
-      <button wx:if="{{dirty || !user.profileCompleted}}" class="primary-button" loading="{{busy}}" disabled="{{busy}}" bindtap="save">保存资料</button>
+    <view class="card profile-summary" bindtap="openProfileEdit" aria-role="button" aria-label="编辑个人资料">
+      <cloud-image wx:if="{{user.avatarFileId}}" class="summary-avatar" src="{{user.avatarFileId}}" mode="aspectFill" />
+      <view wx:else class="summary-avatar summary-empty">头像</view>
+      <view class="summary-details"><text class="summary-nickname">{{user.nickname || '未设置昵称'}}</text><text class="summary-contact">联系方式：{{user.contactInfo || '未填写'}}</text><text class="summary-campus">{{campusIndex < 0 ? '未设置常驻校区' : campuses[campusIndex].name}}</text></view>
+      <text class="summary-chevron">›</text>
     </view>
     <block wx:if="{{user.profileCompleted}}">
       <view class="card profile-links"><view class="profile-entry" bindtap="openMyPosts"><image src="/assets/icons/my-posts.svg" mode="aspectFit" /><text>我的发布</text></view><view class="profile-entry" bindtap="openMyTransactions"><image class="transactions-entry-icon" src="/assets/icons/my-transactions.png" mode="aspectFit" /><text>我的交易</text></view></view>

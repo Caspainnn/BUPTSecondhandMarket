@@ -14,4 +14,6 @@ function syncMessageBadge(totalUnread, tabIndex = 2) {
   else wx.removeTabBarBadge({ index: tabIndex })
 }
 
-module.exports = { listConversations, listMessages, markRead, openConversation, sendMessage, syncMessageBadge }
+const sendPostCard = (conversationId, postId, requestId) => messageAction('sendPostCard', { conversationId, postId, requestId })
+
+module.exports = { sendPostCard, listConversations, listMessages, markRead, openConversation, sendMessage, syncMessageBadge }

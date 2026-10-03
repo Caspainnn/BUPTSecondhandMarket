@@ -27,7 +27,7 @@ test('own product always explains self-chat restriction without a cloud request'
     const s = setup({ isOwner: true, unavailable })
     await s.page.contactSeller()
     assert.equal(s.calls.length, 0)
-    assert.equal(s.modals[0]?.content, '这个商品是你自己想要卖的，所以不能和自己聊一聊。')
+    assert.equal(s.modals[0]?.content, '这是你自己发布的信息，不能和自己聊一聊。')
     assert.equal(s.modals[0]?.showCancel, false)
   }
 })

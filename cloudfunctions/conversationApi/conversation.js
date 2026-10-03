@@ -20,18 +20,21 @@ async function openConversation({ actor, postId, requestId, conversations, now }
   const post = await conversations.findPost(postId)
   if (!post) throw new ConversationError('POST_NOT_FOUND', '商品不存在')
   if (post.ownerId === actor._id) throw new ConversationError('SELF_CONTACT', '不能联系自己发布的商品')
-  const key = uniqueKey(post._id, actor._id, post.ownerId)
+  const need = post.direction === 'need'
+  const key = uniqueKey(post._id, need ? post.ownerId : actor._id, need ? actor._id : post.ownerId)
   const existing = await conversations.findByKey(key)
   if (existing) return { conversation: existing, created: false }
-  if (post.status !== 'active' || post.availableQuantity <= 0) throw new ConversationError('POST_UNAVAILABLE', '商品当前不可预约')
+  if (post.status !== 'active' || (!need && post.contentType !== 'service' && post.availableQuantity <= 0)) throw new ConversationError('POST_UNAVAILABLE', '信息当前不可预约')
+  const owner = { nickname: post.ownerNickname, avatarFileId: post.ownerAvatarFileId }
+  const visitor = { nickname: actor.nickname, avatarFileId: actor.avatarFileId }
   const data = {
     uniqueKey: key,
     postId: post._id,
-    buyerId: actor._id,
-    sellerId: post.ownerId,
-    buyerSnapshot: { nickname: actor.nickname, avatarFileId: actor.avatarFileId },
-    sellerSnapshot: { nickname: post.ownerNickname, avatarFileId: post.ownerAvatarFileId },
-    postSnapshot: { postId: post._id, title: post.title, coverFileId: post.imageFileIds[0], unitPriceCents: post.unitPriceCents },
+    buyerId: need ? post.ownerId : actor._id,
+    sellerId: need ? actor._id : post.ownerId,
+    buyerSnapshot: need ? owner : visitor,
+    sellerSnapshot: need ? visitor : owner,
+    postSnapshot: { postId: post._id, title: post.title, coverFileId: (post.imageFileIds || [])[0] || '', unitPriceCents: post.unitPriceCents == null ? null : post.unitPriceCents, direction: post.direction || 'provide', contentType: post.contentType || 'item' },
     buyerUnread: 0,
     sellerUnread: 0,
     lastMessageText: '',

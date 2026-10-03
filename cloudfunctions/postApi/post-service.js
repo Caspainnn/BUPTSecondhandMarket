@@ -29,9 +29,7 @@ async function createPost({ actor, input, requestId, posts, now }) {
     ownerNickname: actor.nickname,
     ownerAvatarFileId: actor.avatarFileId,
     ...normalized,
-    availableQuantity: normalized.totalQuantity,
-    reservedQuantity: 0,
-    soldQuantity: 0,
+    ...(normalized.totalQuantity ? { availableQuantity: normalized.totalQuantity, reservedQuantity: 0, soldQuantity: 0 } : {}),
     status: 'active',
     createRequestId: normalizedRequestId,
     publishedAt: now,
@@ -52,6 +50,10 @@ async function ownedPost(actor, postId, posts) {
 async function updatePost({ actor, postId, input, posts, now }) {
   const current = await ownedPost(actor, postId, posts)
   const normalized = validatePostInput(input)
+  if ((current.direction || 'provide') !== normalized.direction || (current.contentType || 'item') !== normalized.contentType) throw new PostError('TYPE_IMMUTABLE', '已发布信息不能切换方向或物品/服务类型，请重新发布')
+  if (normalized.direction === 'need' || normalized.contentType === 'service') {
+    return { post: await posts.update(postId, { ...normalized, updatedAt: now }) }
+  }
   validateInventoryEdit({
     totalQuantity: normalized.totalQuantity,
     reservedQuantity: current.reservedQuantity,
@@ -65,12 +67,20 @@ async function updatePost({ actor, postId, input, posts, now }) {
 async function setPostStatus({ actor, postId, status, posts, now }) {
   const current = await ownedPost(actor, postId, posts)
   if (!['active', 'offline'].includes(status)) throw new PostError('INVALID_STATUS', '商品状态无效')
-  if (status === 'active' && current.availableQuantity <= 0) throw new PostError('NO_AVAILABLE_STOCK', '商品暂无可预约库存')
+  if (current.status === 'completed') throw new PostError('NEED_COMPLETED', '已完成的需求不能重新开放，请重新发布')
+  if (status === 'active' && (current.direction || 'provide') === 'provide' && (current.contentType || 'item') === 'item' && current.availableQuantity <= 0) throw new PostError('NO_AVAILABLE_STOCK', '商品暂无可预约库存')
   return { post: await posts.update(postId, { status, updatedAt: now }) }
 }
 
-async function listPosts({ campusId, cursor, limit, posts }) {
-  const query = { campusId: campusId || '', cursor: cursor || null, limit: Math.min(Math.max(Number(limit) || 20, 1), 20) }
+async function listPosts({ campusId, direction, contentType, categoryId, categoryIds, sort = 'newest', priceSort = '', keyword = '', cursor, limit, posts }) {
+  if (direction && !['provide', 'need'].includes(direction)) throw new PostError('INVALID_TYPE', '信息方向无效')
+  if (contentType && !['item', 'service'].includes(contentType)) throw new PostError('INVALID_TYPE', '内容类型无效')
+  if (!['comprehensive', 'newest', 'oldest', 'price_asc', 'price_desc'].includes(sort)) throw new PostError('INVALID_SORT', '排序方式无效')
+  if (!['', 'price_asc', 'price_desc'].includes(priceSort)) throw new PostError('INVALID_SORT', '价格排序方式无效')
+  if (typeof keyword !== 'string' || [...keyword.trim()].length > 50) throw new PostError('INVALID_SEARCH', '搜索词不能超过 50 个字符')
+  const selected = categoryIds === undefined ? (categoryId ? [categoryId] : []) : categoryIds
+  if (!Array.isArray(selected) || selected.length > 8 || selected.some(id => !['digital', 'books', 'mobility', 'daily', 'fashion', 'sports', 'tickets', 'other'].includes(id))) throw new PostError('INVALID_CATEGORY', '物品分类无效')
+  const query = { keyword: keyword.trim(), sort: priceSort || sort, timeSort: sort === 'oldest' ? 'asc' : 'desc', campusId: campusId || '', ...(direction ? { direction } : {}), ...(contentType ? { contentType } : {}), ...(selected.length && contentType !== 'service' ? { categoryIds: [...new Set(selected)], contentType: 'item' } : {}), cursor: cursor || null, limit: Math.min(Math.max(Number(limit) || 20, 1), 20) }
   const result = await posts.listPublic(query)
   return { posts: result.rows.map(publicPost), nextCursor: result.nextCursor, query }
 }

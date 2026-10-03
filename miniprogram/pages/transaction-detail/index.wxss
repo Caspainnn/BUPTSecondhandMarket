@@ -4,3 +4,5 @@
 .event:last-child { border-bottom: 0; }
 .event-label { font-weight: 600; color: #17324d; }
 .event-time, .event-reason { font-size: 24rpx; color: #72808e; }
+
+.actions button{box-sizing:border-box;border:1rpx solid #83c7f4;color:#17324d}.actions .action-secondary{border-color:#c6dce9;background:#f9fcfe;color:#53677a}

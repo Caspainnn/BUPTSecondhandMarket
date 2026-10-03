@@ -21,6 +21,16 @@ test('failed cloud resolution does not render cloud ID as local path and emits e
  assert.equal(s.instance.data.resolvedSrc,'')
  assert.equal(s.events[0][0],'error')
 })
+
+test('repeated chat updates retain the same image without clearing it or resolving again',async()=>{
+ const s=setup(), patches=[]
+ s.instance.setData=patch=>{patches.push(patch);Object.assign(s.instance.data,patch)}
+ await s.instance.resolveSource('cloud://env/image.jpg')
+ patches.length=0
+ await s.instance.resolveSource('cloud://env/image.jpg')
+ assert.equal(s.requests.length,1)
+ assert.equal(patches.length,0)
+})
 test('all dynamic image sources use global cloud image component',()=>{
  const app=JSON.parse(fs.readFileSync('miniprogram/app.json','utf8'))
  assert.equal(app.usingComponents['cloud-image'],'/components/cloud-image/index')

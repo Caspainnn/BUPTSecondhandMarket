@@ -26,7 +26,8 @@ function validateProfile(input = {}) {
     throw new ProfileError('INVALID_CAMPUS', '请选择常驻校区')
   }
 
-  return { nickname, avatarFileId, campusId }
+  if (input.contactInfo !== undefined && (typeof input.contactInfo !== 'string' || [...input.contactInfo.trim()].length > 100)) throw new ProfileError('INVALID_CONTACT', '联系方式不能超过 100 个字符')
+  return { nickname, avatarFileId, campusId, ...(input.contactInfo !== undefined ? { contactInfo: input.contactInfo.trim() } : {}) }
 }
 
 async function updateUserProfile({ openid, input, users, campuses, now }) {
@@ -55,6 +56,7 @@ async function updateUserProfile({ openid, input, users, campuses, now }) {
       avatarFileId: profile.avatarFileId,
       schoolId: 'bupt',
       campusId: profile.campusId,
+      ...(profile.contactInfo !== undefined ? { contactInfo: profile.contactInfo } : {}),
       profileCompleted: true,
       updatedAt: now,
     })

@@ -26,11 +26,11 @@ const CAMPUSES = [
 const POST_LIMITS = {
   titleMin: 2,
   titleMax: 30,
-  descriptionMin: 10,
+  descriptionMin: 0,
   descriptionMax: 1000,
-  imageMin: 1,
+  imageMin: 0,
   imageMax: 6,
-  imageMaxBytes: 2 * 1024 * 1024,
+  imageMaxBytes: 5 * 1024 * 1024,
   priceMaxCents: 99999999,
   quantityMin: 1,
   quantityMax: 99,
@@ -53,5 +53,6 @@ module.exports = {
   POST_CATEGORIES,
   POST_CONDITIONS,
   POST_LIMITS,
+  SERVICE_APPOINTMENT_CAMPUSES: [{ id: '', name: '线上' }, ...CAMPUSES],
   TRANSACTION_LIMITS,
 }

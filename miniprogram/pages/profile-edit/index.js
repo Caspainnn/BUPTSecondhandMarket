@@ -27,6 +27,7 @@ Page({
       this.profileState = createProfileState({
         form: {
           nickname: user.nickname || '',
+          contactInfo: user.contactInfo || '',
           avatarFileId: user.avatarFileId || '',
           avatarPreview: user.avatarFileId || '',
           campusId: user.campusId || '',
@@ -61,6 +62,8 @@ Page({
       patch: { nickname: event.detail.value },
     })
   },
+  editField(event) { this.setData({ activeField: event.currentTarget.dataset.field }) },
+  onContactInput(event) { this.applyEvent({ type: 'PATCH_FORM', patch: { contactInfo: event.detail.value } }) },
 
   onCampusChange(event) {
     const campusIndex = Number(event.detail.value)
@@ -99,6 +102,7 @@ Page({
         nickname: this.profileState.form.nickname,
         avatarFileId: this.profileState.form.avatarFileId,
         campusId: this.profileState.form.campusId,
+        contactInfo: this.profileState.form.contactInfo || '',
       })
       this.applyEvent({ type: 'SAVE_SUCCESS', user })
       prepareProtectedResume()

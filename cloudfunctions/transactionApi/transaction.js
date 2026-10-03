@@ -20,19 +20,31 @@ function normalizeReason(value, required = false) {
   if ((required && reason.length < 2) || reason.length > 200) throw new TransactionError('INVALID_REASON', '原因须为 2 至 200 个字符')
   return reason
 }
-function validateInput({ quantity, scheduledAt, campusId, locationText }, post, now) {
-  if (!Number.isInteger(quantity) || quantity < 1 || quantity > 99 || quantity > post.availableQuantity) throw new TransactionError('INVALID_QUANTITY', '预约数量无效')
+const managesInventory = post => post.direction !== 'need' && post.contentType !== 'service'
+const transactionHasInventory = transaction => transaction.inventoryManaged !== false
+async function releaseNeed(tx, transaction, now, completed = false) {
+  if (!transaction.needPostId && (!transaction.postSnapshot || transaction.postSnapshot.direction !== 'need')) return
+  const post = await tx.getPost(transaction.needPostId || transaction.postId)
+  if (post && post.activeTransactionId === transaction._id) await tx.updatePost(post._id, { activeTransactionId: '', ...(completed ? { status: 'completed' } : {}), updatedAt: now })
+}
+function validateInput({ quantity, scheduledAt, campusId, locationText, itemDescription, fulfillmentMode }, post, now) {
+  const service = post.contentType === 'service'
+  if (service) quantity = 1
+  if (!Number.isInteger(quantity) || quantity < 1 || quantity > 99 || (managesInventory(post) && quantity > post.availableQuantity)) throw new TransactionError('INVALID_QUANTITY', '预约数量无效')
   const time = typeof scheduledAt === 'number' ? scheduledAt : Date.parse(scheduledAt)
   if (!Number.isFinite(time) || time < Math.floor(now / 60000) * 60000 || time > now + 14 * 24 * 60 * 60 * 1000) throw new TransactionError('INVALID_SCHEDULE', '约定时间不能早于当前分钟且不超过 14 天')
-  if (!CAMPUSES.includes(campusId)) throw new TransactionError('INVALID_CAMPUS', '请选择有效校区')
+  const online = service && fulfillmentMode === 'online'
+  if (!online && !CAMPUSES.includes(campusId)) throw new TransactionError('INVALID_CAMPUS', '请选择有效校区')
   const location = typeof locationText === 'string' ? locationText.trim() : ''
   if (location.length < 2 || location.length > 50) throw new TransactionError('INVALID_LOCATION', '交接地点须为 2 至 50 个字符')
-  return { quantity, scheduledAt: time, campusId, locationText: location }
+  const description = typeof itemDescription === 'string' ? itemDescription.trim() : ''
+  if (post.direction === 'need' && !service && (description.length < 2 || description.length > 200)) throw new TransactionError('INVALID_ITEM_DESCRIPTION', '请填写 2 至 200 字的物品说明')
+  return { quantity, scheduledAt: time, campusId: online ? '' : campusId, locationText: location, ...(service || post.direction === 'need' ? { itemDescription: description, fulfillmentMode: online ? 'online' : 'offline' } : {}) }
 }
 
 async function appendSystem(tx, transaction, actor, text, requestKeyValue, now) {
   const recipientId = actor._id === transaction.buyerId ? transaction.sellerId : transaction.buyerId
-  await tx.createSystemMessage({ conversationId: transaction.conversationId, transactionId: transaction._id, senderId: actor._id, actorId: actor._id, recipientId, type: 'system', text, transactionCard: { postSnapshot: transaction.postSnapshot, quantity: transaction.quantity, scheduledAt: transaction.scheduledAt, campusId: transaction.campusId, locationText: transaction.locationText, status: transaction.status }, requestKey: requestKeyValue, createdAt: now })
+  await tx.createSystemMessage({ conversationId: transaction.conversationId, transactionId: transaction._id, senderId: actor._id, actorId: actor._id, recipientId, type: 'system', text, transactionCard: { postSnapshot: transaction.postSnapshot, quantity: transaction.quantity, scheduledAt: transaction.scheduledAt, campusId: transaction.campusId, locationText: transaction.locationText, status: transaction.status, ...(transaction.fulfillmentMode ? { fulfillmentMode: transaction.fulfillmentMode, itemDescription: transaction.itemDescription || '' } : {}) }, requestKey: requestKeyValue, createdAt: now })
   const conversation = await tx.getConversation(transaction.conversationId)
   const patch = { lastMessageText: text, lastMessageType: 'system', lastMessageAt: now, updatedAt: now, buyerUnread: Number(conversation.buyerUnread || 0), sellerUnread: Number(conversation.sellerUnread || 0) }
   if (recipientId === transaction.buyerId) patch.buyerUnread += 1
@@ -40,7 +52,7 @@ async function appendSystem(tx, transaction, actor, text, requestKeyValue, now) 
   await tx.updateConversation(transaction.conversationId, patch)
 }
 
-async function createTransaction({ actor, conversationId, quantity, scheduledAt, campusId, locationText, requestId: request, transactions, now }) {
+async function createTransaction({ actor, conversationId, linkedPostId, quantity, scheduledAt, campusId, locationText, itemDescription, fulfillmentMode, requestId: request, transactions, now }) {
   requireActor(actor)
   const key = requestKey(actor, 'create', request)
   return transactions.runTransaction(async (tx) => {
@@ -50,22 +62,36 @@ async function createTransaction({ actor, conversationId, quantity, scheduledAt,
     if (!conversation) throw new TransactionError('CONVERSATION_NOT_FOUND', '会话不存在')
     if (conversation.buyerId !== actor._id) throw new TransactionError('BUYER_ONLY', '只能由买家发起交易清单')
     if (await tx.findActive(conversationId)) throw new TransactionError('ACTIVE_TRANSACTION_EXISTS', '该会话已有进行中的交易')
-    const post = await tx.getPost(conversation.postId)
-    if (!post || post.ownerId !== conversation.sellerId) throw new TransactionError('POST_NOT_FOUND', '商品不存在')
-    if (post.status !== 'active' || post.availableQuantity <= 0) throw new TransactionError('POST_UNAVAILABLE', '商品当前不可预约')
-    const input = validateInput({ quantity, scheduledAt, campusId, locationText }, post, now)
+    const origin = await tx.getPost(conversation.postId)
+    if (!origin || origin.ownerId !== (origin.direction === 'need' ? conversation.buyerId : conversation.sellerId)) throw new TransactionError('POST_NOT_FOUND', '信息不存在')
+    if (origin.status !== 'active') throw new TransactionError('POST_UNAVAILABLE', '原信息当前不可预约')
+    if (origin.direction === 'need' && origin.activeTransactionId) throw new TransactionError('ACTIVE_TRANSACTION_EXISTS', '该需求已有进行中的预约')
+    const post = linkedPostId ? await tx.getPost(linkedPostId) : origin
+    if (linkedPostId && (!post || post.ownerId !== conversation.sellerId || !managesInventory(post))) throw new TransactionError('INVALID_LINKED_POST', '只能预约当前卖家提供的物品')
+    if (post.status !== 'active' || (managesInventory(post) && post.availableQuantity <= 0)) throw new TransactionError('POST_UNAVAILABLE', '信息当前不可预约')
+    if (post.direction === 'need' && post.activeTransactionId) throw new TransactionError('ACTIVE_TRANSACTION_EXISTS', '该需求已有进行中的预约')
+    const input = validateInput({ quantity, scheduledAt, campusId, locationText, itemDescription, fulfillmentMode }, post, now)
     const transaction = await tx.createTransaction({
       conversationId, postId: post._id, buyerId: conversation.buyerId, sellerId: conversation.sellerId,
-      postSnapshot: { postId: post._id, title: post.title, coverFileId: post.imageFileIds[0], unitPriceCents: post.unitPriceCents },
+      inventoryManaged: managesInventory(post),
+      ...(linkedPostId ? { reservedAtCreate: true } : {}),
+      ...(linkedPostId && origin.direction === 'need' ? { needPostId: origin._id } : {}),
+      postSnapshot: { postId: post._id, title: post.title, coverFileId: (post.imageFileIds || [])[0] || '', unitPriceCents: post.unitPriceCents == null ? null : post.unitPriceCents, direction: post.direction || 'provide', contentType: post.contentType || 'item' },
       ...input, status: 'pending_seller', activeKey: 'active', buyerResult: '', sellerResult: '', createRequestKey: key, createdAt: now, updatedAt: now,
     })
+    if (origin.direction === 'need') await tx.updatePost(origin._id, { activeTransactionId: transaction._id, updatedAt: now })
+    if (linkedPostId) {
+      const inventory = reserveInventory(post, input.quantity, { transactionId: transaction._id, requestKey: key, now })
+      await tx.updatePost(post._id, { ...inventory.patch, updatedAt: now })
+      await tx.createMovement(inventory.movement)
+    }
     await tx.createEvent({ transactionId: transaction._id, actorId: actor._id, type: 'created', requestId: requestId(request), requestKey: key, createdAt: now })
     await appendSystem(tx, transaction, actor, '买家发起预约购买，等待卖家确认', key, now)
     return { transaction, created: true }
   })
 }
 
-async function reviseTransaction({ actor, transactionId, quantity, scheduledAt, campusId, locationText, requestId: request, transactions, now }) {
+async function reviseTransaction({ actor, transactionId, quantity, scheduledAt, campusId, locationText, itemDescription, fulfillmentMode, requestId: request, transactions, now }) {
   requireActor(actor)
   const key = requestKey(actor, 'revise', request)
   return transactions.runTransaction(async tx => {
@@ -76,8 +102,14 @@ async function reviseTransaction({ actor, transactionId, quantity, scheduledAt, 
     if (current.buyerId !== actor._id) throw new TransactionError('BUYER_ONLY', '只能由买家修改预约')
     if (current.status !== 'pending_seller') throw new TransactionError('STALE_STATUS', '卖家已处理预约，不能再修改')
     const post = await tx.getPost(current.postId)
-    if (!post || post.status !== 'active' || post.availableQuantity <= 0) throw new TransactionError('POST_UNAVAILABLE', '商品当前不可预约')
-    const input = validateInput({ quantity, scheduledAt, campusId, locationText }, post, now)
+    if (!post || (managesInventory(post) ? post.status !== 'active' || (!current.reservedAtCreate && post.availableQuantity <= 0) : !['active', 'offline'].includes(post.status))) throw new TransactionError('POST_UNAVAILABLE', '信息当前不可预约')
+    const input = validateInput({ quantity, scheduledAt, campusId, locationText, itemDescription: itemDescription === undefined ? current.itemDescription : itemDescription, fulfillmentMode: fulfillmentMode || current.fulfillmentMode }, current.reservedAtCreate ? { ...post, availableQuantity: post.availableQuantity + current.quantity } : post, now)
+    if (current.reservedAtCreate && input.quantity !== current.quantity) {
+      const delta = input.quantity - current.quantity
+      const inventory = (delta > 0 ? reserveInventory : releaseInventory)(post, Math.abs(delta), { transactionId, requestKey: key, now })
+      await tx.updatePost(post._id, { ...inventory.patch, updatedAt: now })
+      await tx.createMovement(inventory.movement)
+    }
     const updated = await tx.updateTransaction(transactionId, { ...input, updatedAt: now })
     await tx.createEvent({ transactionId, actorId: actor._id, type: 'modified', requestId: requestId(request), requestKey: key, createdAt: now })
     await appendSystem(tx, updated, actor, '买家修改了预约清单，等待卖家确认', key, now)
@@ -97,15 +129,24 @@ async function respondTransaction({ actor, transactionId, decision, reason, requ
     if (transaction.status !== 'pending_seller') throw new TransactionError('STALE_STATUS', '交易状态已变化，请刷新')
     const post = await tx.getPost(transaction.postId)
     if (decision === 'confirm') {
-      const inventory = reserveInventory(post, transaction.quantity, { transactionId, requestKey: key, now })
-      const updatedPost = await tx.updatePost(post._id, { ...inventory.patch, updatedAt: now })
-      await tx.createMovement(inventory.movement)
+      if (!post || (transactionHasInventory(transaction) ? post.status !== 'active' : !['active', 'offline'].includes(post.status))) throw new TransactionError('POST_UNAVAILABLE', '信息已关闭，无法接受预约')
+      let updatedPost = post
+      if (transactionHasInventory(transaction) && !transaction.reservedAtCreate) {
+        const inventory = reserveInventory(post, transaction.quantity, { transactionId, requestKey: key, now })
+        updatedPost = await tx.updatePost(post._id, { ...inventory.patch, updatedAt: now })
+        await tx.createMovement(inventory.movement)
+      }
       const updated = await tx.updateTransaction(transactionId, { status: 'awaiting_handover', confirmedAt: now, updatedAt: now })
       await tx.createEvent({ transactionId, actorId: actor._id, type: 'confirmed', requestId: requestId(request), requestKey: key, createdAt: now })
-      await appendSystem(tx, updated, actor, `卖家已确认交易，已预留 ${transaction.quantity} 件商品`, key, now)
+      await appendSystem(tx, updated, actor, transactionHasInventory(transaction) ? `卖家已确认交易，已预留 ${transaction.quantity} 件商品` : '卖家已确认预约', key, now)
       return { transaction: updated, post: updatedPost }
     }
     const normalizedReason = normalizeReason(reason)
+    if (transaction.reservedAtCreate) {
+      const inventory = releaseInventory(post, transaction.quantity, { transactionId, requestKey: key, now })
+      await tx.updatePost(post._id, { ...inventory.patch, updatedAt: now }); await tx.createMovement(inventory.movement)
+    }
+    await releaseNeed(tx, transaction, now)
     const updated = await tx.updateTransaction(transactionId, { status: 'cancelled', activeKey: `terminal:${transactionId}`, cancelledBy: actor._id, cancelType: 'seller_rejected', cancelReason: normalizedReason, cancelledAt: now, updatedAt: now })
     await tx.createEvent({ transactionId, actorId: actor._id, type: 'seller_rejected', reason: normalizedReason, requestId: requestId(request), requestKey: key, createdAt: now })
     await appendSystem(tx, updated, actor, normalizedReason ? `卖家已拒绝交易：${normalizedReason}` : '卖家已拒绝交易', key, now)
@@ -124,6 +165,12 @@ async function withdrawTransaction({ actor, transactionId, reason, requestId: re
     if (transaction.buyerId !== actor._id) throw new TransactionError('BUYER_ONLY', '只能由买家撤回交易清单')
     if (transaction.status !== 'pending_seller') throw new TransactionError('STALE_STATUS', '交易状态已变化，请刷新')
     const normalizedReason = normalizeReason(reason)
+    if (transaction.reservedAtCreate) {
+      const post = await tx.getPost(transaction.postId)
+      const inventory = releaseInventory(post, transaction.quantity, { transactionId, requestKey: key, now })
+      await tx.updatePost(post._id, { ...inventory.patch, updatedAt: now }); await tx.createMovement(inventory.movement)
+    }
+    await releaseNeed(tx, transaction, now)
     const updated = await tx.updateTransaction(transactionId, { status: 'cancelled', activeKey: `terminal:${transactionId}`, cancelledBy: actor._id, cancelType: 'buyer_withdrew', cancelReason: normalizedReason, cancelledAt: now, updatedAt: now })
     await tx.createEvent({ transactionId, actorId: actor._id, type: 'buyer_withdrew', reason: normalizedReason, requestId: requestId(request), requestKey: key, createdAt: now })
     await appendSystem(tx, updated, actor, normalizedReason ? `买家已撤回交易：${normalizedReason}` : '买家已撤回交易', key, now)
@@ -144,9 +191,13 @@ async function cancelTransaction({ actor, transactionId, reason, requestId: requ
     if (now >= Number(transaction.scheduledAt)) throw new TransactionError('CANCEL_WINDOW_CLOSED', '已到约定时间，请提交交接结果')
     const normalizedReason = normalizeReason(reason, true)
     const post = await tx.getPost(transaction.postId)
-    const inventory = releaseInventory(post, transaction.quantity, { transactionId, requestKey: key, now })
-    const updatedPost = await tx.updatePost(post._id, { ...inventory.patch, updatedAt: now })
-    await tx.createMovement(inventory.movement)
+    let updatedPost = post
+    if (transactionHasInventory(transaction)) {
+      const inventory = releaseInventory(post, transaction.quantity, { transactionId, requestKey: key, now })
+      updatedPost = await tx.updatePost(post._id, { ...inventory.patch, updatedAt: now })
+      await tx.createMovement(inventory.movement)
+    }
+    await releaseNeed(tx, transaction, now)
     const updated = await tx.updateTransaction(transactionId, { status: 'cancelled', activeKey: `terminal:${transactionId}`, cancelledBy: actor._id, cancelType: 'participant_cancelled', cancelReason: normalizedReason, cancelledAt: now, updatedAt: now })
     await tx.createEvent({ transactionId, actorId: actor._id, type: 'participant_cancelled', reason: normalizedReason, requestId: requestId(request), requestKey: key, createdAt: now })
     await appendSystem(tx, updated, actor, `交易已取消：${normalizedReason}`, key, now)
@@ -176,12 +227,12 @@ async function submitTransactionResult({ actor, transactionId, result, requestId
     let updatedPost = post
     let inventory = null
     if (result === 'failure' && transaction.status === 'awaiting_handover') {
-      inventory = releaseInventory(post, transaction.quantity, { transactionId, requestKey: key, now })
+      if (transactionHasInventory(transaction)) inventory = releaseInventory(post, transaction.quantity, { transactionId, requestKey: key, now })
       status = 'failed'
     } else if (result === 'success' && transaction.status === 'failed') {
       status = 'abnormal'
     } else if (result === 'success' && transaction[otherField] === 'success') {
-      inventory = sellInventory(post, transaction.quantity, { transactionId, requestKey: key, now })
+      if (transactionHasInventory(transaction)) inventory = sellInventory(post, transaction.quantity, { transactionId, requestKey: key, now })
       status = 'completed'
     }
     if (inventory) {
@@ -191,9 +242,10 @@ async function submitTransactionResult({ actor, transactionId, result, requestId
       await tx.createMovement(inventory.movement)
     }
     const terminal = ['completed', 'failed', 'abnormal'].includes(status)
+    if (terminal) await releaseNeed(tx, transaction, now, status === 'completed')
     const updated = await tx.updateTransaction(transactionId, { [ownField]: result, [`${role}ResultAt`]: now, status, ...(terminal ? { activeKey: `terminal:${transactionId}` } : {}), completedAt: status === 'completed' ? now : transaction.completedAt, failedAt: status === 'failed' ? (transaction.failedAt || now) : transaction.failedAt, abnormalAt: status === 'abnormal' ? now : transaction.abnormalAt, updatedAt: now })
     await tx.createEvent({ transactionId, actorId: actor._id, type: eventType, result, requestId: requestId(request), requestKey: key, createdAt: now })
-    const statusText = status === 'completed' ? '双方均确认交接成功，交易已完成' : status === 'abnormal' ? '双方交接结果不一致，交易已标记异常' : result === 'failure' ? (transaction.status === 'failed' ? `${role === 'buyer' ? '买家' : '卖家'}也反馈交接失败` : `${role === 'buyer' ? '买家' : '卖家'}反馈交接失败，库存已释放`) : `${role === 'buyer' ? '买家' : '卖家'}已确认交接成功，等待另一方确认`
+    const statusText = status === 'completed' ? '双方均确认交接成功，交易已完成' : status === 'abnormal' ? '双方交接结果不一致，交易已标记异常' : result === 'failure' ? (transaction.status === 'failed' ? `${role === 'buyer' ? '买家' : '卖家'}也反馈交接失败` : `${role === 'buyer' ? '买家' : '卖家'}反馈交接失败${transactionHasInventory(transaction) ? '，库存已释放' : '，预约已结束'}`) : `${role === 'buyer' ? '买家' : '卖家'}已确认交接成功，等待另一方确认`
     await appendSystem(tx, updated, actor, statusText, key, now)
     return { transaction: updated, post: updatedPost }
   })

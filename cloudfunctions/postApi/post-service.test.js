@@ -44,6 +44,7 @@ test('creates an active sale post and reuses the request result', async () => {
   assert.equal(second.post._id, first.post._id)
   assert.deepEqual(first.post, {
     _id: 'post-1', ownerId: 'user-a', ownerNickname: '甲', ownerAvatarFileId: 'cloud://env/a.jpg',
+    direction: 'provide', contentType: 'item',
     title: '出售显示器', description: input.description, imageFileIds: input.imageFileIds,
     categoryId: 'digital', unitPriceCents: 10000, totalQuantity: 2, availableQuantity: 2,
     reservedQuantity: 0, soldQuantity: 0, conditionId: 'visible_wear', defectDescription: '',

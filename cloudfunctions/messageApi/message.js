@@ -24,19 +24,26 @@ function normalizeRequestId(requestId) {
   return requestId.trim()
 }
 
-async function sendMessage({ actor, conversationId, text, requestId, messages, now }) {
+async function sendMessage({ actor, conversationId, text, postId, requestId, messages, now }) {
   requireActor(actor)
-  const normalizedText = normalizeText(text)
+  const normalizedText = postId ? '' : normalizeText(text)
   const normalizedRequestId = normalizeRequestId(requestId)
   return messages.runTransaction(async (tx) => {
     const conversation = await tx.getConversation(conversationId)
     const role = requireParticipant(actor, conversation)
     const existing = await tx.findByRequest(conversationId, actor._id, normalizedRequestId)
     if (existing) return { message: existing, conversation }
-    const message = await tx.createMessage({ conversationId, senderId: actor._id, recipientId: role === 'buyer' ? conversation.sellerId : conversation.buyerId, type: 'text', text: normalizedText, requestId: normalizedRequestId, createdAt: now })
+    let postCard = null
+    if (postId) {
+      const post = await tx.getPost(postId)
+      if (!post || post.ownerId !== actor._id) throw new MessageError('FORBIDDEN', '只能发送自己发布的信息')
+      postCard = { postId: post._id, title: post.title, coverFileId: (post.imageFileIds || [])[0] || '', unitPriceCents: post.unitPriceCents == null ? null : post.unitPriceCents, direction: post.direction || 'provide', contentType: post.contentType || 'item' }
+    }
+    const summary = postCard ? `[信息卡片] ${postCard.title}` : normalizedText
+    const message = await tx.createMessage({ conversationId, senderId: actor._id, recipientId: role === 'buyer' ? conversation.sellerId : conversation.buyerId, type: postCard ? 'post_card' : 'text', text: summary, ...(postCard ? { postCard } : {}), requestId: normalizedRequestId, createdAt: now })
     const patch = {
-      lastMessageText: normalizedText,
-      lastMessageType: 'text',
+      lastMessageText: summary,
+      lastMessageType: postCard ? 'post_card' : 'text',
       lastMessageAt: now,
       updatedAt: now,
       buyerUnread: Number(conversation.buyerUnread || 0),
@@ -46,6 +53,10 @@ async function sendMessage({ actor, conversationId, text, requestId, messages, n
     else patch.buyerUnread += 1
     return { message, conversation: await tx.updateConversation(conversationId, patch) }
   })
+}
+async function sendPostCard(input) {
+  if (typeof input.postId !== 'string' || !input.postId.trim()) throw new MessageError('INVALID_POST', '请选择要发送的信息')
+  return sendMessage(input)
 }
 
 async function listMessages({ actor, conversationId, before, limit, messages }) {
@@ -70,4 +81,4 @@ async function markConversationRead({ actor, conversationId, messages, now }) {
   return { unreadCount: 0, totalUnread: await messages.getTotalUnread(actor._id) }
 }
 
-module.exports = { MessageError, listMessages, markConversationRead, sendMessage }
+module.exports = { MessageError, listMessages, markConversationRead, sendMessage, sendPostCard }

@@ -46,7 +46,6 @@ page { height: 100%; overflow: hidden; background: #fff; }
 .card-editor picker view{display:flex;align-items:center;justify-content:space-between}
 .card-dropdown{width:28rpx;height:28rpx}.composer textarea{min-width:0;width:0}
 .keyboard-open .composer{padding-bottom:18rpx}
-.keyboard-open .composer textarea{height:144rpx;min-height:144rpx;max-height:144rpx;padding:18rpx;line-height:36rpx}
 .bottom-anchor{height:1rpx}
 .transaction-card{border-radius:20rpx 20rpx 20rpx 0}
 .mine .transaction-card{background:#2479b8;border-color:#2479b8;color:#fff;border-radius:20rpx 20rpx 0 20rpx}
@@ -54,3 +53,28 @@ page { height: 100%; overflow: hidden; background: #fff; }
 .mine .transaction-card-event{color:#e4f4ff}
 .mine .transaction-card-link{border-top-color:rgba(255,255,255,.25)}
 .mine .card-editor{color:#17324d}
+
+.card-picker-button { flex:0 0 56rpx; width:56rpx; padding:0; margin:0 12rpx 0 0; font-size:36rpx; } .post-message-card { max-width:480rpx; background:#fff; color:#1f2937; border-radius:16rpx; padding:22rpx; } .post-message-card text { display:block; margin:8rpx 0; } .post-message-card cloud-image { display:block; width:180rpx; height:180rpx; } .post-message-card .card-title { font-weight:600; } .card-picker-overlay { position:fixed; inset:0; z-index:30; background:rgba(0,0,0,.4); display:flex; align-items:flex-end; } .card-picker-panel { width:100%; background:#fff; padding:24rpx; padding-bottom:calc(24rpx + env(safe-area-inset-bottom)); border-radius:24rpx 24rpx 0 0; } .card-picker-heading { display:flex; align-items:center; justify-content:space-between; } .card-picker-heading button { font-size:24rpx; margin:0; } .card-picker-list { height:55vh; } .card-picker-item { padding:24rpx 0; border-bottom:1rpx solid #e2e8f0; } .card-picker-item text { display:block; }
+
+.composer .card-picker-button{display:flex;align-items:center;justify-content:center;flex:0 0 64rpx;width:64rpx;height:80rpx;margin:0 12rpx 0 0;padding:0;background:transparent;border-radius:0}.add-card-icon{width:52rpx;height:52rpx}
+
+.transaction-card.post-message-card,.mine .transaction-card.post-message-card{flex:0 0 50%;width:50%;max-width:50%;min-width:0;gap:10rpx;padding:18rpx;border:1rpx solid #dbeaf4;border-radius:20rpx;background:#fff;color:#3f5568}
+.mine .transaction-card.post-message-card{background:#83c7f4;border-color:#83c7f4}
+.post-message-card .transaction-card-heading{flex-direction:column;align-items:flex-start;gap:4rpx;font-size:26rpx}
+.post-message-card .transaction-card-heading text{margin:0}
+.post-message-card .transaction-card-status,.mine .post-message-card .transaction-card-status{font-size:22rpx;color:#38536a}
+.post-message-card .transaction-card-title,.mine .post-message-card .transaction-card-title,.mine .post-message-card .transaction-card-heading{color:#17324d;word-break:break-all}
+.post-message-card cloud-image{width:100%;height:210rpx;border-radius:12rpx;overflow:hidden}
+.post-message-card text{margin:0}
+.post-message-card .transaction-card-link,.mine .post-message-card .transaction-card-link{color:#17486b;border-top-color:rgba(23,50,77,.2);font-size:23rpx;font-weight:600}
+.post-message-card .post-card-price{color:#17324d;font-weight:600;font-size:28rpx}
+.post-message-card .card-actions{margin-top:4rpx}
+.post-message-card .card-actions button{width:100%;min-width:0;padding:0 6rpx;font-size:23rpx}
+
+.new-message-tip{flex-shrink:0;align-self:center;padding:12rpx 24rpx;margin:8rpx 0;border-radius:999rpx;background:#e4f4ff;color:#17486b;font-size:24rpx}
+
+.appointment-progress{position:relative;overflow:hidden;display:flex;flex-direction:column;gap:8rpx;padding:20rpx 20rpx 20rpx 26rpx;border-left:0;border-radius:14rpx;background:#edf7ff;color:#17486b}.progress-status{font-size:32rpx;font-weight:700;line-height:1.35}.progress-event{font-size:25rpx;line-height:1.5;font-weight:500}.appointment-progress.progress-alert{background:#fff1eb;border-left-color:#b34a27;color:#87361e}.appointment-progress.progress-success{background:#eaf6ee;border-left-color:#328052;color:#225d3b}.mine .appointment-progress{background:#edf7ff;color:#17486b}.mine .appointment-progress.progress-alert{background:#fff1eb;color:#87361e}.mine .appointment-progress.progress-success{background:#eaf6ee;color:#225d3b}
+
+.progress-stripe{position:absolute;top:0;bottom:0;left:0;width:6rpx;background:#17486b}.progress-alert .progress-stripe{background:#87361e}.progress-success .progress-stripe{background:#225d3b}
+
+.card-actions .card-secondary{box-sizing:border-box;border:1rpx solid #c6dce9;background:#f9fcfe;color:#53677a}

@@ -18,10 +18,10 @@ function reduceChatState(state, event) {
       return { ...state, loading: false, messages: mergeMessages(event.messages || [], state.messages), nextBefore: event.nextBefore || null, exhausted: !event.nextBefore }
     case 'SEND_START':
       if (state.sending) return state
-      return { ...state, sending: true, error: '', requestId: state.requestId || event.requestId }
+      return { ...state, sending: true, submittedDraft: state.draft, error: '', requestId: state.requestId || event.requestId }
     case 'SEND_SUCCESS':
       if (event.conversationId !== state.conversationId) return state
-      return { ...state, sending: false, draft: '', requestId: '', error: '', messages: mergeMessages(state.messages, [event.message]) }
+      return { ...state, sending: false, draft: state.submittedDraft === undefined || state.draft === state.submittedDraft ? '' : state.draft, submittedDraft: undefined, requestId: '', error: '', messages: mergeMessages(state.messages, [event.message]) }
     case 'MARK_READ_SUCCESS':
       if (event.conversationId !== state.conversationId) return state
       return { ...state, unreadCount: 0, totalUnread: event.totalUnread || 0 }

@@ -19,6 +19,8 @@ function loadPage() {
 test('publish defaults to selling and switching tabs preserves the draft', () => {
   const page = loadPage()
   assert.equal(page.data.activeTab, 'sell')
+  page.state = require('./miniprogram/services/post-form-state').createPostFormState()
+  page.sync()
   const form = page.data.form
   form.title = '测试草稿'
   page.switchTab({ currentTarget: { dataset: { tab: 'wanted' } } })
@@ -31,22 +33,18 @@ test('publish defaults to selling and switching tabs preserves the draft', () =>
   assert.equal(page.data.form.title, '测试草稿')
 })
 
-test('publish exposes two tabs, a retained selling form and an honest wanted placeholder', () => {
+test('publish exposes provide and need tabs sharing one working form', () => {
   const wxml = read(pagePath + '.wxml')
-  assert.match(wxml, /data-tab="sell"[^>]*bindtap="switchTab"[^>]*>发闲置</)
-  assert.match(wxml, /data-tab="wanted"[^>]*bindtap="switchTab"[^>]*>求购</)
-  assert.match(wxml, /hidden="{{activeTab !== 'sell'}}"[\s\S]*<post-form/)
-  const placeholder = wxml.match(/<view wx:if="{{activeTab === 'wanted'}}"[\s\S]*<\/view>/)?.[0] || ''
-  assert.match(placeholder, /后续开放/)
-  for (const text of ['预算', '期望程度', '需求期限', '响应求购']) assert.ok(placeholder.includes(text))
-  assert.doesNotMatch(placeholder, /<(?:button|input|textarea|post-form)\b|bindsubmit=/)
+  assert.match(wxml, /data-tab="sell"[^>]*bindtap="switchTab"[^>]*>我提供</)
+  assert.match(wxml, /data-tab="wanted"[^>]*bindtap="switchTab"[^>]*>我需要</)
+  assert.equal((wxml.match(/<post-form/g) || []).length, 1)
+  assert.doesNotMatch(wxml, /后续开放|wanted-placeholder/)
 })
 
-test('wanted mode cannot invoke the selling submission', async () => {
+test('both directions block overlapping submissions', async () => {
   const page = loadPage()
-  page.data.activeTab = 'wanted'
-  page.state = { status: 'idle', form: {} }
-  page.apply = () => assert.fail('wanted placeholder must not start uploads')
+  page.data.activeTab = 'wanted'; page.state = { status: 'uploading', form: {} }
+  page.apply = () => assert.fail('must not overlap uploads')
   await page.submit()
 })
 
@@ -105,7 +103,7 @@ test('every picker reuses the dropdown vector instead of text glyphs', () => {
 })
 test('image actions avoid native button defaults that override positioning and margins', () => {
   const wxml = read('miniprogram/components/post-form/index.wxml')
-  const images = wxml.slice(0, wxml.indexOf('<label'))
+  const images = wxml.slice(wxml.indexOf('<view class="images">'), wxml.indexOf('<label class="field">', wxml.indexOf('<view class="images">')))
   assert.doesNotMatch(images, /<button\b/)
   assert.match(images, /<view class="remove-image" aria-role="button"/)
   assert.match(images, /<view wx:if="{{form.images.length < 6}}" class="add-image" aria-role="button"/)

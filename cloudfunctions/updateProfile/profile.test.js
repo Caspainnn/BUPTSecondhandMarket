@@ -9,6 +9,13 @@ const validInput = {
   campusId: 'bupt-shahe',
 }
 
+test('contact information is optional, trimmed, clearable and bounded',()=>{
+ assert.equal(validateProfile(validInput).contactInfo,undefined)
+ assert.equal(validateProfile({...validInput,contactInfo:'  WeChat: example  '}).contactInfo,'WeChat: example')
+ assert.equal(validateProfile({...validInput,contactInfo:'  '}).contactInfo,'')
+ assert.throws(()=>validateProfile({...validInput,contactInfo:'x'.repeat(101)}),error=>error.code==='INVALID_CONTACT')
+})
+
 function createRepositories({
   user = { _id: 'user-1', _openid: 'openid-1', status: 'active' },
   campus = {

@@ -1,4 +1,5 @@
 <view class="post-form">
+  <label class="field"><view class="field-heading"><text class="required">*</text><text>内容类型</text></view><picker range="{{['物品', '服务']}}" value="{{form.contentType === 'service' ? 1 : 0}}" disabled="{{editing || status === 'saving' || status === 'uploading'}}" bindchange="pickType"><view class="picker dropdown-picker"><text>{{form.contentType === 'service' ? '服务' : '物品'}}</text><image class="dropdown-icon" src="/assets/icons/dropdown.svg" mode="aspectFit" /></view></picker></label>
   <view class="images">
     <view wx:for="{{form.images}}" wx:key="tempPath" class="image-item">
       <cloud-image class="preview" src="{{item.fileId || item.tempPath}}" mode="aspectFill" />
@@ -6,14 +7,14 @@
     </view>
     <view wx:if="{{form.images.length < 6}}" class="add-image" aria-role="button" aria-label="添加图片" bindtap="chooseImages"><view class="add-content"><text class="add-icon">+</text><text>添加图片</text></view></view>
   </view>
-  <label class="field"><text>标题</text><input data-field="title" value="{{form.title}}" maxlength="30" placeholder="2～30 个字" bindinput="patch" /></label>
-  <label class="field"><text>详细描述（选填）</text><textarea data-field="description" value="{{form.description}}" maxlength="1000" placeholder="可补充型号、状态和使用情况，也可留空" bindinput="patch" /></label>
-  <label class="field"><text>分类</text><picker range="{{categories}}" range-key="name" bindchange="pickCategory"><view class="picker dropdown-picker"><text>{{categoryName || '请选择分类'}}</text><image class="dropdown-icon" src="/assets/icons/dropdown.svg" mode="aspectFit" /></view></picker></label>
-  <label class="field"><text>参考单价（元）</text><input data-field="price" value="{{form.price}}" type="digit" placeholder="0 表示免费赠送" bindinput="patch" /></label>
-  <label class="field"><text>库存数量</text><input data-field="totalQuantity" value="{{form.totalQuantity}}" type="number" bindinput="patch" /></label>
-  <label class="field"><text>新旧程度</text><picker range="{{conditions}}" range-key="name" bindchange="pickCondition"><view class="picker dropdown-picker"><text>{{conditionName || '请选择新旧程度'}}</text><image class="dropdown-icon" src="/assets/icons/dropdown.svg" mode="aspectFit" /></view></picker></label>
-  <label wx:if="{{form.conditionId === 'partially_faulty'}}" class="field"><text>故障说明</text><textarea data-field="defectDescription" value="{{form.defectDescription}}" maxlength="200" bindinput="patch" /></label>
-  <label class="field"><text>校区</text><picker range="{{campuses}}" range-key="name" bindchange="pickCampus"><view class="picker dropdown-picker"><text>{{campusName || '请选择校区'}}</text><image class="dropdown-icon" src="/assets/icons/dropdown.svg" mode="aspectFit" /></view></picker></label>
+  <label class="field"><view class="field-heading"><text class="required">*</text><text>标题</text></view><input data-field="title" value="{{form.title}}" maxlength="30" placeholder="2～30 个字" bindinput="patch" /></label>
+  <label class="field"><text>详细描述</text><textarea data-field="description" value="{{form.description}}" maxlength="1000" placeholder="可补充具体内容，也可留空" bindinput="patch" /></label>
+  <label wx:if="{{form.contentType !== 'service'}}" class="field"><view class="field-heading"><text class="required">*</text><text>分类</text></view><picker range="{{categories}}" range-key="name" bindchange="pickCategory"><view class="picker dropdown-picker"><text>{{categoryName || '请选择分类'}}</text><image class="dropdown-icon" src="/assets/icons/dropdown.svg" mode="aspectFit" /></view></picker></label>
+  <label class="field"><view class="field-heading"><text wx:if="{{form.direction !== 'need'}}" class="required">*</text><text>{{form.direction === 'need' ? '最高预算' : '参考价格'}}</text></view><input data-field="price" value="{{form.price}}" type="digit" placeholder="{{form.direction === 'need' ? '留空表示面议' : '0 表示免费赠送'}}" bindinput="patch" /></label>
+  <label wx:if="{{form.direction !== 'need' && form.contentType !== 'service'}}" class="field"><view class="field-heading"><text class="required">*</text><text>库存数量</text></view><input data-field="totalQuantity" value="{{form.totalQuantity}}" type="number" bindinput="patch" /></label>
+  <label wx:if="{{form.direction !== 'need' && form.contentType !== 'service'}}" class="field"><view class="field-heading"><text class="required">*</text><text>新旧程度</text></view><picker range="{{conditions}}" range-key="name" bindchange="pickCondition"><view class="picker dropdown-picker"><text>{{conditionName || '请选择新旧程度'}}</text><image class="dropdown-icon" src="/assets/icons/dropdown.svg" mode="aspectFit" /></view></picker></label>
+  <label wx:if="{{form.direction !== 'need' && form.contentType !== 'service' && form.conditionId === 'partially_faulty'}}" class="field"><view class="field-heading"><text class="required">*</text><text>故障说明</text></view><textarea data-field="defectDescription" value="{{form.defectDescription}}" maxlength="200" bindinput="patch" /></label>
+  <label class="field"><view class="field-heading"><text class="required">*</text><text>校区</text></view><picker range="{{campuses}}" range-key="name" bindchange="pickCampus"><view class="picker dropdown-picker"><text>{{campusName || '请选择校区'}}</text><image class="dropdown-icon" src="/assets/icons/dropdown.svg" mode="aspectFit" /></view></picker></label>
   <text wx:if="{{error}}" class="error">{{error}}</text>
   <button class="submit" loading="{{status === 'saving' || status === 'uploading'}}" disabled="{{status === 'saving' || status === 'uploading'}}" bindtap="submit">{{status === 'uploading' ? '正在上传图片' : submitText}}</button>
 </view>

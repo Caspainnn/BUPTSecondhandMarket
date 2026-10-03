@@ -1,22 +1,25 @@
 const { CAMPUSES, POST_CATEGORIES, POST_CONDITIONS } = require('../../config/market')
 
 Component({
-  properties: { form: Object, status: String, error: String, submitText: { type: String, value: '发布商品' } },
+  properties: { form: Object, status: String, error: String, editing: Boolean, submitText: { type: String, value: '发布信息' } },
   data: { campuses: CAMPUSES, categories: POST_CATEGORIES, conditions: POST_CONDITIONS, categoryName: '', conditionName: '', campusName: '' },
   observers: {
-    'form.categoryId, form.conditionId, form.campusId': function(categoryId, conditionId, campusId) {
+    'form.categoryId, form.conditionId, form.campusId, form.contentType': function(categoryId, conditionId, campusId, contentType) {
+      const campuses = contentType === 'service' ? [{ id: '', name: '全部校区' }, ...CAMPUSES] : CAMPUSES
       this.setData({
+        campuses,
         categoryName: (POST_CATEGORIES.find((item) => item.id === categoryId) || {}).name || '',
         conditionName: (POST_CONDITIONS.find((item) => item.id === conditionId) || {}).name || '',
-        campusName: (CAMPUSES.find((item) => item.id === campusId) || {}).name || '',
+        campusName: (campuses.find((item) => item.id === campusId) || {}).name || '',
       })
     },
   },
   methods: {
     patch(event) { this.triggerEvent('patch', { patch: { [event.currentTarget.dataset.field]: event.detail.value } }) },
+    pickType(event) { this.triggerEvent('patch', { patch: { contentType: Number(event.detail.value) === 1 ? 'service' : 'item' } }) },
     pickCategory(event) { const item = this.data.categories[Number(event.detail.value)]; this.triggerEvent('patch', { patch: { categoryId: item.id } }) },
     pickCondition(event) { const item = this.data.conditions[Number(event.detail.value)]; this.triggerEvent('patch', { patch: { conditionId: item.id } }) },
-    pickCampus(event) { const item = this.data.campuses[Number(event.detail.value)]; this.triggerEvent('patch', { patch: { campusId: item.id } }) },
+    pickCampus(event) { const item = this.data.campuses[Number(event.detail.value)]; this.triggerEvent('patch', { patch: { campusId: item.id, allCampuses: item.id === '' } }) },
     async chooseImages() {
       const remaining = 6 - (this.properties.form.images || []).length
       if (remaining <= 0) return

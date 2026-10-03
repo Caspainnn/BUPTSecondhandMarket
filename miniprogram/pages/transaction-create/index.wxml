@@ -1,9 +1,11 @@
 <view class="page"><view class="card form-card">
-  <view wx:if="{{conversation}}" class="snapshot"><cloud-image src="{{conversation.postSnapshot.coverFileId}}" mode="aspectFill" /><view><text>{{conversation.postSnapshot.title}}</text><text class="price">参考单价 ¥{{conversation.postSnapshot.unitPriceCents / 100}}</text></view></view>
-  <label><text>数量</text><input data-field="quantity" type="number" value="{{form.quantity}}" bindinput="patch" /></label>
-  <label><text>校区</text><picker range="{{campuses}}" range-key="name" bindchange="pickCampus"><view class="picker dropdown-picker"><text>{{campusName}}</text><image class="dropdown-icon" src="/assets/icons/dropdown.svg" mode="aspectFit" /></view></picker></label>
-  <label><text>具体交接地点</text><input data-field="locationText" maxlength="50" value="{{form.locationText}}" placeholder="例如：图书馆南门" bindinput="patch" /></label>
+  <view wx:if="{{conversation}}" class="snapshot"><cloud-image src="{{conversation.postSnapshot.coverFileId}}" mode="aspectFill" /><view><text>{{conversation.postSnapshot.title}}</text><text wx:if="{{conversation.postSnapshot.unitPriceCents != null}}" class="price">参考价格 ¥{{conversation.postSnapshot.unitPriceCents / 100}}</text></view></view>
+  <text wx:if="{{availableQuantity != null}}" class="hint">当前可预约 {{availableQuantity}} 件，提交时将重新校验库存</text>
+  <label wx:if="{{!isService}}"><text>数量</text><input data-field="quantity" type="number" value="{{form.quantity}}" bindinput="patch" /></label>
+  <label wx:if="{{isNeed && !isService}}"><text>物品说明</text><textarea data-field="itemDescription" maxlength="200" value="{{form.itemDescription}}" bindinput="patch" placeholder="填写双方约定交易的物品" /></label>
+  <label><text>{{isService ? '服务地点或方式' : '校区'}}</text><picker range="{{campuses}}" range-key="name" bindchange="pickCampus"><view class="picker dropdown-picker"><text>{{campusName}}</text><image class="dropdown-icon" src="/assets/icons/dropdown.svg" mode="aspectFit" /></view></picker></label>
+  <label><text>{{form.fulfillmentMode === 'online' ? '沟通或交付方式' : '具体交接地点'}}</text><input data-field="locationText" maxlength="50" value="{{form.locationText}}" placeholder="例如：图书馆南门" bindinput="patch" /></label>
   <view class="date-row"><label><text>日期</text><picker mode="date" value="{{date}}" bindchange="pickDate"><view class="picker dropdown-picker"><text>{{date}}</text><image class="dropdown-icon" src="/assets/icons/dropdown.svg" mode="aspectFit" /></view></picker></label><label><text>时间</text><picker mode="time" value="{{time}}" bindchange="pickTime"><view class="picker dropdown-picker"><text>{{time}}</text><image class="dropdown-icon" src="/assets/icons/dropdown.svg" mode="aspectFit" /></view></picker></label></view>
   <text class="hint">可约定当前时间，不能早于当前分钟，且不超过 14 天</text><text wx:if="{{error}}" class="error">{{error}}</text>
-  <button loading="{{status === 'submitting'}}" disabled="{{status === 'submitting'}}" bindtap="submit">提交给卖家确认</button>
+  <button loading="{{status === 'submitting'}}" disabled="{{status === 'submitting' || status === 'unavailable'}}" bindtap="submit">提交给卖家确认</button>
 </view></view>

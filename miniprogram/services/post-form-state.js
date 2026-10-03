@@ -1,4 +1,6 @@
 const emptyForm = {
+  direction: 'provide',
+  contentType: 'item',
   title: '',
   description: '',
   images: [],
@@ -16,6 +18,7 @@ function createPostFormState(overrides = {}) {
     error: '',
     requestId: '',
     createdPost: null,
+    drafts: {},
     ...overrides,
     mode: overrides.mode || 'create',
     form: {
@@ -28,6 +31,12 @@ function createPostFormState(overrides = {}) {
 
 function reducePostFormState(state, event) {
   switch (event.type) {
+    case 'SWITCH_KIND': {
+      const key = `${state.form.direction}:${state.form.contentType}`
+      const nextKey = `${event.direction}:${event.contentType}`
+      const drafts = { ...state.drafts, [key]: state.form }
+      return { ...state, status: 'idle', error: '', requestId: '', drafts, form: drafts[nextKey] || { ...emptyForm, direction: event.direction, contentType: event.contentType, campusId: state.form.campusId } }
+    }
     case 'PATCH_FORM': {
       const form = { ...state.form, ...event.patch }
       if (event.patch.conditionId && event.patch.conditionId !== 'partially_faulty') form.defectDescription = ''
@@ -46,7 +55,7 @@ function reducePostFormState(state, event) {
       if (state.status === 'saving' || state.status === 'uploading') return state
       return { ...state, status: 'saving', error: '', requestId: state.requestId || event.requestId }
     case 'SAVE_SUCCESS':
-      return { ...state, status: 'success', error: '', createdPost: event.post, form: state.mode === 'create' ? { ...emptyForm } : state.form }
+      return { ...state, status: 'success', error: '', requestId: '', createdPost: event.post, form: state.mode === 'create' ? { ...emptyForm, direction: state.form.direction, contentType: state.form.contentType } : state.form }
     case 'FAILURE':
       return { ...state, status: 'error', error: event.message }
     case 'RETRY':

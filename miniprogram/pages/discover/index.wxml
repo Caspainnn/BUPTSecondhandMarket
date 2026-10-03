@@ -1,17 +1,34 @@
 <view class="page discover-page">
   <view class="toolbar">
-    <view><text class="heading">发现好物</text><text class="subheading">按发布时间从新到旧</text></view>
-    <picker range="{{campusOptions}}" range-key="name" bindchange="changeCampus"><view class="campus-picker dropdown-picker"><text>{{campusName}}</text><image class="dropdown-icon" src="/assets/icons/dropdown.svg" mode="aspectFit" /></view></picker>
+    <view><text class="heading">发现</text></view>
   </view>
-  <view wx:if="{{loading && !posts.length}}" class="state-card">正在加载商品…</view>
+  <view class="search-bar"><input value="{{searchDraft}}" maxlength="50" placeholder="搜索标题或描述" confirm-type="search" bindinput="changeSearch" bindconfirm="search" /><view wx:if="{{searchDraft || keyword}}" class="clear-search" aria-role="button" aria-label="清空搜索" bindtap="clearSearch">×</view><view class="search-action" aria-role="button" bindtap="search">搜索</view></view>
+  <view class="filter-bar">
+    <picker class="campus-control" range="{{campusOptions}}" range-key="name" value="{{campusIndex}}" bindchange="changeCampus"><view class="sort-picker dropdown-picker"><text>{{campusName}}</text><image class="dropdown-icon" src="/assets/icons/dropdown.svg" mode="aspectFit" /></view></picker>
+    <picker class="sort-control" range="{{sortOptions}}" range-key="name" value="{{sortIndex}}" bindchange="changeSort"><view class="sort-picker dropdown-picker"><text>{{sortName}}</text><image class="dropdown-icon" src="/assets/icons/dropdown.svg" mode="aspectFit" /></view></picker>
+    <view aria-role="button" aria-label="{{priceSort === 'price_asc' ? '价格从低到高，再点切换降序' : priceSort === 'price_desc' ? '价格从高到低，再点取消' : '按价格排序'}}" class="price-sort {{priceSort ? 'active' : ''}}" bindtap="changePriceSort"><text>价格</text><view class="price-arrows"><text class="{{priceSort === 'price_asc' ? 'active' : ''}}">▴</text><text class="{{priceSort === 'price_desc' ? 'active' : ''}}">▾</text></view></view>
+    <view aria-role="button" class="filter-trigger {{hasFilters ? 'selected' : ''}}" bindtap="openFilters"><image class="filter-icon" src="/assets/icons/filter.svg" mode="aspectFit" /><text>筛选</text></view>
+  </view>
+  <view wx:if="{{loading && !posts.length}}" class="state-card">正在加载信息…</view>
   <view wx:elif="{{error && !posts.length}}" class="state-card error"><text>{{error}}</text><button bindtap="retry">重试</button></view>
-  <view wx:elif="{{!posts.length}}" class="state-card"><text>当前校区暂无可预约商品</text><text class="muted">可以切换校区看看</text></view>
-  <view wx:else class="post-grid">
-    <view wx:for="{{posts}}" wx:key="_id" class="post-card" data-id="{{item._id}}" bindtap="openPost">
-      <cloud-image class="cover" src="{{item.imageFileIds[0]}}" mode="aspectFill" lazy-load />
-      <view class="post-body"><text class="post-title">{{item.title}}</text><text class="price">{{item.priceLabel}}</text><text class="meta">剩余 {{item.availableQuantity}} · {{item.campusName}}</text></view>
+  <view wx:elif="{{!posts.length}}" class="state-card"><text>暂无符合条件的信息</text><text class="muted">可以调整筛选或切换校区看看</text></view>
+  <view wx:else class="post-grid" style="height:{{waterfallHeight || 0}}px;visibility:{{waterfallReady ? 'visible' : 'hidden'}}">
+    <view wx:for="{{posts}}" wx:key="_id" class="post-card" style="left:{{waterfallPositions[index].left || 0}}px;top:{{waterfallPositions[index].top || 0}}px" data-id="{{item._id}}" bindtap="openPost">
+      <cloud-image wx:if="{{item.imageFileIds.length}}" class="cover" src="{{item.imageFileIds[0]}}" mode="aspectFill" lazy-load />
+      <view class="post-body"><text class="type-tag">{{item.typeLabel}} · {{item.isService ? '服务' : '物品'}}</text><text class="post-title">{{item.title}}</text><text wx:if="{{!item.imageFileIds.length && item.description}}" class="post-description">{{item.description}}</text><text class="price">{{item.priceLabel}}</text><text class="meta">{{item.direction !== 'need' && !item.isService ? '剩余 ' + item.availableQuantity + ' · ' : ''}}{{item.campusName}}</text></view>
     </view>
   </view>
   <view wx:if="{{loadingMore}}" class="footer-note">正在加载更多…</view>
   <view wx:if="{{exhausted && posts.length}}" class="footer-note">已经到底了</view>
+  <view wx:if="{{filterOpen}}" class="filter-mask" bindtap="closeFilters">
+    <view class="filter-sheet" catchtap="keepFiltersOpen" aria-role="dialog" aria-label="筛选信息">
+      <view class="sheet-heading"><text>筛选</text><view class="close-filter" aria-role="button" bindtap="closeFilters" aria-label="关闭筛选">×</view></view>
+      <scroll-view scroll-y class="filter-scroll">
+        <view class="filter-group"><text class="filter-heading">供需方向</text><view class="filter-options"><view aria-role="button" wx:for="{{directionOptions}}" wx:key="id" class="filter-option {{filterDraft.direction === item.id ? 'selected' : ''}}" data-key="direction" data-id="{{item.id}}" bindtap="pickFilter">{{item.name}}</view></view></view>
+        <view class="filter-group"><text class="filter-heading">内容类型</text><view class="filter-options"><view aria-role="button" wx:for="{{typeOptions}}" wx:key="id" class="filter-option {{filterDraft.contentType === item.id ? 'selected' : ''}}" data-key="contentType" data-id="{{item.id}}" bindtap="pickFilter">{{item.name}}</view></view></view>
+        <view wx:if="{{filterDraft.contentType !== 'service'}}" class="filter-group"><text class="filter-heading">物品分类（可多选）</text><view class="filter-options category-options"><view aria-role="button" wx:for="{{categoryOptions}}" wx:key="id" class="filter-option {{item.selected ? 'selected' : ''}}" data-key="categoryId" data-id="{{item.id}}" bindtap="pickFilter">{{item.name}}</view></view></view>
+      </scroll-view>
+      <view class="filter-actions"><button bindtap="resetFilters">重置</button><button class="apply-filter" bindtap="confirmFilters">查看结果</button></view>
+    </view>
+  </view>
 </view>

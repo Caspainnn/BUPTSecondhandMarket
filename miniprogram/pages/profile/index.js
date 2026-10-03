@@ -18,6 +18,7 @@ Page({
       this.setData({ campuses, campusIndex: campuses.findIndex(campus => campus.campusId === user.campusId) })
     } catch (error) { this.setData({ state: this.data.user ? 'ready' : 'error', message: error.message || '资料加载失败，请重试' }) }
   },
+  openProfileEdit() { wx.navigateTo({ url: '/pages/profile-edit/index' }) },
   patch(patch) {
     if (this.data.busy) return
     this.setData({ form: { ...this.data.form, ...patch }, dirty: true, message: '' })

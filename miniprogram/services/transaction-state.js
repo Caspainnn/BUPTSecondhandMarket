@@ -32,10 +32,28 @@ function getTransactionActions(transaction, userId, now) {
 
 function getTransactionStatusLabel(status) { return STATUS_LABELS[status] || status }
 
+function getAppointmentProgress(transaction, now, eventText = '') {
+  const status = transaction.status
+  if (status === 'pending_seller') return { title: '待确认', detail: '待卖家确认预约清单' }
+  if (status === 'awaiting_handover') {
+    if (transaction.buyerResult === 'success' || eventText.includes('买家已确认交接成功')) return { title: '待确认', detail: '买家已确认成功，待卖家确认交接结果' }
+    if (transaction.sellerResult === 'success' || eventText.includes('卖家已确认交接成功')) return { title: '待确认', detail: '卖家已确认成功，待买家确认交接结果' }
+    return { title: '待交接', detail: now < Number(transaction.scheduledAt) ? '预约已确认，请按约定时间和地点交接' : '已到约定时间，待双方提交交接结果' }
+  }
+  if (status === 'completed') return { title: '已完成', detail: '买卖双方均已确认交接成功' }
+  if (status === 'cancelled') {
+    const detail = transaction.cancelType === 'seller_rejected' || eventText.includes('卖家已拒绝') ? '卖家已拒绝预约，可重新协商后发起' : transaction.cancelType === 'buyer_withdrew' || eventText.includes('买家已撤回') ? '买家已撤回预约，可重新发起' : '预约已取消，可重新协商后发起'
+    return { title: '已取消', detail: transaction.cancelReason ? `${detail}；原因：${transaction.cancelReason}` : detail }
+  }
+  if (status === 'failed') return { title: '交接失败', detail: transaction.buyerResult === 'failure' ? '买家反馈交接失败，本次预约已结束' : transaction.sellerResult === 'failure' ? '卖家反馈交接失败，本次预约已结束' : '已收到交接失败反馈，本次预约已结束' }
+  if (status === 'abnormal') return { title: '结果异常', detail: '买卖双方交接结果不一致，请核实情况' }
+  return { title: getTransactionStatusLabel(status), detail: eventText }
+}
+
 function getPostManagementActions(post) {
   const actions = ['edit']
-  if (post.status === 'active' && post.availableQuantity > 0) actions.push('downlist')
-  if (post.status === 'offline' && post.availableQuantity > 0) actions.push('relist')
+  if (post.status === 'active' && (post.direction === 'need' || post.contentType === 'service' || post.availableQuantity > 0)) actions.push('downlist')
+  if (post.status === 'offline' && (post.direction === 'need' || post.contentType === 'service' || post.availableQuantity > 0)) actions.push('relist')
   return actions
 }
 
@@ -49,4 +67,4 @@ function derivePendingCounts(rows, userId) {
   }, { buyer: 0, seller: 0 })
 }
 
-module.exports = { createTransactionState, derivePendingCounts, getPostManagementActions, getTransactionActions, getTransactionStatusLabel, reduceTransactionState }
+module.exports = { getAppointmentProgress, createTransactionState, derivePendingCounts, getPostManagementActions, getTransactionActions, getTransactionStatusLabel, reduceTransactionState }

@@ -7,20 +7,24 @@ const { consumeProtectedResume, requireCompletedProfile } = require('../../servi
 const nameOf = (items, id) => (items.find((item) => item.id === id) || {}).name || id
 
 Page({
-  data: { state: 'loading', error: '', post: null, busy: false },
-  async onLoad(options) { this.postId = options.postId; await this.load() },
+  data: { fromCard: false, canReserve: false, state: 'loading', error: '', post: null, busy: false },
+  async onLoad(options) { this.postId = options.postId; this.conversationId = options.conversationId; this.setData({ fromCard: options.fromCard === '1' }); await this.load() },
   onShow() { if (this.postId && consumeProtectedResume('/pages/post-detail/index', 'contactSeller')) this.contactSeller() },
   async load() {
     this.setData({ state: 'loading', error: '' })
     try {
       const post = await getPost(this.postId)
-      this.setData({ state: 'ready', post: { ...post, priceLabel: formatPrice(post.unitPriceCents), categoryName: nameOf(POST_CATEGORIES, post.categoryId), conditionName: nameOf(POST_CONDITIONS, post.conditionId), campusName: nameOf(CAMPUSES, post.campusId), unavailable: post.status !== 'active' || post.availableQuantity <= 0 } })
+      const conversation = getApp().globalData.currentConversation
+      const user = await require('../../services/user').getCurrentUser()
+      const canReserve = Boolean(this.data.fromCard && user && conversation && conversation._id === this.conversationId && conversation.buyerId === user._id && !post.isOwner && post.direction !== 'need' && post.contentType !== 'service')
+      this.setData({ canReserve, state: 'ready', post: { ...post, isGoods: post.direction !== 'need' && post.contentType !== 'service', typeLabel: post.direction === 'need' ? '我需要' : '我提供', priceLabel: formatPrice(post.unitPriceCents), categoryName: nameOf(POST_CATEGORIES, post.categoryId), conditionName: nameOf(POST_CONDITIONS, post.conditionId), campusName: nameOf(CAMPUSES, post.campusId) || '全部校区', unavailable: post.status !== 'active' || (post.direction !== 'need' && post.contentType !== 'service' && post.availableQuantity <= 0) } })
     } catch (error) { this.setData({ state: 'error', error: error.message }) }
   },
+  reservePost() { if (!this.data.canReserve || this.data.post.unavailable) return; wx.navigateTo({ url: '/pages/transaction-create/index?conversationId=' + encodeURIComponent(this.conversationId) + '&linkedPostId=' + encodeURIComponent(this.postId) }) },
   async contactSeller() {
     if (!this.data.post) return
     if (this.data.post.isOwner) {
-      wx.showModal({ title: '提示', content: '这个商品是你自己想要卖的，所以不能和自己聊一聊。', showCancel: false })
+      wx.showModal({ title: '提示', content: '这是你自己发布的信息，不能和自己聊一聊。', showCancel: false })
       return
     }
     if (this.data.busy || this.data.post.unavailable) return

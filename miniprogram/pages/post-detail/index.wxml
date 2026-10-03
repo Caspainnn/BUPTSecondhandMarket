@@ -2,16 +2,17 @@
   <view wx:if="{{state === 'loading'}}" class="card state">正在加载商品…</view>
   <view wx:elif="{{state === 'error'}}" class="card state error"><text>{{error}}</text><button bindtap="load">重试</button></view>
   <block wx:else>
-    <swiper class="gallery" indicator-dots circular><swiper-item wx:for="{{post.imageFileIds}}" wx:key="*this"><cloud-image src="{{item}}" mode="aspectFill" /></swiper-item></swiper>
+    <swiper wx:if="{{post.imageFileIds.length}}" class="gallery" indicator-dots circular><swiper-item wx:for="{{post.imageFileIds}}" wx:key="*this"><cloud-image src="{{item}}" mode="aspectFill" /></swiper-item></swiper>
     <view class="card info-card">
       <view class="title-row"><text class="title">{{post.title}}</text><text class="price">{{post.priceLabel}}</text></view>
-      <text wx:if="{{post.unavailable}}" class="unavailable">该商品当前不可预约，仅供查看历史信息</text>
-      <view class="chips"><text>{{post.categoryName}}</text><text>{{post.conditionName}}</text><text>{{post.campusName}}</text></view>
+      <text wx:if="{{post.unavailable}}" class="unavailable">该信息当前不可预约，仅供查看历史信息</text>
+      <view class="chips"><text wx:if="{{post.contentType !== 'service'}}">{{post.categoryName}}</text><text wx:if="{{post.isGoods}}">{{post.conditionName}}</text><text>{{post.typeLabel}} · {{post.contentType === 'service' ? '服务' : '物品'}}</text><text>{{post.campusName}}</text></view>
       <text class="description">{{post.description}}</text>
       <text wx:if="{{post.defectDescription}}" class="defect">异常说明：{{post.defectDescription}}</text>
-      <text class="stock">可预约 {{post.availableQuantity}} / 共 {{post.totalQuantity}}</text>
+      <text wx:if="{{post.isGoods}}" class="stock">可预约 {{post.availableQuantity}} / 共 {{post.totalQuantity}}</text>
     </view>
     <view class="card seller"><cloud-image src="{{post.ownerAvatarFileId}}" mode="aspectFill" /><text>{{post.ownerNickname}}</text></view>
-    <button class="contact {{post.isOwner ? 'own-contact' : ''}}" loading="{{busy}}" disabled="{{!post.isOwner && post.unavailable}}" bindtap="contactSeller">{{!post.isOwner && post.unavailable ? '暂不可预约' : '聊一聊'}}</button>
+    <button wx:if="{{!fromCard}}" class="contact {{post.isOwner ? 'own-contact' : ''}}" loading="{{busy}}" disabled="{{!post.isOwner && post.unavailable}}" bindtap="contactSeller">{{!post.isOwner && post.unavailable ? '暂不可预约' : '聊一聊'}}</button>
+    <button wx:if="{{fromCard && canReserve}}" class="contact" disabled="{{post.unavailable}}" bindtap="reservePost">{{post.unavailable ? '暂不可预约' : '发起预约'}}</button>
   </block>
 </view>

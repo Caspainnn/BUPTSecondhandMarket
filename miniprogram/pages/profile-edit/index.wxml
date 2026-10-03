@@ -1,12 +1,11 @@
 <view class="page">
   <view wx:if="{{status === 'loading'}}" class="card edit-state">
-    <text class="state-title">完善个人资料</text>
+    <text class="state-title">个人资料</text>
     <text class="muted">正在加载…</text>
   </view>
 
   <view wx:else class="card edit-state">
-    <text class="state-title">完善个人资料</text>
-    <text class="muted">头像、昵称和常驻校区均为必填。</text>
+    <text class="state-title">个人资料</text>
 
     <view class="avatar-picker">
       <cloud-image wx:if="{{form.avatarPreview}}" class="avatar-visual" src="{{form.avatarPreview}}" mode="aspectFill" />
@@ -16,8 +15,10 @@
 
     <label class="field">
       <text class="field-label">昵称</text>
-      <input class="input" type="nickname" maxlength="20" value="{{form.nickname}}" placeholder="请输入昵称" bindinput="onNicknameInput" />
+      <input wx:if="{{activeField === 'nickname'}}" class="input" type="nickname" maxlength="20" value="{{form.nickname}}" placeholder="请输入昵称" bindinput="onNicknameInput" focus />
+      <view wx:else class="edit-profile-row" data-field="nickname" bindtap="editField"><text>{{form.nickname || '未填写'}}</text><text>›</text></view>
     </label>
+    <label class="field"><text class="field-label">联系方式</text><input wx:if="{{activeField === 'contactInfo'}}" class="input" maxlength="100" value="{{form.contactInfo}}" placeholder="可填写手机号、QQ、微信号等，也可留空" bindinput="onContactInput" focus /><view wx:else class="edit-profile-row" data-field="contactInfo" bindtap="editField"><text>{{form.contactInfo || '未填写'}}</text><text>›</text></view></label>
 
     <label class="field">
       <text class="field-label">常驻校区</text>

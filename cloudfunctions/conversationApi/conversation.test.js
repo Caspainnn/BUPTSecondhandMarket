@@ -43,7 +43,7 @@ test('records fixed buyer and seller roles with post snapshot', async () => {
   const { conversation } = await openConversation({ actor: buyer, postId: salePost._id, requestId: 'r1', conversations: repository(), now: 100 })
   assert.equal(conversation.buyerId, buyer._id)
   assert.equal(conversation.sellerId, seller._id)
-  assert.deepEqual(conversation.postSnapshot, { postId: 'post-1', title: '二手书', coverFileId: 'cloud://cover.jpg', unitPriceCents: 1200 })
+  assert.deepEqual(conversation.postSnapshot, { direction: 'provide', contentType: 'item', postId: 'post-1', title: '二手书', coverFileId: 'cloud://cover.jpg', unitPriceCents: 1200 })
 })
 
 test('requires a complete active profile and a bounded request id', async () => {

@@ -16,21 +16,21 @@ Page({
       this.sync()
     } finally { this.initializing = false }
   },
-  switchTab(e) { const tab = e.currentTarget.dataset.tab; if (['sell', 'wanted'].includes(tab)) this.setData({ activeTab: tab }) },
+  switchTab(e) { const tab = e.currentTarget.dataset.tab; if (this.state && !['saving', 'uploading'].includes(this.state.status) && ['sell', 'wanted'].includes(tab)) { this.setData({ activeTab: tab }); this.apply({ type: 'SWITCH_KIND', direction: tab === 'sell' ? 'provide' : 'need', contentType: this.state.form.contentType }) } },
   onLoad() { this.initialize() },
   onShow() { if (!this.state) this.initialize() },
   sync() {
-    if (!this.state.form.campusId && this.defaultCampusId) this.state = { ...this.state, form: { ...this.state.form, campusId: this.defaultCampusId } }
+    if (!this.state.form.campusId && this.defaultCampusId && !(this.state.form.contentType === 'service' && this.state.form.allCampuses)) this.state = { ...this.state, form: { ...this.state.form, campusId: this.defaultCampusId } }
     this.setData({ form: this.state.form, status: this.state.status, error: this.state.error })
   },
   apply(event) { this.state = reducePostFormState(this.state, event); this.sync() },
-  onPatch(e) { const patch = { ...e.detail.patch }; if (patch.totalQuantity !== undefined) patch.totalQuantity = Number(patch.totalQuantity); this.apply({ type: 'PATCH_FORM', patch }) },
+  onPatch(e) { const patch = { ...e.detail.patch }; if (patch.contentType) { this.apply({ type: 'SWITCH_KIND', direction: this.state.form.direction, contentType: patch.contentType }); return } if (patch.totalQuantity !== undefined) patch.totalQuantity = Number(patch.totalQuantity); this.apply({ type: 'PATCH_FORM', patch }) },
   onAddImages(e) { this.apply({ type: 'ADD_IMAGES', images: e.detail.images }) },
   onRemoveImage(e) { this.apply({ type: 'REMOVE_IMAGE', index: e.detail.index }) },
   onMoveImage(e) { this.apply({ type: 'MOVE_IMAGE', ...e.detail }) },
   onFailure(e) { this.apply({ type: 'FAILURE', message: e.detail.message }) },
   async submit() {
-    if (this.data.activeTab !== 'sell' || !this.state || ['saving', 'uploading'].includes(this.state.status)) return
+    if (!this.state || ['saving', 'uploading'].includes(this.state.status)) return
     const requestId = this.state.requestId || `${Date.now()}-${Math.random().toString(36).slice(2)}`
     try {
       this.apply({ type: 'UPLOAD_START' })

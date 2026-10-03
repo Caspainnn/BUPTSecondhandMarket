@@ -79,12 +79,12 @@ exports.main = async (event = {}) => {
     const transactions = repository()
     const now = Date.now()
     const actions = {
-      create: () => service.createTransaction({ actor, ...event, transactions, now }),
-      revise: () => service.reviseTransaction({ actor, ...event, transactions, now }),
-      withdraw: () => service.withdrawTransaction({ actor, ...event, transactions, now }),
-      respond: () => service.respondTransaction({ actor, ...event, transactions, now }),
-      cancel: () => service.cancelTransaction({ actor, ...event, transactions, now }),
-      submitResult: () => service.submitTransactionResult({ actor, ...event, transactions, now }),
+      create: () => service.createTransaction({ ...event, actor, transactions, now }),
+      revise: () => service.reviseTransaction({ ...event, actor, transactions, now }),
+      withdraw: () => service.withdrawTransaction({ ...event, actor, transactions, now }),
+      respond: () => service.respondTransaction({ ...event, actor, transactions, now }),
+      cancel: () => service.cancelTransaction({ ...event, actor, transactions, now }),
+      submitResult: () => service.submitTransactionResult({ ...event, actor, transactions, now }),
       list: () => service.listTransactions({ actor, ...event, transactions }),
       detail: () => service.getTransactionDetail({ actor, transactionId: event.transactionId, transactions }),
     }

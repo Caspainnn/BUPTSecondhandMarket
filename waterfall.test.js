@@ -1,0 +1,16 @@
+const test = require('node:test')
+const assert = require('node:assert/strict')
+const fs = require('node:fs')
+const vm = require('node:vm')
+const source = fs.readFileSync('miniprogram/pages/discover/index.js', 'utf8')
+const layoutWaterfall = vm.runInNewContext(source.slice(source.indexOf('function layoutWaterfall'), source.indexOf('const campusOptions')) + '\nlayoutWaterfall')
+
+test('waterfall places the next card under the shorter column and appending keeps earlier positions', () => {
+  const first = layoutWaterfall([300, 100, 120], 160, 10)
+  assert.deepEqual(JSON.parse(JSON.stringify(first.positions)), [{ left: 0, top: 0 }, { left: 170, top: 0 }, { left: 170, top: 110 }])
+  const appended = layoutWaterfall([300, 100, 120, 90], 160, 10)
+  assert.deepEqual(JSON.parse(JSON.stringify(appended.positions.slice(0, 3))), JSON.parse(JSON.stringify(first.positions)))
+  assert.deepEqual(JSON.parse(JSON.stringify(appended.positions[3])), { left: 170, top: 240 })
+  assert.equal(appended.height, 330)
+  assert.equal(layoutWaterfall([], 160, 10).height, 0)
+})

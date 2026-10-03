@@ -16,13 +16,14 @@ function setup(fail=false){
  page.setData=x=>Object.assign(page.data,x)
  return {page,getSaved:()=>saved}
 }
-test('my page displays editable profile fields without a separate edit entry',()=>{
+test('my page shows a compact profile summary and links to the edit page',()=>{
  const xml=fs.readFileSync(path+'.wxml','utf8')
  assert.doesNotMatch(xml,/bindtap="editProfile"/)
- assert.match(xml,/open-type="chooseAvatar"/)
- assert.match(xml,/type="nickname"/)
- assert.match(xml,/<picker/)
- assert.match(xml,/bindtap="save"/)
+ assert.match(xml,/bindtap="openProfileEdit"/)
+ assert.match(xml,/summary-nickname/)
+ assert.match(xml,/user.contactInfo/)
+ assert.match(xml,/summary-campus/)
+ assert.doesNotMatch(xml,/<input|<picker|bindtap="save"/)
 })
 test('profile fields initialize and save directly on the my page',async()=>{
  const s=setup();await s.page.onShow()

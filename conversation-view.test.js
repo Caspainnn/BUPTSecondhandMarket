@@ -30,7 +30,7 @@ test('appointments render structured cards with a transaction detail entry',()=>
  const xml=fs.readFileSync('miniprogram/pages/conversation/index.wxml','utf8')
  assert.match(xml,/item.transactionCard/)
  assert.match(xml,/class="transaction-card"/)
- for(const field of ['quantity','locationText','scheduledText','statusLabel'])assert.ok(xml.includes('item.transactionCard.'+field))
+ for(const field of ['quantity','locationText','scheduledText','progress.title'])assert.ok(xml.includes('item.transactionCard.'+field))
  assert.match(xml,/bindtap="openTransaction"/)
 })
 
@@ -90,12 +90,53 @@ test('sending retriggers bottom positioning while polling respects reading older
  page.apply({type:'SEND_SUCCESS',conversationId:'c',message:{_id:'b',createdAt:2}})
  assert.equal(page.data.scrollTarget,'bottom-anchor')
  assert.equal(patches[patches.length-2].scrollTarget,'')
- page.onHistoryScroll({detail:{deltaY:-20}})
+ page.onHistoryTouchStart();page.onHistoryScroll({detail:{deltaY:-20}});page.onHistoryTouchEnd()
  const before=patches.length
  page.apply({type:'MESSAGES_SUCCESS',conversationId:'c',messages:[{_id:'d',createdAt:4}]})
- assert.equal(patches.length,before+1)
+ assert.equal(page.data.hasNewMessages,true)
  page.onHistoryBottom();page.apply({type:'MESSAGES_SUCCESS',conversationId:'c',messages:[{_id:'e',createdAt:5}]})
  assert.equal(page.data.scrollTarget,'bottom-anchor')
+})
+
+test('automatic scroll events do not disable following incoming messages',()=>{
+ const {page}=conversationLayoutPage()
+ page.scrollToBottom()
+ page.onHistoryScroll({detail:{deltaY:-20}})
+ assert.equal(page.atBottom,true)
+ page.apply({type:'MESSAGES_SUCCESS',conversationId:'c',messages:[{_id:'incoming',createdAt:4}]})
+ assert.equal(page.data.scrollTarget,'bottom-anchor')
+ assert.equal(page.data.hasNewMessages,false)
+})
+
+test('seller goods card exposes appointment action only to the conversation buyer',()=>{
+ const {page}=conversationLayoutPage()
+ page.data.conversation={_id:'c',buyerId:'buyer',sellerId:'seller',postSnapshot:{direction:'need',contentType:'item'}}
+ page.state.messages=[{_id:'card',senderId:'seller',postCard:{postId:'goods',direction:'provide',contentType:'item',unitPriceCents:100}}]
+ page.userId='buyer';page.sync()
+ assert.equal(page.data.messages[0].canReservePost,true)
+ page.data.conversation.postSnapshot.contentType='service';page.sync()
+ assert.equal(page.data.messages[0].canReservePost,true)
+ page.userId='seller';page.sync()
+ assert.equal(page.data.messages[0].canReservePost,false)
+})
+
+test('typing and polling never write the controlled textarea value back to the native input',()=>{
+ const {page,patches}=conversationLayoutPage()
+ patches.length=0
+ page.onDraft({detail:{value:'unfinished message'}})
+ page.apply({type:'MESSAGES_SUCCESS',conversationId:'c',messages:[{_id:'incoming',createdAt:1}]})
+ page.apply({type:'MARK_READ_SUCCESS',conversationId:'c',totalUnread:0})
+ assert.equal(page.state.draft,'unfinished message')
+ assert.ok(patches.every(patch=>!Object.hasOwn(patch,'draft')))
+})
+
+test('send response preserves text typed after the submitted message',()=>{
+ const {page}=conversationLayoutPage()
+ page.onDraft({detail:{value:'first'}})
+ page.apply({type:'SEND_START',requestId:'r'})
+ page.onDraft({detail:{value:'next message'}})
+ page.apply({type:'SEND_SUCCESS',conversationId:'c',message:{_id:'sent',createdAt:1}})
+ assert.equal(page.state.draft,'next message')
 })
 test('keyboard layout uses current viewport units and restores full height after blur',()=>{
  const {page}=conversationLayoutPage()

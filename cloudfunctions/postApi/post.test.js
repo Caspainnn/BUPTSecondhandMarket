@@ -36,6 +36,8 @@ test('rejects unsafe or out-of-range prices', () => {
 
 test('normalizes a valid sale post', () => {
   assert.deepEqual(validatePostInput(validInput), {
+    direction: 'provide',
+    contentType: 'item',
     title: '出九成新显示器',
     description: validInput.description,
     imageFileIds: validInput.imageFileIds,
@@ -53,7 +55,6 @@ test('enforces text, image, category, quantity, and campus boundaries', () => {
   const invalid = [
     { title: '一' },
     { description: '字'.repeat(1001) },
-    { imageFileIds: [] },
     { imageFileIds: Array(7).fill('cloud://env/posts/a.jpg') },
     { imageFileIds: ['https://example.com/a.jpg'] },
     { imageFileIds: ['cloud://env/posts/a.gif'] },

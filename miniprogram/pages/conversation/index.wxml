@@ -7,21 +7,21 @@
     <view wx:if="{{conversation}}" class="product-info" bindtap="openPost">
       <cloud-image wx:if="{{!imageError}}" class="product-cover" src="{{conversation.postSnapshot.coverFileId}}" mode="aspectFill" binderror="onImageError" />
       <view wx:else class="product-cover image-placeholder"></view>
-      <view class="product-text"><text class="product-title">{{conversation.postSnapshot.title}}</text><text class="product-price">¥{{conversation.postSnapshot.unitPriceCents / 100}}</text></view>
+      <view class="product-text"><text class="product-title">{{conversation.postSnapshot.title}}</text><text class="product-price">{{conversation.postSnapshot.unitPriceCents == null ? '面议' : '¥' + conversation.postSnapshot.unitPriceCents / 100}}</text></view>
     </view>
     <text wx:else class="product-title">正在获取商品信息</text>
-    <view wx:if="{{canCreateTransaction}}" class="transaction-entry" aria-role="button" bindtap="createTransaction">预约购买</view>
+    <view wx:if="{{canCreateTransaction}}" class="transaction-entry" aria-role="button" bindtap="createTransaction">发起预约</view>
   </view>
-  <scroll-view class="messages" scroll-y scroll-with-animation scroll-into-view="{{scrollTarget}}" bindscroll="onHistoryScroll" bindscrolltolower="onHistoryBottom" upper-threshold="80" bindscrolltoupper="loadOlder">
+  <scroll-view class="messages" scroll-y scroll-with-animation scroll-into-view="{{scrollTarget}}" bindtouchstart="onHistoryTouchStart" bindtouchend="onHistoryTouchEnd" bindtouchcancel="onHistoryTouchEnd" bindscroll="onHistoryScroll" bindscrolltolower="onHistoryBottom" upper-threshold="80" bindscrolltoupper="loadOlder">
     <view wx:if="{{loading}}" class="loading">正在加载…</view>
     <view wx:for="{{messages}}" wx:key="_id" class="message-row {{item.mine ? 'mine' : ''}}">
       <view wx:if="{{item.transactionCard}}" class="transaction-card">
-        <view class="transaction-card-heading"><text>预约清单</text><text class="transaction-card-status">{{item.transactionCard.statusLabel}}</text></view>
+        <view class="transaction-card-heading"><text>预约清单</text></view>
+        <view class="appointment-progress progress-{{item.transactionCard.progressTone}}"><view class="progress-stripe" aria-hidden="true"></view><text class="progress-status">{{item.transactionCard.progress.title}}</text><text class="progress-event">{{item.transactionCard.progress.detail}}</text></view>
         <text class="transaction-card-title">{{item.transactionCard.postSnapshot.title}}</text>
-        <text class="transaction-key">数量：{{item.transactionCard.quantity}} 件</text>
-        <text class="transaction-key">地点：{{item.transactionCard.campusName}} · {{item.transactionCard.locationText}}</text>
+        <text wx:if="{{item.transactionCard.postSnapshot.contentType !== 'service'}}" class="transaction-key">数量：{{item.transactionCard.quantity}} 件</text>
+        <text wx:if="{{item.transactionCard.itemDescription}}" class="transaction-key">物品：{{item.transactionCard.itemDescription}}</text><text class="transaction-key">地点：{{item.transactionCard.campusName}} · {{item.transactionCard.locationText}}</text>
         <text class="transaction-key">时间：{{item.transactionCard.scheduledText}}</text>
-        <text class="transaction-card-event">{{item.text}}</text>
         <view wx:if="{{item.canRespond || item.canRevise}}" class="card-actions">
           <button wx:if="{{item.canRespond}}" data-id="{{item.transactionId}}" data-action="confirm" disabled="{{cardBusy}}" catchtap="actOnCard">接受</button>
           <button wx:if="{{item.canRespond}}" class="card-secondary" data-id="{{item.transactionId}}" data-action="reject" disabled="{{cardBusy}}" catchtap="actOnCard">拒绝</button>
@@ -29,9 +29,10 @@
           <button wx:if="{{item.canRevise}}" data-message="{{item._id}}" disabled="{{cardBusy}}" catchtap="editCard">修改</button>
         </view>
         <view wx:if="{{editingMessageId === item._id && item.canRevise}}" class="card-editor">
-          <label><text>数量</text><input type="number" data-field="quantity" value="{{editForm.quantity}}" disabled="{{cardBusy}}" bindinput="patchCardEdit" /></label>
-          <label><text>校区</text><picker range="{{campuses}}" range-key="name" value="{{editForm.campusIndex}}" data-field="campusIndex" disabled="{{cardBusy}}" bindchange="patchCardEdit"><view>{{campuses[editForm.campusIndex].name}}<image class="card-dropdown" src="/assets/icons/dropdown.svg" /></view></picker></label>
-          <label><text>交接地点</text><input data-field="locationText" maxlength="50" value="{{editForm.locationText}}" disabled="{{cardBusy}}" bindinput="patchCardEdit" /></label>
+          <label wx:if="{{!editingService}}"><text>数量</text><input type="number" data-field="quantity" value="{{editForm.quantity}}" disabled="{{cardBusy}}" bindinput="patchCardEdit" /></label>
+          <label wx:if="{{editingNeed && !editingService}}"><text>物品说明</text><input data-field="itemDescription" maxlength="200" value="{{editForm.itemDescription}}" disabled="{{cardBusy}}" bindinput="patchCardEdit" /></label>
+          <label><text>地点或方式</text><picker range="{{campuses}}" range-key="name" value="{{editForm.campusIndex}}" data-field="campusIndex" disabled="{{cardBusy}}" bindchange="patchCardEdit"><view>{{campuses[editForm.campusIndex].name}}<image class="card-dropdown" src="/assets/icons/dropdown.svg" /></view></picker></label>
+          <label><text>{{editForm.fulfillmentMode === 'online' ? '沟通或交付方式' : '交接地点'}}</text><input data-field="locationText" maxlength="50" value="{{editForm.locationText}}" disabled="{{cardBusy}}" bindinput="patchCardEdit" /></label>
           <label><text>日期</text><picker mode="date" value="{{editForm.date}}" data-field="date" disabled="{{cardBusy}}" bindchange="patchCardEdit"><view>{{editForm.date}}<image class="card-dropdown" src="/assets/icons/dropdown.svg" /></view></picker></label>
           <label><text>时间</text><picker mode="time" value="{{editForm.time}}" data-field="time" disabled="{{cardBusy}}" bindchange="patchCardEdit"><view>{{editForm.time}}<image class="card-dropdown" src="/assets/icons/dropdown.svg" /></view></picker></label>
           <view class="card-actions"><button loading="{{cardBusy}}" disabled="{{cardBusy}}" catchtap="saveCardEdit">保存修改</button><button class="card-secondary" disabled="{{cardBusy}}" catchtap="cancelCardEdit">取消修改</button></view>
@@ -40,11 +41,14 @@
         <text wx:if="{{item.canResult && item.successDisabled}}" class="transaction-card-event">到约定时间后可确认交接成功</text>
         <text class="transaction-card-link" data-id="{{item.transactionId}}" bindtap="openTransaction">查看预约详情 ›</text>
       </view>
+      <view wx:elif="{{item.postCard}}" class="transaction-card post-message-card"><view class="transaction-card-heading"><text>商品信息</text><text class="transaction-card-status">{{item.postCard.direction === 'need' ? '需求' : '提供'}} · {{item.postCard.contentType === 'service' ? '服务' : '物品'}}</text></view><cloud-image wx:if="{{item.postCard.coverFileId}}" src="{{item.postCard.coverFileId}}" mode="aspectFill" /><text class="transaction-card-title">{{item.postCard.title}}</text><text class="post-card-price">{{item.postCard.priceLabel}}</text><view class="card-actions" wx:if="{{item.canReservePost}}"><button data-id="{{item.postCard.postId}}" bindtap="reserveCardPost">发起预约</button></view><view class="transaction-card-link" data-id="{{item.postCard.postId}}" bindtap="openCardPost">查看详情 ›</view></view>
       <view wx:elif="{{item.type === 'system'}}" class="system-message">{{item.text}}</view>
       <view wx:else class="bubble">{{item.text}}</view>
     </view>
     <view id="bottom-anchor" class="bottom-anchor"></view>
   </scroll-view>
 
-  <view class="composer"><textarea value="{{draft}}" maxlength="500" placeholder="输入消息" adjust-position="{{false}}" show-confirm-bar="{{false}}" disable-default-padding="{{true}}" hold-keyboard="{{true}}" bindkeyboardheightchange="onKeyboardHeight" bindfocus="onKeyboardHeight" bindblur="onInputBlur" bindinput="onDraft" /><button class="send-button" aria-label="发送消息" loading="{{sending}}" disabled="{{sending || !draft}}" bindtap="submit"><image class="send-icon" src="/assets/icons/send.svg" mode="aspectFit" /></button></view>
+  <view wx:if="{{hasNewMessages}}" class="new-message-tip" aria-role="button" bindtap="scrollToBottom">有新消息，点击查看 ↓</view>
+  <view class="composer"><button class="card-picker-button" aria-label="发送信息卡片" bindtap="openCardPicker"><image class="add-card-icon" src="/assets/icons/add-circle.svg" mode="aspectFit" /></button><textarea value="{{draft}}" maxlength="500" placeholder="输入消息" adjust-position="{{false}}" show-confirm-bar="{{false}}" disable-default-padding="{{true}}" hold-keyboard="{{true}}" bindkeyboardheightchange="onKeyboardHeight" bindfocus="onKeyboardHeight" bindblur="onInputBlur" bindinput="onDraft" /><button class="send-button" aria-label="发送消息" loading="{{sending}}" disabled="{{sending || !hasDraft}}" bindtap="submit"><image class="send-icon" src="/assets/icons/send.svg" mode="aspectFit" /></button></view>
+  <view wx:if="{{cardPickerOpen}}" class="card-picker-overlay"><view class="card-picker-panel"><view class="card-picker-heading"><text>选择我的发布</text><button bindtap="closeCardPicker" disabled="{{cardSending}}">关闭</button></view><scroll-view scroll-y class="card-picker-list"><view wx:for="{{cardPosts}}" wx:key="_id" data-id="{{item._id}}" bindtap="sendCard" class="card-picker-item"><text>{{item.direction === 'need' ? '我需要' : '我提供'}} · {{item.contentType === 'service' ? '服务' : '物品'}}</text><text>{{item.title}}</text></view><text wx:if="{{!cardPosts.length && !cardLoading}}">暂无发布的信息</text><button wx:if="{{cardNextCursor}}" bindtap="moreCardPosts" loading="{{cardLoading}}">加载更多</button><text wx:if="{{cardLoading}}">正在加载…</text></scroll-view></view></view>
 </view>

@@ -4,7 +4,7 @@ const { requireCompletedProfile } = require('../../services/user')
 
 Page({
   data: { form: createPostFormState().form, status: 'loading', error: '' },
-  async onLoad(options) { this.postId = options.postId; try { const user = await requireCompletedProfile(); if (!user) return; this.userId = user._id; const post = await getPost(this.postId); this.state = createPostFormState({ mode: 'edit', form: { ...post, price: (post.unitPriceCents / 100).toFixed(2), images: post.imageFileIds.map((fileId) => ({ fileId, tempPath: fileId })) } }); this.sync() } catch (error) { this.state = createPostFormState({ mode: 'edit', status: 'error', error: error.message }); this.sync() } },
+  async onLoad(options) { this.postId = options.postId; try { const user = await requireCompletedProfile(); if (!user) return; this.userId = user._id; const post = await getPost(this.postId); this.state = createPostFormState({ mode: 'edit', form: { ...post, direction: post.direction || 'provide', contentType: post.contentType || 'item', allCampuses: post.campusId === '', price: post.unitPriceCents == null ? '' : (post.unitPriceCents / 100).toFixed(2), images: (post.imageFileIds || []).map((fileId) => ({ fileId, tempPath: fileId })) } }); this.sync() } catch (error) { this.state = createPostFormState({ mode: 'edit', status: 'error', error: error.message }); this.sync() } },
   sync() { this.setData({ form: this.state.form, status: this.state.status, error: this.state.error }) },
   apply(event) { this.state = reducePostFormState(this.state, event); this.sync() },
   onPatch(e) { const patch = { ...e.detail.patch }; if (patch.totalQuantity !== undefined) patch.totalQuantity = Number(patch.totalQuantity); this.apply({ type: 'PATCH_FORM', patch }) },

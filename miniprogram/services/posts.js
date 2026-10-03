@@ -4,7 +4,7 @@ const postAction = (action, data = {}) => callCloud('postApi', { action, ...data
 const createPost = (input, requestId) => postAction('create', { input, requestId }).then((data) => data.post)
 const updatePost = (postId, input, requestId) => postAction('update', { postId, input, requestId }).then((data) => data.post)
 const getPost = (postId) => postAction('detail', { postId }).then((data) => data.post)
-const listPosts = (campusId, cursor, limit = 20) => postAction('list', { campusId, cursor, limit })
+const listPosts = (campusId, cursor, limit = 20, direction = '', contentType = '', categoryIds = [], sort = 'newest', priceSort = '', keyword = '') => postAction('list', { campusId, cursor, limit, direction, contentType, categoryIds, sort, priceSort, keyword })
 const listMyPosts = (status, cursor, limit = 20) => postAction('listMine', { status, cursor, limit })
 const setPostStatus = (postId, status, requestId) => postAction('setStatus', { postId, status, requestId }).then((data) => data.post)
 

@@ -16,6 +16,7 @@ function transactionRepository(transaction) {
   const conversations = transaction.collection('conversations')
   const messages = transaction.collection('messages')
   return {
+    async getPost(id) { try { return (await transaction.collection('posts').doc(id).get()).data || null } catch (error) { return null } },
     async getConversation(id) { try { return (await conversations.doc(id).get()).data || null } catch (error) { return null } },
     async findByRequest(conversationId, senderId, requestId) { const result = await messages.where({ conversationId, senderId, requestId }).limit(1).get(); return result.data[0] || null },
     async createMessage(data) { const result = await messages.add({ data }); return { _id: result._id, ...data } },
@@ -54,6 +55,7 @@ exports.main = async (event = {}) => {
     const messages = repository()
     const actions = {
       send: () => service.sendMessage({ actor, conversationId: event.conversationId, text: event.text, requestId: event.requestId, messages, now: db.serverDate() }),
+      sendPostCard: () => service.sendPostCard({ actor, conversationId: event.conversationId, postId: event.postId, requestId: event.requestId, messages, now: db.serverDate() }),
       list: () => service.listMessages({ actor, conversationId: event.conversationId, before: event.before, limit: event.limit, messages }),
       markRead: () => service.markConversationRead({ actor, conversationId: event.conversationId, messages, now: db.serverDate() }),
     }

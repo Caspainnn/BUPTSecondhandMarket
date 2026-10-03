@@ -146,3 +146,24 @@
 | `transaction_events` | `actor_request` | `actorId`、`requestId` 升序 | 唯一 |
 | `inventory_movements` | `post_movements` | `postId` 升序、`createdAt` 降序 | 普通 |
 | `inventory_movements` | `transaction_movements` | `transactionId` 升序、`createdAt` 降序 | 普通 |
+
+## 阶段 2 增量（2026-10-02）
+
+不新增集合，不重跑初始化，不改变客户端权限。旧帖子缺少 direction/contentType 按 provide/item 解释；旧交易缺少 inventoryManaged 仍执行库存路径，不需批量迁移旧记录。
+
+新增帖子 direction（provide/need）、contentType（item/service）；全部校区服务 campusId 为空字符串。服务和需求没有物品库存字段。需求 activeTransactionId 由 transactionApi 数据库事务维护，跨会话共用同一帖子记录作为锁，终态仅清除属于当前交易的锁，成功设 status=completed。
+
+新增交易 inventoryManaged、快照类型、需求物品 itemDescription、服务 fulfillmentMode（online/offline）；线上 campusId 为空，locationText 保存沟通/交付方式。消息 post_card 保存公开快照，不改变会话关联帖子。
+
+### posts 列表普通索引
+
+保留原索引，按新增查询补充以下普通组合索引（不新增唯一约束）：
+
+| 名称 | 字段顺序 |
+| --- | --- |
+| public_posts_time | status 升序、publishedAt 降序、_id 降序 |
+| public_posts_direction | status 升序、direction 升序、publishedAt 降序、_id 降序 |
+| public_posts_campus | status 升序、campusId 升序、publishedAt 降序、_id 降序 |
+| public_posts_direction_campus | status 升序、direction 升序、campusId 升序、publishedAt 降序、_id 降序 |
+
+列表使用一个包含普通物品/服务/需求及校区覆盖的组合查询，按发布时间和_id稳定分页。实际云端若提示具体OR分支索引需求，按控制台对应查询建议补充，不能依据本地模拟断言云端索引已足够。唯一会话、活跃交易、请求幂等索引沿用阶段一。
