@@ -1,4 +1,4 @@
-const { getAppointmentProgress, getTransactionActions, getTransactionStatusLabel } = require('./transaction-state')
+const { getAutoCompleteAt, getAppointmentProgress, getTransactionActions, getTransactionStatusLabel } = require('./transaction-state')
 const { respondTransaction, withdrawTransaction, cancelTransaction, submitResult, reviseTransaction } = require('./transactions')
 const { CAMPUSES, SERVICE_APPOINTMENT_CAMPUSES } = require('../config/market')
 function parts(timestamp) {
@@ -17,7 +17,7 @@ const definition = {
       const scheduled = parts(item.scheduledAt)
       const isService = (item.postSnapshot || {}).contentType === 'service'
       this.setData({ isService, isNeed: (item.postSnapshot || {}).direction === 'need', campuses: isService ? SERVICE_APPOINTMENT_CAMPUSES : CAMPUSES })
-      this.setData({ actions: actions.filter(action => !['success','failure'].includes(action)), canResult: actions.includes('success') || actions.includes('failure'), successDisabled: !actions.includes('success'), canEdit: item.status === 'pending_seller' && item.buyerId === this.data.userId, statusLabel: getTransactionStatusLabel(item.status), progress: getAppointmentProgress(item, Date.now()), progressTone: ['failed', 'abnormal', 'cancelled'].includes(item.status) ? 'alert' : item.status === 'completed' ? 'success' : 'pending', scheduledText: scheduled.date + ' ' + scheduled.time, campusName: (this.data.campuses.find(campus => campus.id === item.campusId) || {}).name || '', waitingOther: item.status === 'awaiting_handover' && Boolean(item.buyerId === this.data.userId ? item.buyerResult : item.sellerResult) })
+      this.setData({ actions: actions.filter(action => !['success','failure'].includes(action)), canResult: actions.includes('success') || actions.includes('failure'), successDisabled: !actions.includes('success'), canEdit: item.status === 'pending_seller' && item.buyerId === this.data.userId, statusLabel: getTransactionStatusLabel(item.status), progress: getAppointmentProgress(item, Date.now()), progressTone: ['failed', 'abnormal', 'cancelled'].includes(item.status) ? 'alert' : item.status === 'completed' ? 'success' : 'pending', scheduledText: scheduled.date + ' ' + scheduled.time, autoCompleteText: item.status === 'awaiting_handover' ? (() => { const deadline = parts(getAutoCompleteAt(item)); return deadline.date + ' ' + deadline.time })() : '', campusName: (this.data.campuses.find(campus => campus.id === item.campusId) || {}).name || '', waitingOther: item.status === 'awaiting_handover' && Boolean(item.buyerId === this.data.userId ? item.buyerResult : item.sellerResult) })
     },
     async act(event) {
       if (this.data.busy) return

@@ -52,3 +52,5 @@ test('derives buyer and seller pending counts from transaction rows', () => {
   const rows = [{ buyerId: 'u', sellerId: 'x', status: 'pending_seller' }, { buyerId: 'x', sellerId: 'u', status: 'awaiting_handover' }, { buyerId: 'u', sellerId: 'x', status: 'completed' }]
   assert.deepEqual(derivePendingCounts(rows, 'u'), { buyer: 1, seller: 1 })
 })
+
+test("sold-out goods offer republish rather than edit", () => { assert.deepEqual(getPostManagementActions({ status: "sold", availableQuantity: 0, reservedQuantity: 0, soldQuantity: 1 }), ["republish"]) })

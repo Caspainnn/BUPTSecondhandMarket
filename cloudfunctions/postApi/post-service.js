@@ -72,15 +72,21 @@ async function setPostStatus({ actor, postId, status, posts, now }) {
   return { post: await posts.update(postId, { status, updatedAt: now }) }
 }
 
-async function listPosts({ campusId, direction, contentType, categoryId, categoryIds, sort = 'newest', priceSort = '', keyword = '', cursor, limit, posts }) {
+async function listPosts({ campusId, direction, contentType, categoryId, categoryIds, sort = 'newest', priceSort = '', keyword = '', minPriceCents, maxPriceCents, conditionIds = [], cursor, limit, posts }) {
   if (direction && !['provide', 'need'].includes(direction)) throw new PostError('INVALID_TYPE', '信息方向无效')
   if (contentType && !['item', 'service'].includes(contentType)) throw new PostError('INVALID_TYPE', '内容类型无效')
   if (!['comprehensive', 'newest', 'oldest', 'price_asc', 'price_desc'].includes(sort)) throw new PostError('INVALID_SORT', '排序方式无效')
   if (!['', 'price_asc', 'price_desc'].includes(priceSort)) throw new PostError('INVALID_SORT', '价格排序方式无效')
   if (typeof keyword !== 'string' || [...keyword.trim()].length > 50) throw new PostError('INVALID_SEARCH', '搜索词不能超过 50 个字符')
+  for (const value of [minPriceCents, maxPriceCents]) {
+    if (value != null && (!Number.isSafeInteger(value) || value < 0 || value > 99999999)) throw new PostError('INVALID_PRICE_RANGE', '请输入有效价格区间')
+  }
+  if (minPriceCents != null && maxPriceCents != null && minPriceCents > maxPriceCents) throw new PostError('INVALID_PRICE_RANGE', '最低价格不能高于最高价格')
+  if (!Array.isArray(conditionIds) || conditionIds.length > 5 || conditionIds.some(id => !['new', 'like_new', 'visible_wear', 'worn_functional', 'partially_faulty'].includes(id))) throw new PostError('INVALID_CONDITION', '物品成色无效')
+  if (conditionIds.length) { direction = 'provide'; contentType = 'item' }
   const selected = categoryIds === undefined ? (categoryId ? [categoryId] : []) : categoryIds
   if (!Array.isArray(selected) || selected.length > 8 || selected.some(id => !['digital', 'books', 'mobility', 'daily', 'fashion', 'sports', 'tickets', 'other'].includes(id))) throw new PostError('INVALID_CATEGORY', '物品分类无效')
-  const query = { keyword: keyword.trim(), sort: priceSort || sort, timeSort: sort === 'oldest' ? 'asc' : 'desc', campusId: campusId || '', ...(direction ? { direction } : {}), ...(contentType ? { contentType } : {}), ...(selected.length && contentType !== 'service' ? { categoryIds: [...new Set(selected)], contentType: 'item' } : {}), cursor: cursor || null, limit: Math.min(Math.max(Number(limit) || 20, 1), 20) }
+  const query = { ...(minPriceCents != null ? { minPriceCents } : {}), ...(maxPriceCents != null ? { maxPriceCents } : {}), conditionIds: [...new Set(conditionIds)], keyword: keyword.trim(), sort: priceSort || sort, timeSort: sort === 'oldest' ? 'asc' : 'desc', campusId: campusId || '', ...(direction ? { direction } : {}), ...(contentType ? { contentType } : {}), ...(selected.length && contentType !== 'service' ? { categoryIds: [...new Set(selected)], contentType: 'item' } : {}), cursor: cursor || null, limit: Math.min(Math.max(Number(limit) || 20, 1), 20) }
   const result = await posts.listPublic(query)
   return { posts: result.rows.map(publicPost), nextCursor: result.nextCursor, query }
 }

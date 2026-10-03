@@ -167,3 +167,37 @@
 | public_posts_direction_campus | status 升序、direction 升序、campusId 升序、publishedAt 降序、_id 降序 |
 
 列表使用一个包含普通物品/服务/需求及校区覆盖的组合查询，按发布时间和_id稳定分页。实际云端若提示具体OR分支索引需求，按控制台对应查询建议补充，不能依据本地模拟断言云端索引已足够。唯一会话、活跃交易、请求幂等索引沿用阶段一。
+
+## 阶段3自动完成增量
+
+不新增集合或修改权限。在transactions添加普通组合索引timeout_due：status升序、scheduledAt升序、_id升序。transactionApi新增定时入口，部署和触发器配置见docs/阶段3验收.md。
+
+已完成交易新增completionSource：participants表示双方主动确认，timeout表示定时自动完成。timeout不改写buyerResult/sellerResult，transaction_events记录系统timeout_completed事件，库存流水复用sell。旧已完成记录无completionSource仍按原展示兼容。新定时入口也会补处理现有符合规则的待交接订单。
+
+
+## 阶段3提醒与可选订阅增量
+
+站内提醒不新增集合；transactions新增nearRemindedAt/resultRemindedAt（已发时间）及nextReminderAt（下次时间，null表示无后续到时提醒）。提醒与自动完成共享timeout_due；实际云端OR组合查询若提示缺索引，按控制台建议补普通索引（status/nextReminderAt/scheduledAt/_id相关字段），保留已有索引，不放宽权限。
+
+只有模板获批并准备启用时才手动创建subscription_deliveries，客户端read/write均为false；默认enabled=false时不读写此集合。无需重跑旧初始化函数，不新增notifications集合。
+
+| 索引名 | 字段顺序（均升序） | 类型 |
+| --- | --- | --- |
+| pending_delivery | kind、status、createdAt、_id | 普通 |
+| transaction_delivery | kind、status、transactionId、createdAt、_id | 普通 |
+| available_grant | kind、recipientId、transactionId、templateId、status、createdAt | 普通 |
+
+grant记录用户对指定预约的授权意图，status为available/consumed；delivery记录对应事件、收件用户内部ID、模板ID、时间及发送状态。文档ID由事件和收件人或授权请求做确定性散列，利用系统_id唯一性实现幂等。OpenID只在发送时从users读取，不保存至发送队列，不输出至日志。微信实际授权额度由接口裁决。
+
+授权候选在事务外查询，事务内按文档ID重读并消费，避免新增事务where依赖。核心预约事务只收集通知意图，提交后再独立写订阅队列；队列不可用不回滚预约、库存和聊天。发送前先事务认领并消费授权，API在事务外只尝试一次；失败/unknown/dispatching不自动重发。启用与验收见docs/阶段3验收.md。
+
+自动完成参数增量：新预约保存autoCompleteAfterMs和autoCompleteAt（数值时间戳）；更改云端timeout-config.json仅影响之后创建的预约，旧记录缺字段按1小时。新增普通deadline_due索引：status、autoCompleteAt、scheduledAt、_id均升序，保留timeout_due。扫描按新记录截止时间与旧记录约定时间OR兼容，不做数据迁移。
+
+
+## 最新规则：用户打开页面时检查超时（2026-10-03）
+
+用户明确改为页面加载/刷新触发，覆盖此前后台每分钟自动完成要求。transactionApi在可信用户的列表、详情和预约操作前检查其参与的待交接预约；聊天轮询先调用refresh再加载消息。比较服务端时间及预约保存的截止，符合规则执行同一库存/需求/审计事务。无操作且无人打开页面时不处理；失败、取消、异常订单不自动完成，不伪造双方成功。终态从正在进行移除。提醒同步改为页面检查时处理，迟到不补临期，超时先完成；不能再承诺离线时精准临期/到时微信提醒。
+
+部署：只需上传部署最新transactionApi（云端安装依赖），重新编译客户端。页面检查复用已有买卖双方预约列表索引，无需新增超时索引或上传触发器。config.json已清空triggers，旧Timer入口拒绝；之前已上传的appointment-timeout可移除，或按工具支持的方式上传空触发配置，避免旧任务继续产生无用调用。
+
+现在直接打开我的或预约详情/聊天，已有超过截止的六分钟预约应自动完成，正在进行消失；无需再等六分钟或重建。截止之前保持待交接；失败反馈不变，重复页面刷新库存与系统完成消息仅一次。新配置仍仅影响新预约。完整240项回归通过，云端与真机保持待验收。

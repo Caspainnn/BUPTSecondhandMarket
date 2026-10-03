@@ -37,6 +37,7 @@ async function sendMessage({ actor, conversationId, text, postId, requestId, mes
     if (postId) {
       const post = await tx.getPost(postId)
       if (!post || post.ownerId !== actor._id) throw new MessageError('FORBIDDEN', '只能发送自己发布的信息')
+      if (post.status !== 'active' || ((post.direction || 'provide') === 'provide' && (post.contentType || 'item') === 'item' && !(post.availableQuantity > 0))) throw new MessageError('POST_UNAVAILABLE', '该信息已下架、售完或不可预约，请选择其他信息')
       postCard = { postId: post._id, title: post.title, coverFileId: (post.imageFileIds || [])[0] || '', unitPriceCents: post.unitPriceCents == null ? null : post.unitPriceCents, direction: post.direction || 'provide', contentType: post.contentType || 'item' }
     }
     const summary = postCard ? `[信息卡片] ${postCard.title}` : normalizedText

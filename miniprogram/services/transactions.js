@@ -25,4 +25,6 @@ async function listOngoingTransactions() {
   return { transactions: rows.filter((row, index) => ['pending_seller', 'awaiting_handover'].includes(row.status) && rows.findIndex(item => item._id === row._id) === index).sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()), nextCursor: null }
 }
 
-module.exports = { listOngoingTransactions, reviseTransaction, cancelTransaction, createTransaction, getTransaction, listTransactions, respondTransaction, submitResult, withdrawTransaction }
+const refreshAppointments = () => action('refresh')
+
+module.exports = { refreshAppointments, listOngoingTransactions, reviseTransaction, cancelTransaction, createTransaction, getTransaction, listTransactions, respondTransaction, submitResult, withdrawTransaction }

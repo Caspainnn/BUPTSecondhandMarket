@@ -6,3 +6,5 @@
 .event-time, .event-reason { font-size: 24rpx; color: #72808e; }
 
 .actions button{box-sizing:border-box;border:1rpx solid #83c7f4;color:#17324d}.actions .action-secondary{border-color:#c6dce9;background:#f9fcfe;color:#53677a}
+
+.subscription-entry{display:flex;flex-direction:column;gap:16rpx}.subscription-entry button{margin:0;border:0;border-radius:16rpx;background:#e4f4ff;color:#2479b8;font-size:26rpx}.subscription-entry button::after{border:0}.subscription-entry text{color:#72808e;font-size:22rpx;line-height:1.5}

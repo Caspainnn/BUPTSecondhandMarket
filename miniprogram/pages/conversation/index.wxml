@@ -22,6 +22,7 @@
         <text wx:if="{{item.transactionCard.postSnapshot.contentType !== 'service'}}" class="transaction-key">数量：{{item.transactionCard.quantity}} 件</text>
         <text wx:if="{{item.transactionCard.itemDescription}}" class="transaction-key">物品：{{item.transactionCard.itemDescription}}</text><text class="transaction-key">地点：{{item.transactionCard.campusName}} · {{item.transactionCard.locationText}}</text>
         <text class="transaction-key">时间：{{item.transactionCard.scheduledText}}</text>
+        <text wx:if="{{item.transactionCard.autoCompleteText}}" class="transaction-card-event transaction-deadline">无失败反馈将于 {{item.transactionCard.autoCompleteText}} 自动完成</text>
         <view wx:if="{{item.canRespond || item.canRevise}}" class="card-actions">
           <button wx:if="{{item.canRespond}}" data-id="{{item.transactionId}}" data-action="confirm" disabled="{{cardBusy}}" catchtap="actOnCard">接受</button>
           <button wx:if="{{item.canRespond}}" class="card-secondary" data-id="{{item.transactionId}}" data-action="reject" disabled="{{cardBusy}}" catchtap="actOnCard">拒绝</button>

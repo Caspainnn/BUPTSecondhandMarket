@@ -13,3 +13,9 @@ test('appointment progress separates stage from the next participant action', ()
   assert.equal(getAppointmentProgress({ status: 'completed' }, 100).title, '已完成')
   assert.equal(getAppointmentProgress({ status: 'abnormal' }, 100).title, '结果异常')
 })
+
+test('appointment progress distinguishes automatic completion and shows scheduled deadline', () => {
+  assert.match(getAppointmentProgress({ status: 'completed', completionSource: 'timeout' }, 0).detail, /自动完成/)
+  const progress = getAppointmentProgress({ status: 'awaiting_handover', scheduledAt: 1000 }, 0)
+  assert.equal(progress.autoCompleteAt, 3601000)
+})

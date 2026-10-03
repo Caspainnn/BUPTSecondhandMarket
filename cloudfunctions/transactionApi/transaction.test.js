@@ -46,6 +46,8 @@ function repository(seed = {}) {
     async list({ userId, role, status, limit }) { const rows = state.transactions.filter((x) => (!role || x[`${role}Id`] === userId) && (!status || x.status === status) && (x.buyerId === userId || x.sellerId === userId)); return { rows: rows.slice(0, limit), nextCursor: null } },
     async pendingCounts(userId) { return { buyer: state.transactions.filter((x) => x.buyerId === userId && ['pending_seller', 'awaiting_handover'].includes(x.status)).length, seller: state.transactions.filter((x) => x.sellerId === userId && ['pending_seller', 'awaiting_handover'].includes(x.status)).length } },
     async getTransaction(id) { return tx.getTransaction(id) },
+    async getUser(id) { return (state.users || []).find(user => user._id === id) || null },
+    async getConversation(id) { return tx.getConversation(id) },
     async getEvents(id) { return state.events.filter((x) => x.transactionId === id) },
   }
 }
@@ -86,7 +88,7 @@ test('create and seller response retries are deterministic without duplicate rec
   assert.equal(repeated.transaction._id, first.transaction._id)
   await respondTransaction({ actor: seller, transactionId: first.transaction._id, decision: 'confirm', requestId: 'confirm-1', transactions, now: NOW + 2 })
   await respondTransaction({ actor: seller, transactionId: first.transaction._id, decision: 'confirm', requestId: 'confirm-1', transactions, now: NOW + 3 })
-  assert.deepEqual([transactions.state.events.length, transactions.state.movements.length, transactions.state.messages.length], [2, 1, 2])
+  assert.deepEqual([transactions.state.events.length, transactions.state.movements.length, transactions.state.messages.length], [3, 1, 3])
 })
 
 test('concurrent seller confirmations atomically reserve inventory and cannot oversell', async () => {
@@ -269,9 +271,179 @@ test('appointment changes carry their actor and notify only the other participan
  await respondTransaction({actor:seller,transactionId:id,decision:'confirm',requestId:'notify-confirm',transactions,now:NOW})
  const failure={actor:buyer,transactionId:id,result:'failure',requestId:'notify-failure',transactions,now:NOW}
  await submitTransactionResult(failure);await submitTransactionResult(failure)
- assert.deepEqual(transactions.state.messages.map(row=>row.senderId),['buyer','buyer','seller','buyer'])
- assert.deepEqual(transactions.state.messages.map(row=>row.recipientId),['seller','seller','buyer','seller'])
- assert.equal(transactions.state.conversations[0].sellerUnread,3)
- assert.equal(transactions.state.conversations[0].buyerUnread,1)
- assert.ok(transactions.state.messages.every(row=>row.actorId===row.senderId && row.transactionCard))
+ assert.deepEqual(transactions.state.messages.filter(row=>!row.reminderType).map(row=>row.senderId),['buyer','buyer','seller','buyer'])
+ assert.deepEqual(transactions.state.messages.filter(row=>!row.reminderType).map(row=>row.recipientId),['seller','seller','buyer','seller'])
+ assert.equal(transactions.state.conversations[0].sellerUnread,4)
+ assert.equal(transactions.state.conversations[0].buyerUnread,2)
+ assert.ok(transactions.state.messages.filter(row=>!row.reminderType).every(row=>row.actorId===row.senderId && row.transactionCard))
+})
+
+async function confirmedTimeoutFixture(seed) {
+  const transactions = repository(seed)
+  const { transaction } = await createTransaction({ actor: buyer, ...validInput(), transactions, now: NOW })
+  transaction.autoCompleteAfterMs = 3600000; transaction.autoCompleteAt = transaction.scheduledAt + 3600000
+  await respondTransaction({ actor: seller, transactionId: transaction._id, decision: 'confirm', requestId: 'confirm-timeout', transactions, now: NOW })
+  return { transactions, id: transaction._id, deadline: transaction.scheduledAt + 3600000 }
+}
+test('timeout completion respects exact hour and does not invent participant results', async () => {
+  const { autoCompleteTransaction } = require('./transaction')
+  const { transactions, id, deadline } = await confirmedTimeoutFixture()
+  assert.equal((await autoCompleteTransaction({ transactionId: id, transactions, now: deadline - 1 })).completed, false)
+  const result = await autoCompleteTransaction({ transactionId: id, transactions, now: deadline })
+  assert.equal(result.completed, true)
+  assert.equal(result.transaction.completionSource, 'timeout')
+  assert.equal(result.transaction.buyerResult, '')
+  assert.equal(result.transaction.sellerResult, '')
+  assert.equal(transactions.state.posts[0].soldQuantity, 2)
+  assert.equal(transactions.state.posts[0].reservedQuantity, 0)
+  const before = structuredClone(transactions.state)
+  assert.equal((await autoCompleteTransaction({ transactionId: id, transactions, now: deadline + 1 })).completed, false)
+  assert.deepEqual(transactions.state, before)
+  const message = transactions.state.messages.at(-1)
+  assert.equal(message.actorId, 'system')
+  assert.equal(message.transactionCard.completionSource, 'timeout')
+  assert.equal(transactions.state.conversations[0].buyerUnread, before.conversations[0].buyerUnread)
+  assert.equal(transactions.state.conversations[0].sellerUnread, 3)
+})
+test('timeout handles single success and concurrent failure with one inventory outcome', async () => {
+  const { autoCompleteTransaction } = require('./transaction')
+  for (const result of ['success', 'failure']) {
+    const { transactions, id, deadline } = await confirmedTimeoutFixture()
+    await submitTransactionResult({ actor: buyer, transactionId: id, result, requestId: 'feedback', transactions, now: deadline - 1 })
+    const completed = await autoCompleteTransaction({ transactionId: id, transactions, now: deadline })
+    assert.equal(completed.completed, result === 'success')
+    assert.equal(transactions.state.transactions[0].status, result === 'success' ? 'completed' : 'failed')
+  }
+  for (const failureFirst of [true, false]) {
+    const { transactions, id, deadline } = await confirmedTimeoutFixture()
+    const failure = () => submitTransactionResult({ actor: buyer, transactionId: id, result: 'failure', requestId: 'racing-failure', transactions, now: deadline })
+    const timeout = () => autoCompleteTransaction({ transactionId: id, transactions, now: deadline })
+    await Promise.allSettled(failureFirst ? [failure(), timeout()] : [timeout(), failure()])
+    assert.equal(transactions.state.movements.filter(row => ['sell', 'release'].includes(row.type)).length, 1)
+    assert.equal(transactions.state.transactions[0].status, failureFirst ? 'failed' : 'completed')
+  }
+})
+test('timeout ignores pending invalid and failed appointments and rolls back on broken inventory', async () => {
+  const { autoCompleteTransaction } = require('./transaction')
+  const transactions = repository()
+  const { transaction } = await createTransaction({ actor: buyer, ...validInput(), transactions, now: NOW })
+  assert.equal((await autoCompleteTransaction({ transactionId: transaction._id, transactions, now: NOW + 9999999 })).completed, false)
+  for (const patch of [{ scheduledAt: null }, { scheduledAt: 'bad' }, { buyerResult: 'failure' }]) {
+    const fixture = await confirmedTimeoutFixture()
+    Object.assign(fixture.transactions.state.transactions[0], patch)
+    assert.equal((await autoCompleteTransaction({ transactionId: fixture.id, transactions: fixture.transactions, now: fixture.deadline })).completed, false)
+  }
+  const fixture = await confirmedTimeoutFixture()
+  fixture.transactions.state.posts[0].reservedQuantity = 0
+  const before = structuredClone(fixture.transactions.state)
+  await assert.rejects(autoCompleteTransaction({ transactionId: fixture.id, transactions: fixture.transactions, now: fixture.deadline }))
+  assert.deepEqual(fixture.transactions.state, before)
+})
+test('timeout closes need without inventory and preserves ongoing services', async () => {
+  const { autoCompleteTransaction } = require('./transaction')
+  for (const direction of ['need', 'provide']) {
+    const servicePost = { ...post, direction, contentType: 'service', ownerId: direction === 'need' ? 'buyer' : 'seller' }
+    const fixture = await confirmedTimeoutFixture({ posts: [servicePost] })
+    await autoCompleteTransaction({ transactionId: fixture.id, transactions: fixture.transactions, now: fixture.deadline })
+    assert.equal(fixture.transactions.state.movements.length, 0)
+    assert.equal(fixture.transactions.state.posts[0].status, direction === 'need' ? 'completed' : 'active')
+    if (direction === 'need') assert.equal(fixture.transactions.state.posts[0].activeTransactionId, '')
+  }
+})
+
+test('timeout linked stock closes original need and sells out only exhausted goods', async () => {
+  const { autoCompleteTransaction } = require('./transaction')
+  const need = { _id: 'need', ownerId: 'buyer', direction: 'need', contentType: 'item', title: '求教材', status: 'active', imageFileIds: [] }
+  const goods = { ...post, totalQuantity: 2, availableQuantity: 2 }
+  const transactions = repository({ posts: [goods, need], conversations: [{ ...conversations[0], postId: 'need' }] })
+  const { transaction } = await createTransaction({ actor: buyer, ...validInput(), linkedPostId: 'post', transactions, now: NOW })
+  await respondTransaction({ actor: seller, transactionId: transaction._id, decision: 'confirm', requestId: 'confirm-linked-timeout', transactions, now: NOW })
+  await autoCompleteTransaction({ transactionId: transaction._id, transactions, now: transaction.scheduledAt + 3600000 })
+  assert.equal(transactions.state.posts[0].status, 'sold')
+  assert.equal(transactions.state.posts[0].soldQuantity, 2)
+  assert.equal(transactions.state.posts[1].status, 'completed')
+  assert.equal(transactions.state.posts[1].activeTransactionId, '')
+  assert.equal(transactions.state.movements.filter(row => row.type === 'sell').length, 1)
+})
+
+test('confirmed appointments within fifteen minutes receive one plain reminder immediately', async () => {
+  const { processAppointmentReminders } = require('./reminders')
+  for (const minutes of [0, 10, 15]) {
+    const transactions = repository()
+    const { transaction } = await createTransaction({ actor: buyer, ...validInput(), scheduledAt: NOW + minutes * 60000, transactions, now: NOW })
+    await respondTransaction({ actor: seller, transactionId: transaction._id, decision: 'confirm', requestId: 'confirm-short', transactions, now: NOW })
+    const near = transactions.state.messages.filter(row => row.reminderType === 'near')
+    assert.equal(near.length, 1)
+    assert.equal(near[0].transactionCard, undefined)
+    assert.equal(near[0].senderId, 'system')
+    await processAppointmentReminders({ transactionId: transaction._id, transactions, now: NOW })
+    assert.equal(transactions.state.messages.filter(row => row.reminderType === 'near').length, 1)
+    assert.equal(transactions.state.messages.filter(row => row.reminderType === 'result').length, minutes === 0 ? 1 : 0)
+  }
+})
+test('future appointments remind at fifteen minutes and at scheduled time without stealing the order card', async () => {
+  const { processAppointmentReminders } = require('./reminders')
+  const transactions = repository()
+  const scheduledAt = NOW + 30 * 60000
+  const { transaction } = await createTransaction({ actor: buyer, ...validInput(), scheduledAt, transactions, now: NOW })
+  await respondTransaction({ actor: seller, transactionId: transaction._id, decision: 'confirm', requestId: 'confirm-future', transactions, now: NOW })
+  for (const now of [scheduledAt - 900001, scheduledAt - 900000, scheduledAt - 900000, scheduledAt, scheduledAt]) await processAppointmentReminders({ transactionId: transaction._id, transactions, now })
+  assert.deepEqual(transactions.state.messages.filter(row => row.reminderType).map(row => row.reminderType), ['near', 'result'])
+  assert.equal(transactions.state.transactions[0].nextReminderAt, null)
+  assert.ok(transactions.state.messages.filter(row => row.reminderType).every(row => !row.transactionCard))
+  assert.equal(transactions.state.transactions[0].status, 'awaiting_handover')
+})
+test('late reminder scan only sends current result reminder and skips cancelled expired or failed orders', async () => {
+  const { processAppointmentReminders } = require('./reminders')
+  const seed = awaitingSeed({ scheduledAt: NOW })
+  const transactions = repository(seed)
+  await processAppointmentReminders({ transactionId: 't1', transactions, now: NOW + 60000 })
+  assert.deepEqual(transactions.state.messages.map(row => row.reminderType), ['result'])
+  for (const patch of [{ status: 'cancelled' }, { status: 'failed' }, { scheduledAt: NOW - 3600000 }, { buyerResult: 'failure' }]) {
+    const repo = repository(awaitingSeed({ scheduledAt: NOW, ...patch }))
+    await processAppointmentReminders({ transactionId: 't1', transactions: repo, now: NOW })
+    assert.equal(repo.state.messages.length, 0)
+  }
+})
+
+test('detail exposes only participant nicknames with conversation fallback after access check', async () => {
+  const transactions = repository({ users: [{ _id: 'buyer', nickname: '买家甲', _openid: 'private-openid', contactInfo: 'private-contact' }] })
+  transactions.state.conversations[0].sellerSnapshot = { nickname: '卖家乙' }
+  const created = await createTransaction({ actor: buyer, ...validInput(), transactions, now: NOW })
+  const detail = await getTransactionDetail({ actor: buyer, transactionId: created.transaction._id, transactions })
+  assert.equal(detail.buyerNickname, '买家甲')
+  assert.equal(detail.sellerNickname, '卖家乙')
+  assert.ok(!JSON.stringify(detail).includes('private-'))
+  transactions.getUser = async () => { throw Error('Must not read profiles before authorization') }
+  await assert.rejects(getTransactionDetail({ actor: { ...buyer, _id: 'outsider' }, transactionId: created.transaction._id, transactions }), { code: 'FORBIDDEN' })
+})
+
+test('per-appointment timeout supports one day and seven days', async () => {
+  const { autoCompleteTransaction, reviseTransaction } = require('./transaction')
+  for (const hours of [24, 168]) {
+    const { transactions, id } = await confirmedTimeoutFixture()
+    const row = transactions.state.transactions.find(item => item._id === id)
+    row.autoCompleteAfterMs = hours * 3600000
+    const cutoff = row.scheduledAt + row.autoCompleteAfterMs
+    assert.equal((await autoCompleteTransaction({ transactionId: id, transactions, now: cutoff - 1 })).completed, false)
+    assert.equal((await autoCompleteTransaction({ transactionId: id, transactions, now: cutoff })).completed, true)
+  }
+})
+
+test('timeout config accepts one day and seven days and rejects invalid values', () => {
+  const { configuredTimeoutMs } = require('./timeout')
+  for (const hours of [1, 24, 168]) assert.equal(configuredTimeoutMs({ autoCompleteAfterHours: hours }), hours * 3600000)
+  for (const hours of [0, -1, '24', null, Infinity, 9000]) assert.throws(() => configuredTimeoutMs({ autoCompleteAfterHours: hours }))
+})
+test('new appointment snapshots timeout and revision moves deadline without changing duration', async () => {
+  const { reviseTransaction } = require('./transaction')
+  const transactions = repository()
+  const { transaction } = await createTransaction({ actor: buyer, ...validInput(), transactions, now: NOW })
+  assert.equal(transaction.autoCompleteAfterMs, require('./timeout').configuredTimeoutMs())
+  transaction.autoCompleteAfterMs = 168 * 3600000
+  const updated = await reviseTransaction({ actor: buyer, ...validInput(), transactionId: transaction._id, scheduledAt: NOW + 3600000, requestId: 'move', transactions, now: NOW })
+  assert.equal(updated.transaction.autoCompleteAfterMs, 168 * 3600000)
+  assert.equal(updated.transaction.autoCompleteAt, NOW + 169 * 3600000)
+  const { getAutoCompleteAt } = require('../../miniprogram/services/transaction-state')
+  assert.equal(getAutoCompleteAt(updated.transaction), updated.transaction.autoCompleteAt)
 })

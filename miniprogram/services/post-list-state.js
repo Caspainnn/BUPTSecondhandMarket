@@ -11,6 +11,9 @@ function createPostListState({ user } = {}) {
     direction: '',
     contentType: '',
     categoryIds: [],
+    conditionIds: [],
+    minPriceCents: null,
+    maxPriceCents: null,
     posts: [],
     nextCursor: null,
     exhausted: false,
@@ -29,9 +32,9 @@ function uniquePosts(rows) {
 function reducePostListState(state, event) {
   switch (event.type) {
     case 'CAMPUS_CHANGE':
-      return { ...createPostListState(), campusId: event.campusId || '', sort: state.sort, priceSort: state.priceSort, keyword: state.keyword, direction: state.direction || '', contentType: state.contentType || '', categoryIds: [...(state.categoryIds || [])] }
+      return { ...createPostListState(), campusId: event.campusId || '', sort: state.sort, priceSort: state.priceSort, keyword: state.keyword, direction: state.direction || '', contentType: state.contentType || '', categoryIds: [...(state.categoryIds || [])], conditionIds: [...(state.conditionIds || [])], minPriceCents: state.minPriceCents, maxPriceCents: state.maxPriceCents }
     case 'FILTER_CHANGE':
-      return { ...createPostListState(), campusId: state.campusId, sort: state.sort, priceSort: state.priceSort, keyword: state.keyword, direction: event.direction || '', contentType: event.contentType || '', categoryIds: event.contentType === 'service' ? [] : [...(event.categoryIds || [])] }
+      return { ...createPostListState(), campusId: state.campusId, sort: state.sort, priceSort: state.priceSort, keyword: state.keyword, direction: event.conditionIds && event.conditionIds.length ? 'provide' : event.direction || '', contentType: event.conditionIds && event.conditionIds.length ? 'item' : event.contentType || '', categoryIds: event.contentType === 'service' && !(event.conditionIds && event.conditionIds.length) ? [] : [...(event.categoryIds || [])], conditionIds: [...(event.conditionIds || [])], minPriceCents: event.minPriceCents == null ? null : event.minPriceCents, maxPriceCents: event.maxPriceCents == null ? null : event.maxPriceCents }
     case 'DIRECTION_CHANGE':
       return { ...createPostListState(), campusId: state.campusId, sort: state.sort, priceSort: state.priceSort, keyword: state.keyword, direction: event.direction || '' }
     case 'PRICE_SORT_CHANGE':

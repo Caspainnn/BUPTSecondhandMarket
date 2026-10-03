@@ -18,7 +18,7 @@ function repository() {
     if (!ownerId && (query.sort || '').startsWith('price_') && !query.pricePhase) {
       const phase = query.cursor && query.cursor.pricePhase || 'priced'
       const first = await list({ ...query, pricePhase: phase }, '')
-      if (phase === 'negotiable' || first.rows.length === query.limit) return first
+      if (query.minPriceCents != null || query.maxPriceCents != null || phase === 'negotiable' || first.rows.length === query.limit) return first
       const rest = await list({ ...query, pricePhase: 'negotiable', cursor: null, limit: query.limit - first.rows.length }, '')
       return { rows: [...first.rows, ...rest.rows], nextCursor: rest.nextCursor }
     }
@@ -36,6 +36,9 @@ function repository() {
     if (query.contentType === 'service') conditions.push({ contentType: 'service' })
     if (query.contentType === 'item') conditions.push(_.or([{ contentType: 'item' }, { contentType: _.exists(false) }]))
     if (query.categoryIds && query.categoryIds.length) conditions.push(_.or(query.categoryIds.map(categoryId => ({ categoryId }))))
+    if (query.minPriceCents != null) conditions.push({ unitPriceCents: _.gte(query.minPriceCents) })
+    if (query.maxPriceCents != null) { conditions.push({ unitPriceCents: _.gte(0) }); conditions.push({ unitPriceCents: _.lte(query.maxPriceCents) }) }
+    if (query.conditionIds && query.conditionIds.length) conditions.push({ conditionId: _.in(query.conditionIds) })
     if (query.pricePhase === 'priced') conditions.push({ unitPriceCents: _.gt(-1) })
     if (query.pricePhase === 'negotiable') conditions.push(_.or([{ unitPriceCents: null }, { unitPriceCents: _.exists(false) }]))
     const fields = [[timeField, order]]
@@ -73,7 +76,7 @@ exports.main = async (event = {}) => {
       create: () => service.createPost({ actor, input: event.input, requestId: event.requestId, posts, now: db.serverDate() }),
       update: () => service.updatePost({ actor, postId: event.postId, input: event.input, posts, now: db.serverDate() }),
       setStatus: () => service.setPostStatus({ actor, postId: event.postId, status: event.status, posts, now: db.serverDate() }),
-      list: () => service.listPosts({ campusId: event.campusId, direction: event.direction, contentType: event.contentType, categoryId: event.categoryId, categoryIds: event.categoryIds, sort: event.sort, priceSort: event.priceSort, keyword: event.keyword, cursor: event.cursor, limit: event.limit, posts }),
+      list: () => service.listPosts({ campusId: event.campusId, direction: event.direction, contentType: event.contentType, categoryId: event.categoryId, categoryIds: event.categoryIds, sort: event.sort, priceSort: event.priceSort, keyword: event.keyword, minPriceCents: event.minPriceCents, maxPriceCents: event.maxPriceCents, conditionIds: event.conditionIds, cursor: event.cursor, limit: event.limit, posts }),
       listMine: () => service.listMyPosts({ actor, status: event.status, cursor: event.cursor, limit: event.limit, posts }),
       detail: () => service.getPostDetail({ actor, postId: event.postId, posts }),
     }

@@ -10,6 +10,7 @@
   <view wx:if="{{actions.length || canEdit}}" class="actions"><button class="{{item === 'confirm' ? 'action-primary' : 'action-secondary'}}" wx:for="{{actions}}" wx:key="*this" data-action="{{item}}" disabled="{{busy}}" data-id="{{transaction._id}}" bindtap="orderAct">{{item === 'confirm' ? '接受' : item === 'reject' ? '拒绝' : item === 'withdraw' ? '撤回' : '取消交易'}}</button><button wx:if="{{canEdit}}" disabled="{{busy}}" data-id="{{transaction._id}}" bindtap="orderEdit">修改</button></view>
   <view wx:if="{{canResult}}" class="actions"><button data-action="success" disabled="{{busy || successDisabled}}" data-id="{{transaction._id}}" bindtap="orderAct">交接成功</button><button class="action-secondary" data-action="failure" disabled="{{busy}}" data-id="{{transaction._id}}" bindtap="orderAct">交接失败</button></view>
   <text wx:if="{{canResult && successDisabled}}" class="hint">到约定时间后可确认交接成功</text>
+  <text wx:if="{{autoCompleteText}}" class="hint">无失败反馈将于 {{autoCompleteText}} 自动完成</text>
   <text wx:if="{{waitingOther}}" class="hint">你已提交交接结果，等待对方确认</text>
   <view wx:if="{{editing && canEdit}}" class="editor">
     <label wx:if="{{!isService}}">数量<input type="number" value="{{form.quantity}}" data-field="quantity" data-id="{{transaction._id}}" bindinput="orderPatch" disabled="{{busy}}" /></label>

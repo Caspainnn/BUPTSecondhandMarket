@@ -100,7 +100,7 @@ test('stage2 service publishes without a goods category and normalizes its type 
 test('stage2 card message checks ownership and increments recipient unread only once', async () => {
   const { sendPostCard } = require('./cloudfunctions/messageApi/message')
   const rows = []; let conversation = { _id: 'c', buyerId: 'buyer', sellerId: 'seller', buyerUnread: 0, sellerUnread: 0 }
-  const tx = { getConversation: async () => conversation, getPost: async id => ({ _id: id, ownerId: id === 'own' ? 'buyer' : 'seller', title: '我的需求', imageFileIds: [], direction: 'need', contentType: 'item', unitPriceCents: null }), findByRequest: async (id, sender, req) => rows.find(row => row.requestId === req), createMessage: async data => { const row = { _id: 'm', ...data }; rows.push(row); return row }, updateConversation: async (id, patch) => conversation = { ...conversation, ...patch } }
+  const tx = { getConversation: async () => conversation, getPost: async id => ({ _id: id, ownerId: id === 'own' ? 'buyer' : 'seller', title: '我的需求', status: 'active', imageFileIds: [], direction: 'need', contentType: 'item', unitPriceCents: null }), findByRequest: async (id, sender, req) => rows.find(row => row.requestId === req), createMessage: async data => { const row = { _id: 'm', ...data }; rows.push(row); return row }, updateConversation: async (id, patch) => conversation = { ...conversation, ...patch } }
   const messages = { runTransaction: async fn => fn(tx) }
   const input = { actor: buyer, conversationId: 'c', postId: 'own', requestId: 'card', messages, now: 1 }
   await sendPostCard(input); await sendPostCard(input)

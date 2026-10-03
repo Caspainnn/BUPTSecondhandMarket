@@ -103,3 +103,21 @@ test('detail returns public fields, an owner flag, and no private identity data'
   assert.equal((await getPostDetail({ actor: { _id: 'another-user' }, postId: 'p', posts })).post.isOwner, false)
   await assert.rejects(getPostDetail({ postId: 'missing', posts }))
 })
+
+test('range validation accepts zero and rejects malformed bounds before querying', async () => {
+  const posts = { async listPublic(query) { return { rows: [], nextCursor: null } } }
+  const result = await listPosts({ minPriceCents: 0, maxPriceCents: 10000, posts })
+  assert.equal(result.query.minPriceCents, 0)
+  assert.equal(result.query.maxPriceCents, 10000)
+  for (const bounds of [{ minPriceCents: -1 }, { maxPriceCents: 1.5 }, { minPriceCents: '100' }, { maxPriceCents: 100000000 }, { minPriceCents: 200, maxPriceCents: 100 }]) {
+    await assert.rejects(listPosts({ ...bounds, posts }), { code: 'INVALID_PRICE_RANGE' })
+  }
+})
+test('condition selection normalizes supply items and rejects unknown conditions', async () => {
+  const posts = { async listPublic() { return { rows: [], nextCursor: null } } }
+  const result = await listPosts({ direction: 'need', contentType: 'service', conditionIds: ['new', 'new', 'like_new'], posts })
+  assert.equal(result.query.direction, 'provide')
+  assert.equal(result.query.contentType, 'item')
+  assert.deepEqual(result.query.conditionIds, ['new', 'like_new'])
+  await assert.rejects(listPosts({ conditionIds: ['unknown'], posts }), { code: 'INVALID_CONDITION' })
+})

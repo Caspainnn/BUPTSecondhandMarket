@@ -1,0 +1,6 @@
+﻿{
+  "enabled": false,
+  "templateId": "",
+  "miniprogramState": "trial",
+  "fields": { "mode": "", "status": "", "time": "", "location": "", "nickname": "" }
+}

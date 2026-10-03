@@ -13,6 +13,7 @@ function repository() {
     updates: 0,
   }
   const txApi = {
+    async getPost(id) { return (state.posts || []).find(item => item._id === id) || null },
     async getConversation(id) { return state.conversations.find((item) => item._id === id) || null },
     async findByRequest(conversationId, senderId, requestId) { return state.messages.find((item) => item.conversationId === conversationId && item.senderId === senderId && item.requestId === requestId) || null },
     async createMessage(data) { const row = { _id: `m${state.messages.length + 1}`, ...data }; state.messages.push(row); return row },
@@ -110,4 +111,22 @@ test('transaction messages include fresh authorized state rather than old snapsh
  assert.equal(result.messages[0].currentTransaction.status,'cancelled')
  messages.getTransactions=async()=>[{_id:'t1',conversationId:'other',buyerId:'other',status:'pending_seller'}]
  assert.equal((await listMessages({actor:buyer,conversationId:'c1',messages})).messages[0].currentTransaction,null)
+})
+
+test('post card rejects inactive or sold-out information without messages or unread changes', async () => {
+  const { sendPostCard } = require('./message')
+  for (const patch of [{ status: 'offline' }, { status: 'sold' }, { status: 'completed', direction: 'need' }, { status: 'active', availableQuantity: 0 }]) {
+    const messages = repository()
+    messages.state.posts = [{ _id: 'p', ownerId: 'seller', title: '教材', status: 'active', availableQuantity: 1, ...patch }]
+    await assert.rejects(sendPostCard({ actor: seller, conversationId: 'c1', postId: 'p', requestId: 'card', messages, now: 1 }), { code: 'POST_UNAVAILABLE' })
+    assert.equal(messages.state.messages.length, 0); assert.equal(messages.state.updates, 0)
+  }
+})
+test('active service and need cards remain sendable without item inventory', async () => {
+  const { sendPostCard } = require('./message')
+  for (const patch of [{ contentType: 'service' }, { direction: 'need' }, { availableQuantity: 1 }]) {
+    const messages = repository(); messages.state.posts = [{ _id: 'p', ownerId: 'seller', title: '信息', status: 'active', ...patch }]
+    const result = await sendPostCard({ actor: seller, conversationId: 'c1', postId: 'p', requestId: 'card', messages, now: 1 })
+    assert.equal(result.message.type, 'post_card')
+  }
 })

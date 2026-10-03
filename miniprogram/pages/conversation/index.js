@@ -1,5 +1,5 @@
-const { respondTransaction, withdrawTransaction, reviseTransaction, submitResult } = require('../../services/transactions')
-const { getAppointmentProgress, getTransactionActions, getTransactionStatusLabel } = require('../../services/transaction-state')
+const { refreshAppointments, respondTransaction, withdrawTransaction, reviseTransaction, submitResult } = require('../../services/transactions')
+const { getAutoCompleteAt, getAppointmentProgress, getTransactionActions, getTransactionStatusLabel } = require('../../services/transaction-state')
 const { CAMPUSES, SERVICE_APPOINTMENT_CAMPUSES } = require('../../config/market')
 const { createChatState, reduceChatState, startPolling } = require('../../services/chat-state')
 const { listMessages, markRead, sendMessage, sendPostCard, syncMessageBadge } = require('../../services/conversations')
@@ -27,8 +27,9 @@ Page({
   stopPolling() { if (this.stop) { this.stop(); this.stop = null } },
   sync(callback) {
     const latest = new Map()
-    for (const message of this.state.messages) if (message.transactionId) latest.set(message.transactionId, message._id)
+    for (const message of this.state.messages) if (message.transactionId && !message.reminderType) latest.set(message.transactionId, message._id)
     const messages = this.state.messages.map(item => {
+      if (item.reminderType) return { ...item, mine: false, transactionCard: null, canResult: false, canRespond: false, canRevise: false }
       const current = item.currentTransaction
       const isLatest = latest.get(item.transactionId) === item._id
       const card = isLatest && current ? current : item.transactionCard
@@ -43,7 +44,7 @@ Page({
         canRevise: Boolean(pending && current.buyerId === this.userId),
         transactionCard: card ? { ...card, progress: getAppointmentProgress(card, Date.now(), item.text || ''), statusLabel: card.status === 'cancelled' && card.cancelType === 'seller_rejected' ? '卖家已拒绝交易' : card.status === 'cancelled' && card.cancelType === 'buyer_withdrew' ? '买家已撤回预约' : getTransactionStatusLabel(card.status), progressTone: ['failed', 'abnormal', 'cancelled'].includes(card.status) ? 'alert' : card.status === 'completed' ? 'success' : 'pending',
           campusName: card.fulfillmentMode === 'online' ? '线上' : (CAMPUSES.find(campus => campus.id === card.campusId) || {}).name || '',
-          scheduledText: this.formatAppointment(card.scheduledAt) } : null }
+          autoCompleteText: card.status === 'awaiting_handover' ? this.formatAppointment(getAutoCompleteAt(card)) : '', scheduledText: this.formatAppointment(card.scheduledAt) } : null }
     })
     this.setData({ messages, loading: this.state.loading, sending: this.state.sending, error: this.state.error }, callback)
   },
@@ -78,6 +79,7 @@ Page({
     this.fetchingLatest = true
     const conversationId = this.conversationId
     try {
+      await refreshAppointments()
       const result = await listMessages(conversationId, null, 50)
       this.apply({ type: 'MESSAGES_SUCCESS', conversationId, messages: result.messages, nextBefore: result.nextBefore })
       try {
@@ -200,7 +202,7 @@ Page({
   async loadCardPosts(append) {
     if (this.data.cardLoading) return
     this.setData({ cardLoading: true })
-    try { const result = await listMyPosts('', append ? this.data.cardNextCursor : null, 20); this.setData({ cardPosts: append ? [...this.data.cardPosts, ...result.posts] : result.posts, cardNextCursor: result.nextCursor }) }
+    try { const result = await listMyPosts('active', append ? this.data.cardNextCursor : null, 20); const posts = result.posts.filter(post => post.status === 'active' && (post.direction === 'need' || post.contentType === 'service' || post.availableQuantity > 0)); this.setData({ cardPosts: append ? [...this.data.cardPosts, ...posts] : posts, cardNextCursor: result.nextCursor }) }
     catch (error) { console.warn('Card picker failed', error); wx.showToast({ title: '信息加载失败，请重试', icon: 'none' }) }
     finally { this.setData({ cardLoading: false }) }
   },
@@ -212,7 +214,7 @@ Page({
     this.postCardRequests = this.postCardRequests || {}
     const requestId = this.postCardRequests[postId] || (this.postCardRequests[postId] = Date.now() + '-' + Math.random().toString(36).slice(2))
     try { await sendPostCard(this.conversationId, postId, requestId); delete this.postCardRequests[postId]; this.setData({ cardPickerOpen: false }); await this.fetchLatest(); this.scrollToBottom() }
-    catch (error) { console.warn('Card send failed', error); wx.showToast({ title: '卡片未发送，请重试', icon: 'none' }) }
+    catch (error) { console.warn('Card send failed', error); wx.showToast({ title: error.message || '卡片未发送，请重试', icon: 'none' }); await this.loadCardPosts(false) }
     finally { this.setData({ cardSending: false }) }
   },
   openCardPost(event) { wx.navigateTo({ url: '/pages/post-detail/index?postId=' + encodeURIComponent(event.currentTarget.dataset.id) + '&fromCard=1&conversationId=' + encodeURIComponent(this.conversationId) }) },

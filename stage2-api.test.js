@@ -4,12 +4,12 @@ const vm = require('node:vm')
 const fs = require('node:fs')
 function queryCommand() {
   const evaluate = (row, condition) => typeof condition === 'function' ? condition(row) : Object.entries(condition).every(([key, value]) => typeof value === 'function' ? value(row[key]) : row[key] === value)
-  return { and: parts => row => parts.every(part => evaluate(row, part)), or: parts => row => parts.some(part => evaluate(row, part)), gt: value => candidate => candidate != null && candidate > value, lt: value => candidate => candidate < value, eq: value => candidate => candidate === value, exists: value => candidate => (candidate !== undefined) === value }
+  return { gte: value => candidate => typeof candidate === 'number' && candidate >= value, lte: value => candidate => typeof candidate === 'number' && candidate <= value, in: values => candidate => values.includes(candidate), and: parts => row => parts.every(part => evaluate(row, part)), or: parts => row => parts.some(part => evaluate(row, part)), gt: value => candidate => candidate != null && candidate > value, lt: value => candidate => candidate < value, eq: value => candidate => candidate === value, exists: value => candidate => (candidate !== undefined) === value }
 }
 function loadApi(path, database, service) {
   const exports = {}
   const cloud = { init() {}, DYNAMIC_CURRENT_ENV: 'env', database: () => database, getWXContext: () => ({ OPENID: 'trusted' }) }
-  vm.runInNewContext(fs.readFileSync(path, 'utf8'), { exports, require: name => name === 'wx-server-sdk' ? cloud : service || require(require('node:path').resolve(require('node:path').dirname(path), name)) })
+  vm.runInNewContext(fs.readFileSync(path, 'utf8'), { exports, require: name => name === 'wx-server-sdk' ? cloud : (service && name === './transaction') ? service : (service && name === './timer') ? { runPageRefreshBatch: async () => ({ completed: 0, reminded: 0 }) } : require(require('node:path').resolve(require('node:path').dirname(path), name)) })
   return exports.main
 }
 test('stage2 real post repository paginates mixed local and all-campus services without gaps', async () => {
@@ -68,6 +68,30 @@ test('discovery sorts all pages by price with ties and puts negotiable posts las
       assert.deepEqual(prices, [...prices].sort((a, b) => sort === 'price_asc' ? a - b : b - a))
     } else assert.equal(found[0].publishedAt, sort === 'oldest' ? 0 : 24)
   }
+})
+
+test('range and condition filters apply before stable price pagination including old supply rows', async () => {
+  const rows = Array.from({ length: 29 }, (_, i) => ({ _id: String(i).padStart(2, '0'), publishedAt: i, status: 'active', direction: i % 2 ? 'need' : undefined, availableQuantity: 1, unitPriceCents: i < 26 ? Math.floor(i / 2) * 100 : null, conditionId: i % 4 ? 'like_new' : 'new' }))
+  let predicate, size, orders
+  const collection = { where(condition) { predicate = condition; orders = []; return this }, orderBy(field, direction) { orders.push([field, direction]); return this }, limit(value) { size = value; return this }, async get() { return { data: rows.filter(predicate).sort((a, b) => { for (const [field, direction] of orders) { const comparison = a[field] < b[field] ? -1 : a[field] > b[field] ? 1 : 0; if (comparison) return direction === 'asc' ? comparison : -comparison } return 0 }).slice(0, size) } } }
+  const main = loadApi('cloudfunctions/postApi/index.js', { command: queryCommand(), collection: () => collection })
+  for (const bounds of [{ minPriceCents: 0 }, { maxPriceCents: 600 }, { minPriceCents: 200, maxPriceCents: 600 }]) {
+    for (const sort of ['price_asc', 'price_desc', 'newest', 'oldest']) {
+      let cursor = null, found = [], pages = 0
+      do {
+        const result = await main({ action: 'list', sort, ...bounds, limit: 3, cursor })
+        assert.equal(result.ok, true, JSON.stringify(result.error))
+        found.push(...result.data.posts); cursor = result.data.nextCursor
+        assert.ok(++pages < 30)
+      } while (cursor)
+      const expected = rows.filter(row => row.unitPriceCents != null && (bounds.minPriceCents == null || row.unitPriceCents >= bounds.minPriceCents) && (bounds.maxPriceCents == null || row.unitPriceCents <= bounds.maxPriceCents)).map(row => row._id).sort()
+      assert.deepEqual(found.map(row => row._id).sort(), expected)
+      assert.equal(new Set(found.map(row => row._id)).size, found.length)
+    }
+  }
+  const result = await main({ action: 'list', minPriceCents: 0, maxPriceCents: 600, conditionIds: ['new'] })
+  assert.equal(result.ok, true)
+  assert.deepEqual(result.data.posts.map(row => row._id), ['12', '08', '04', '00'])
 })
 
 test('stage2 transaction API ignores a forged client actor', async () => {

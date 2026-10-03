@@ -58,3 +58,16 @@ test('formats free labels and integer-cent prices', () => {
 test('filters unavailable cards defensively', () => {
   assert.deepEqual(selectDiscoverablePosts([post('visible'), post('hidden', 0)]).map((item) => item._id), ['visible'])
 })
+
+test('range and conditions survive campus sort refresh and reset on filter reset', () => {
+  let state = reducePostListState(createPostListState(), { type: 'FILTER_CHANGE', minPriceCents: 0, maxPriceCents: 10000, conditionIds: ['new'], direction: 'need' })
+  assert.equal(state.direction, 'provide')
+  assert.equal(state.contentType, 'item')
+  for (const event of [{ type: 'CAMPUS_CHANGE', campusId: 'bupt-shahe' }, { type: 'SORT_CHANGE', sort: 'oldest' }, { type: 'REFRESH' }]) state = reducePostListState(state, event)
+  assert.equal(state.minPriceCents, 0)
+  assert.equal(state.maxPriceCents, 10000)
+  assert.deepEqual(state.conditionIds, ['new'])
+  state = reducePostListState(state, { type: 'FILTER_CHANGE', direction: '', contentType: '', categoryIds: [], conditionIds: [] })
+  assert.equal(state.minPriceCents, null)
+  assert.deepEqual(state.conditionIds, [])
+})
