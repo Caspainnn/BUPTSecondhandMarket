@@ -1,5 +1,7 @@
 # 第三阶段实施计划
 
+> 2026-10-04最终状态：阶段三当前范围及双账号回归已验收通过；微信订阅延期上线前。最终实现、部署及数据说明见[阶段三落地说明](../../阶段3落地说明.md)。下文早期定时触发器、独立通知和待验收记录为历史，以最终说明及最新验收单为准。
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** 补齐发现筛选、站内通知、预约提醒及超时自动完成。
