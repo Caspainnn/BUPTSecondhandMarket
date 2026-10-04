@@ -18,7 +18,7 @@
       <input wx:if="{{activeField === 'nickname'}}" class="input" type="nickname" maxlength="20" value="{{form.nickname}}" placeholder="请输入昵称" bindinput="onNicknameInput" focus />
       <view wx:else class="edit-profile-row" data-field="nickname" bindtap="editField"><text>{{form.nickname || '未填写'}}</text><text>›</text></view>
     </label>
-    <label class="field"><text class="field-label">联系方式</text><input wx:if="{{activeField === 'contactInfo'}}" class="input" maxlength="100" value="{{form.contactInfo}}" placeholder="可填写手机号、QQ、微信号等，也可留空" bindinput="onContactInput" focus /><view wx:else class="edit-profile-row" data-field="contactInfo" bindtap="editField"><text>{{form.contactInfo || '未填写'}}</text><text>›</text></view></label>
+    <view class="field"><text class="field-label">联系方式</text><view class="contact-entry"><picker class="contact-type" range="{{contactTypes}}" value="{{contactTypeIndex}}" bindchange="onContactTypeChange"><view class="contact-type-content"><text>{{form.contactType || '微信'}}</text><image class="contact-arrow" src="/assets/icons/dropdown.svg" /></view></picker><input class="input contact-value" maxlength="100" value="{{form.contactInfo}}" type="{{form.contactType === '电话' ? 'number' : 'text'}}" placeholder="{{contactFocused ? '' : form.contactType === 'QQ' ? '填写QQ号，可留空' : form.contactType === '电话' ? '填写电话号码，可留空' : '填写微信号，可留空'}}" bindinput="onContactInput" bindfocus="onContactFocus" bindblur="onContactBlur" /></view></view>
 
     <label class="field">
       <text class="field-label">常驻校区</text>

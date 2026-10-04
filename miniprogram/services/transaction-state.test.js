@@ -38,8 +38,8 @@ test('preserves the full form on failure and prevents duplicate submit', () => {
 
 test('uses the approved 待交接 label and renders failed/abnormal distinctly', () => {
   assert.equal(getTransactionStatusLabel('awaiting_handover'), '待交接')
-  assert.equal(getTransactionStatusLabel('failed'), '交接失败')
-  assert.equal(getTransactionStatusLabel('abnormal'), '结果异常')
+  assert.equal(getTransactionStatusLabel('failed'), '交易失败')
+  assert.equal(getTransactionStatusLabel('abnormal'), '交接结果不一致')
 })
 
 test('post management reflects unavailable and lifecycle states', () => {

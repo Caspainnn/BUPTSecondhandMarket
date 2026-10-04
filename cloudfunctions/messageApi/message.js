@@ -68,7 +68,14 @@ async function listMessages({ actor, conversationId, before, limit, messages }) 
   const ids = [...new Set(result.rows.filter(row => row.transactionId).map(row => row.transactionId))]
   const transactions = ids.length && messages.getTransactions ? await messages.getTransactions(ids) : []
   const authorized = transactions.filter(row => row.conversationId === conversationId && (row.buyerId === actor._id || row.sellerId === actor._id))
-  return { messages: [...result.rows].reverse().map(row => row.transactionId ? { ...row, currentTransaction: authorized.find(item => item._id === row.transactionId) || null } : row), nextBefore: result.nextBefore || null }
+  const contactByTransaction = new Map()
+  for (const transaction of authorized) {
+    if (!['failed', 'abnormal'].includes(transaction.status)) continue
+    const peerId = actor._id === transaction.buyerId ? transaction.sellerId : transaction.buyerId
+    const peer = messages.getUser ? await messages.getUser(peerId) : null
+    contactByTransaction.set(transaction._id, { nickname: peer && peer.nickname || '对方用户', contactInfo: peer && peer.contactInfo || '', ...(peer && peer.contactType ? { contactType: peer.contactType } : {}), role: actor._id === transaction.buyerId ? 'seller' : 'buyer' })
+  }
+  return { messages: [...result.rows].reverse().map(row => row.transactionId ? { ...row, currentTransaction: (() => { const current = authorized.find(item => item._id === row.transactionId); return current ? { ...current, peerContact: contactByTransaction.get(current._id) || null } : null })() } : row), nextBefore: result.nextBefore || null }
 }
 
 async function markConversationRead({ actor, conversationId, messages, now }) {

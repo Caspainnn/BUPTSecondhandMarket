@@ -1,7 +1,7 @@
 <view class="chat-page {{keyboardHeight > 0 ? 'keyboard-open' : ''}}" style="{{keyboardHeight > 0 ? 'height: calc(100vh - ' + keyboardHeight + 'px);' : ''}}">
   <view class="seller-bar">
     <cloud-image class="seller-avatar" src="{{peer.avatarFileId}}" mode="aspectFill" />
-    <view class="seller-details"><text class="seller-name">{{peer.nickname || peerRole}}</text><text class="seller-label">{{peerRole}}</text></view>
+    <view class="seller-details"><text class="seller-name">{{peer.nickname || peerRole}}</text><text class="seller-label">{{peerRole}}</text></view><contact-copy conversation-id="{{conversation._id}}" />
   </view>
   <view class="product-bar">
     <view wx:if="{{conversation}}" class="product-info" bindtap="openPost">
@@ -40,6 +40,7 @@
         </view>
         <view wx:if="{{item.canResult}}" class="card-actions"><button data-id="{{item.transactionId}}" data-action="success" disabled="{{cardBusy || item.successDisabled}}" catchtap="actOnCard">交接成功</button><button class="card-secondary" data-id="{{item.transactionId}}" data-action="failure" disabled="{{cardBusy}}" catchtap="actOnCard">交接失败</button></view>
         <text wx:if="{{item.canResult && item.successDisabled}}" class="transaction-card-event">到约定时间后可确认交接成功</text>
+        <transaction-help transaction="{{item.currentTransaction}}" peer="{{item.currentTransaction.peerContact}}" wx:if="{{item.transactionCard.showResolution}}" />
         <text class="transaction-card-link" data-id="{{item.transactionId}}" bindtap="openTransaction">查看预约详情 ›</text>
       </view>
       <view wx:elif="{{item.postCard}}" class="transaction-card post-message-card"><view class="transaction-card-heading"><text>商品信息</text><text class="transaction-card-status">{{item.postCard.direction === 'need' ? '需求' : '提供'}} · {{item.postCard.contentType === 'service' ? '服务' : '物品'}}</text></view><cloud-image wx:if="{{item.postCard.coverFileId}}" src="{{item.postCard.coverFileId}}" mode="aspectFill" /><text class="transaction-card-title">{{item.postCard.title}}</text><text class="post-card-price">{{item.postCard.priceLabel}}</text><view class="card-actions" wx:if="{{item.canReservePost}}"><button data-id="{{item.postCard.postId}}" bindtap="reserveCardPost">发起预约</button></view><view class="transaction-card-link" data-id="{{item.postCard.postId}}" bindtap="openCardPost">查看详情 ›</view></view>

@@ -30,6 +30,7 @@ function repository() {
   return {
     async runTransaction(work) { return db.runTransaction((transaction) => work(transactionRepository(transaction))) },
     async getConversation(id) { try { return (await conversations.doc(id).get()).data || null } catch (error) { return null } },
+    async getUser(id) { try { return (await db.collection('users').doc(id).get()).data || null } catch (error) { return null } },
     async getTransactions(ids) { return (await db.collection('transactions').where({ _id: _.in(ids) }).limit(50).get()).data },
     async listMessages({ conversationId, before, limit }) {
       const conditions = [{ conversationId }]

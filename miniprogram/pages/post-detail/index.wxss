@@ -19,3 +19,4 @@
 .state { margin: 32rpx; text-align: center; }
 .error { color: #c2413b; }
 .contact.own-contact { background: #dce3e9; color: #8794a0; }
+.owner-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.seller contact-copy{margin-left:auto;flex-shrink:0}

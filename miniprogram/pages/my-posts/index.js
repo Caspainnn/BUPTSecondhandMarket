@@ -9,5 +9,27 @@ Page({
   republish(event) { wx.navigateTo({ url: `/pages/post-edit/index?postId=${encodeURIComponent(event.currentTarget.dataset.id)}&relist=1` }) },
   edit(event) { wx.navigateTo({ url: `/pages/post-edit/index?postId=${event.currentTarget.dataset.id}` }) },
   detail(event) { wx.navigateTo({ url: `/pages/post-detail/index?postId=${event.currentTarget.dataset.id}` }) },
-  async status(event) { try { await setPostStatus(event.currentTarget.dataset.id, event.currentTarget.dataset.status, `${Date.now()}`); await this.load() } catch (error) { wx.showToast({ title: error.message, icon: 'none' }) } },
+  async status(event) {
+    if (this.statusBusy) return
+    const { id, status } = event.currentTarget.dataset
+    this.statusBusy = true
+    try {
+      if (status === 'offline') {
+        const post = this.data.posts.find(item => item._id === id)
+        const closing = post && post.direction === 'need'
+        const result = await new Promise((resolve, reject) => wx.showModal({
+          title: closing ? '确认关闭' : '确认下架',
+          content: closing ? '确定要关闭这条需求吗？' : '确定要下架吗？',
+          confirmText: closing ? '确定关闭' : '确定下架',
+          cancelText: '取消',
+          success: resolve,
+          fail: reject,
+        }))
+        if (!result.confirm) return
+      }
+      await setPostStatus(id, status, `${Date.now()}`)
+      await this.load()
+    } catch (error) { wx.showToast({ title: error.message || '操作失败，请重试', icon: 'none' }) }
+    finally { this.statusBusy = false }
+  },
 })

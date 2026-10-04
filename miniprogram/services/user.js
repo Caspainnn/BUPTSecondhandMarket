@@ -72,6 +72,7 @@ async function uploadAvatar(tempPath) {
 
 async function saveProfile(input) {
   const data = await callCloud('updateProfile', input)
+  if (input.contactInfo !== undefined && (data.user.contactInfo || '') !== input.contactInfo.trim() || input.contactType !== undefined && (data.user.contactType || '') !== input.contactType) throw new Error('联系方式未保存，请更新云函数updateProfile后重试')
   return cacheUser(data.user)
 }
 

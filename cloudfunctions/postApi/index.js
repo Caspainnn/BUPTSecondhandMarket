@@ -52,6 +52,7 @@ function repository() {
         return part
       })))
     }
+    if (ownerId && query.excludeRepublished) conditions.push(_.or([{ relistedAsPostId: _.exists(false) }, { relistedAsPostId: _.eq('') }]))
     let request = collection.where(_.and(conditions))
     for (const [field, direction] of fields) request = request.orderBy(field, direction)
     const result = await request.limit(query.limit).get()

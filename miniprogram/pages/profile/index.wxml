@@ -6,7 +6,7 @@
     <view class="card profile-summary" bindtap="openProfileEdit" aria-role="button" aria-label="编辑个人资料">
       <cloud-image wx:if="{{user.avatarFileId}}" class="summary-avatar" src="{{user.avatarFileId}}" mode="aspectFill" />
       <view wx:else class="summary-avatar summary-empty">头像</view>
-      <view class="summary-details"><text class="summary-nickname">{{user.nickname || '未设置昵称'}}</text><text class="summary-contact">联系方式：{{user.contactInfo || '未填写'}}</text><text class="summary-campus">{{campusIndex < 0 ? '未设置常驻校区' : campuses[campusIndex].name}}</text></view>
+      <view class="summary-details"><text class="summary-nickname">{{user.nickname || '未设置昵称'}}</text><text class="summary-contact">{{user.contactType || '联系方式'}}：{{user.contactInfo || '未填写'}}</text><text class="summary-campus">{{campusIndex < 0 ? '未设置常驻校区' : campuses[campusIndex].name}}</text></view>
       <text class="summary-chevron">›</text>
     </view>
     <block wx:if="{{user.profileCompleted}}">

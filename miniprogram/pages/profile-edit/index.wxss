@@ -112,3 +112,10 @@
 
 .dropdown-picker{display:flex;align-items:center;justify-content:space-between;gap:12rpx}.dropdown-icon{width:32rpx;height:32rpx;flex-shrink:0}
 .edit-profile-row{display:flex;align-items:center;justify-content:space-between;gap:20rpx;padding:22rpx;border:1rpx solid #dbeaf4;border-radius:16rpx;background:#f9fcfe;color:#53677a;font-size:28rpx;word-break:break-all}
+
+.contact-entry { display: flex; align-items: center; gap: 16rpx; }
+.contact-type { box-sizing: border-box; flex: none; width: 146rpx; height: 88rpx; border: 1rpx solid #dbeaf4; border-radius: 18rpx; background: #f9fcfe; color: #19435f; font-size: 28rpx; }
+.contact-type-content { box-sizing: border-box; height: 86rpx; line-height: 1; display: flex; align-items: center; justify-content: center; white-space: nowrap; }
+.contact-value { flex: 1; min-width: 0; height: 88rpx; min-height: 88rpx; }
+
+.contact-arrow { display: block; flex-shrink: 0; width: 20rpx; height: 20rpx; margin-left: 8rpx; }

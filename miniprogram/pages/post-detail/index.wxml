@@ -11,7 +11,7 @@
       <text wx:if="{{post.defectDescription}}" class="defect">异常说明：{{post.defectDescription}}</text>
       <text wx:if="{{post.isGoods}}" class="stock">可预约 {{post.availableQuantity}} / 共 {{post.totalQuantity}}</text>
     </view>
-    <view class="card seller"><cloud-image src="{{post.ownerAvatarFileId}}" mode="aspectFill" /><text>{{post.ownerNickname}}</text></view>
+    <view class="card seller"><cloud-image src="{{post.ownerAvatarFileId}}" mode="aspectFill" /><text class="owner-name">{{post.ownerNickname}}</text><contact-copy post-id="{{post._id}}" /></view>
     <button wx:if="{{!fromCard}}" class="contact {{post.isOwner ? 'own-contact' : ''}}" loading="{{busy}}" disabled="{{!post.isOwner && post.unavailable}}" bindtap="contactSeller">{{!post.isOwner && post.unavailable ? '暂不可预约' : '聊一聊'}}</button>
     <button wx:if="{{fromCard && canReserve}}" class="contact" disabled="{{post.unavailable}}" bindtap="reservePost">{{post.unavailable ? '暂不可预约' : '发起预约'}}</button>
   </block>

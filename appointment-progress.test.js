@@ -11,7 +11,7 @@ test('appointment progress separates stage from the next participant action', ()
   assert.match(getAppointmentProgress({ ...confirmed, sellerResult: 'success' }, 100).detail, /待买家/)
   assert.deepEqual(getAppointmentProgress({ status: 'cancelled', cancelType: 'seller_rejected' }, 100), { title: '已取消', detail: '卖家已拒绝预约，可重新协商后发起' })
   assert.equal(getAppointmentProgress({ status: 'completed' }, 100).title, '已完成')
-  assert.equal(getAppointmentProgress({ status: 'abnormal' }, 100).title, '结果异常')
+  assert.equal(getAppointmentProgress({ status: 'abnormal' }, 100).title, '交接结果不一致')
 })
 
 test('appointment progress distinguishes automatic completion and shows scheduled deadline', () => {

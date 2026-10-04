@@ -22,13 +22,23 @@ async function createPost({ actor, input, requestId, posts, now }) {
   requireWriter(actor)
   const normalizedRequestId = requireRequestId(requestId)
   const existing = await posts.findByCreateRequest(actor._id, normalizedRequestId)
-  if (existing) return { post: existing, created: false }
+  if (existing) {
+    if (existing.relistSourcePostId) { await ownedPost(actor, existing.relistSourcePostId, posts); await posts.update(existing.relistSourcePostId, { relistedAsPostId: existing._id }) }
+    return { post: existing, created: false }
+  }
   const normalized = validatePostInput(input)
+  const sourceId = input.relistSourcePostId
+  if (sourceId) {
+    if (typeof sourceId !== 'string') throw new PostError('INVALID_POST', '重新上架来源无效')
+    const source = await ownedPost(actor, sourceId, posts)
+    if ((source.direction || 'provide') !== 'provide' || (source.contentType || 'item') !== 'item' || source.availableQuantity !== 0 || source.reservedQuantity > 0 || !(source.soldQuantity > 0)) throw new PostError('INVALID_POST', '只能重新发布已售完的物品')
+  }
   const post = await posts.create({
     ownerId: actor._id,
     ownerNickname: actor.nickname,
     ownerAvatarFileId: actor.avatarFileId,
     ...normalized,
+    ...(sourceId ? { relistSourcePostId: sourceId } : {}),
     ...(normalized.totalQuantity ? { availableQuantity: normalized.totalQuantity, reservedQuantity: 0, soldQuantity: 0 } : {}),
     status: 'active',
     createRequestId: normalizedRequestId,
@@ -36,6 +46,7 @@ async function createPost({ actor, input, requestId, posts, now }) {
     createdAt: now,
     updatedAt: now,
   })
+  if (sourceId) await posts.update(sourceId, { relistedAsPostId: post._id })
   return { post, created: true }
 }
 
@@ -93,8 +104,8 @@ async function listPosts({ campusId, direction, contentType, categoryId, categor
 
 async function listMyPosts({ actor, status, cursor, limit, posts }) {
   requireWriter(actor)
-  const result = await posts.listMine({ ownerId: actor._id, status: status || '', cursor: cursor || null, limit: Math.min(Math.max(Number(limit) || 20, 1), 20) })
-  return { posts: result.rows, nextCursor: result.nextCursor }
+  const result = await posts.listMine({ excludeRepublished: true, ownerId: actor._id, status: status || '', cursor: cursor || null, limit: Math.min(Math.max(Number(limit) || 20, 1), 20) })
+  return { posts: result.rows.filter(post => !post.relistedAsPostId), nextCursor: result.nextCursor }
 }
 
 async function getPostDetail({ actor, postId, posts }) {

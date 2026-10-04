@@ -2,6 +2,8 @@
   "navigationBarTitleText": "商品会话",
   "disableScroll": true,
   "usingComponents": {
-    "cloud-image": "/components/cloud-image/index"
+    "cloud-image": "/components/cloud-image/index",
+    "transaction-help": "/components/transaction-help/index",
+    "contact-copy": "/components/contact-copy/index"
   }
 }

@@ -297,7 +297,9 @@ async function getTransactionDetail({ actor, transactionId, transactions }) {
   if (!transaction) throw new TransactionError('TRANSACTION_NOT_FOUND', '交易不存在')
   if (transaction.buyerId !== actor._id && transaction.sellerId !== actor._id) throw new TransactionError('FORBIDDEN', '你无权查看该交易')
   const [buyer, seller, conversation] = await Promise.all([transactions.getUser(transaction.buyerId), transactions.getUser(transaction.sellerId), transactions.getConversation(transaction.conversationId)])
-  return { transaction, events: await transactions.getEvents(transactionId), buyerNickname: buyer && buyer.nickname || conversation && conversation.buyerSnapshot && conversation.buyerSnapshot.nickname || '未设置昵称', sellerNickname: seller && seller.nickname || conversation && conversation.sellerSnapshot && conversation.sellerSnapshot.nickname || '未设置昵称' }
+  const peer = actor._id === transaction.buyerId ? seller : buyer
+  const peerContact = ['failed', 'abnormal'].includes(transaction.status) ? { nickname: peer && peer.nickname || '对方用户', contactInfo: peer && peer.contactInfo || '', ...(peer && peer.contactType ? { contactType: peer.contactType } : {}), role: actor._id === transaction.buyerId ? 'seller' : 'buyer' } : null
+  return { transaction, peerContact, events: await transactions.getEvents(transactionId), buyerNickname: buyer && buyer.nickname || conversation && conversation.buyerSnapshot && conversation.buyerSnapshot.nickname || '未设置昵称', sellerNickname: seller && seller.nickname || conversation && conversation.sellerSnapshot && conversation.sellerSnapshot.nickname || '未设置昵称' }
 }
 
 module.exports = { autoCompleteTransaction, reviseTransaction, ACTIVE_STATUSES, TransactionError, cancelTransaction, createTransaction, getTransactionDetail, listTransactions, respondTransaction, submitTransactionResult, withdrawTransaction }

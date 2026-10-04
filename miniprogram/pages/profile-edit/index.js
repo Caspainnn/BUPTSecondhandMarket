@@ -14,13 +14,16 @@ Page({
     form: createProfileState().form,
     campuses: [],
     campusIndex: -1,
+    contactTypes: ['微信', 'QQ', '电话'],
+    contactTypeIndex: 0,
+    contactFocused: false,
   },
 
   async onLoad() {
     this.profileState = createProfileState({ status: 'loading' })
     try {
       const [user, campuses] = await Promise.all([
-        getCurrentUser(),
+        getCurrentUser(true),
         getCampuses(),
       ])
       const campusIndex = campuses.findIndex((campus) => campus.campusId === user.campusId)
@@ -28,6 +31,7 @@ Page({
         form: {
           nickname: user.nickname || '',
           contactInfo: user.contactInfo || '',
+          contactType: ['微信', 'QQ', '电话'].includes(user.contactType) ? user.contactType : (user.contactInfo ? user.contactType || '' : '微信'),
           avatarFileId: user.avatarFileId || '',
           avatarPreview: user.avatarFileId || '',
           campusId: user.campusId || '',
@@ -38,6 +42,7 @@ Page({
         form: this.profileState.form,
         campuses,
         campusIndex,
+        contactTypeIndex: Math.max(0, this.data.contactTypes.indexOf(user.contactType)),
       })
     } catch (error) {
       this.applyEvent({
@@ -63,7 +68,14 @@ Page({
     })
   },
   editField(event) { this.setData({ activeField: event.currentTarget.dataset.field }) },
-  onContactInput(event) { this.applyEvent({ type: 'PATCH_FORM', patch: { contactInfo: event.detail.value } }) },
+  onContactTypeChange(event) {
+    const contactTypeIndex = Number(event.detail.value)
+    this.setData({ contactTypeIndex })
+    this.applyEvent({ type: 'PATCH_FORM', patch: { contactType: this.data.contactTypes[contactTypeIndex] } })
+  },
+  onContactFocus() { this.setData({ contactFocused: true }) },
+  onContactBlur() { this.setData({ contactFocused: false }) },
+  onContactInput(event) { this.applyEvent({ type: 'PATCH_FORM', patch: { contactInfo: event.detail.value, contactType: this.profileState.form.contactType || this.data.contactTypes[this.data.contactTypeIndex] } }) },
 
   onCampusChange(event) {
     const campusIndex = Number(event.detail.value)
@@ -103,6 +115,7 @@ Page({
         avatarFileId: this.profileState.form.avatarFileId,
         campusId: this.profileState.form.campusId,
         contactInfo: this.profileState.form.contactInfo || '',
+        contactType: this.profileState.form.contactType || '',
       })
       this.applyEvent({ type: 'SAVE_SUCCESS', user })
       prepareProtectedResume()

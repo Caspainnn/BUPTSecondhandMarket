@@ -130,3 +130,14 @@ test('active service and need cards remain sendable without item inventory', asy
     assert.equal(result.message.type, 'post_card')
   }
 })
+
+ test('failure contact is restricted to the peer and authenticated conversation participants', async () => {
+  const messages = repository()
+  messages.state.messages.push({ _id: 'm', conversationId: 'c1', transactionId: 't', createdAt: 1 })
+  messages.getTransactions = async () => [{ _id: 't', conversationId: 'c1', buyerId: 'buyer', sellerId: 'seller', status: 'abnormal' }]
+  messages.getUser = async id => ({ nickname: id, contactInfo: id + '-contact', openId: 'secret' })
+  const result = await listMessages({ actor: buyer, conversationId: 'c1', messages })
+  assert.deepEqual(result.messages[0].currentTransaction.peerContact, { nickname: 'seller', contactInfo: 'seller-contact', role: 'seller' })
+  assert.ok(!JSON.stringify(result).includes('secret'))
+  await assert.rejects(listMessages({ actor: { ...buyer, _id: 'outsider' }, conversationId: 'c1', messages }), { code: 'FORBIDDEN' })
+ })

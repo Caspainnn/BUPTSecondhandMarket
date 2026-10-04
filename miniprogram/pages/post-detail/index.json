@@ -1,6 +1,7 @@
 {
   "navigationBarTitleText": "商品详情",
   "usingComponents": {
-    "cloud-image": "/components/cloud-image/index"
+    "cloud-image": "/components/cloud-image/index",
+    "contact-copy": "/components/contact-copy/index"
   }
 }

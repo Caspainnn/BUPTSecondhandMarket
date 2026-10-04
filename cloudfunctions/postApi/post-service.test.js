@@ -121,3 +121,16 @@ test('condition selection normalizes supply items and rejects unknown conditions
   assert.deepEqual(result.query.conditionIds, ['new', 'like_new'])
   await assert.rejects(listPosts({ conditionIds: ['unknown'], posts }), { code: 'INVALID_CONDITION' })
 })
+
+test('republish hides sold source only after successful creation and retry repairs marker', async () => {
+  const posts = repository([{ _id: 'old', ownerId: actor._id, status: 'sold', availableQuantity: 0, reservedQuantity: 0, soldQuantity: 2 }])
+  const options = { actor, input: { ...input, relistSourcePostId: 'old' }, requestId: 'relist', posts, now: 1 }
+  const result = await createPost(options)
+  assert.equal(posts.rows[0].relistedAsPostId, result.post._id)
+  assert.equal(posts.rows[0].soldQuantity, 2)
+  const mine = await listMyPosts({ actor, posts })
+  assert.ok(!mine.posts.some(row => row._id === 'old'))
+  delete posts.rows[0].relistedAsPostId
+  await createPost(options)
+  assert.equal(posts.rows.length, 2); assert.equal(posts.rows[0].relistedAsPostId, result.post._id)
+})

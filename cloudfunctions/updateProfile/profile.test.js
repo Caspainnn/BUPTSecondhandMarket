@@ -144,3 +144,12 @@ test('writes a complete normalized profile in one update', async () => {
   ])
   assert.equal(user.profileCompleted, true)
 })
+
+test('saves contact type and trimmed value together and rejects unsupported types', async () => {
+  const repositories = createRepositories()
+  const user = await updateUserProfile({ openid: 'openid-1', input: { ...validInput, contactType: '微信', contactInfo: '  wx-demo  ' }, ...repositories, now: 1 })
+  assert.equal(user.contactType, '微信')
+  assert.equal(user.contactInfo, 'wx-demo')
+  assert.equal(repositories.updates[0].changes.contactInfo, 'wx-demo')
+  assert.throws(() => validateProfile({ ...validInput, contactType: '未知' }), { code: 'INVALID_CONTACT' })
+})

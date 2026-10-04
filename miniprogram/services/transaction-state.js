@@ -2,8 +2,8 @@ const STATUS_LABELS = {
   pending_seller: '待卖家确认',
   awaiting_handover: '待交接',
   completed: '交易完成',
-  failed: '交接失败',
-  abnormal: '结果异常',
+  failed: '交易失败',
+  abnormal: '交接结果不一致',
   cancelled: '已取消',
 }
 
@@ -51,8 +51,8 @@ function getAppointmentProgress(transaction, now, eventText = '') {
     const detail = transaction.cancelType === 'seller_rejected' || eventText.includes('卖家已拒绝') ? '卖家已拒绝预约，可重新协商后发起' : transaction.cancelType === 'buyer_withdrew' || eventText.includes('买家已撤回') ? '买家已撤回预约，可重新发起' : '预约已取消，可重新协商后发起'
     return { title: '已取消', detail: transaction.cancelReason ? `${detail}；原因：${transaction.cancelReason}` : detail }
   }
-  if (status === 'failed') return { title: '交接失败', detail: transaction.buyerResult === 'failure' ? '买家反馈交接失败，本次预约已结束' : transaction.sellerResult === 'failure' ? '卖家反馈交接失败，本次预约已结束' : '已收到交接失败反馈，本次预约已结束' }
-  if (status === 'abnormal') return { title: '结果异常', detail: '买卖双方交接结果不一致，请核实情况' }
+  if (status === 'failed') return { title: '交易失败', detail: transaction.buyerResult === 'failure' ? '买家反馈交接失败，本次预约已结束' : transaction.sellerResult === 'failure' ? '卖家反馈交接失败，本次预约已结束' : '已收到交接失败反馈，本次预约已结束' }
+  if (status === 'abnormal') return { title: '交接结果不一致', detail: '买卖双方交接结果不一致，请核实情况' }
   return { title: getTransactionStatusLabel(status), detail: eventText }
 }
 

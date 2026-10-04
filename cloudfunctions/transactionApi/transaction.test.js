@@ -447,3 +447,15 @@ test('new appointment snapshots timeout and revision moves deadline without chan
   const { getAutoCompleteAt } = require('../../miniprogram/services/transaction-state')
   assert.equal(getAutoCompleteAt(updated.transaction), updated.transaction.autoCompleteAt)
 })
+
+test('failure details return only opposite contact to the authorized participant', async () => {
+  const transactions = repository({ users: [{ _id: 'buyer', nickname: '甲', contactInfo: 'buyer-contact', _openid: 'secret-buyer' }, { _id: 'seller', nickname: '乙', contactInfo: 'seller-contact', _openid: 'secret-seller' }], transactions: [{ _id: 't', buyerId: 'buyer', sellerId: 'seller', conversationId: 'c1', status: 'abnormal' }] })
+  const result = await getTransactionDetail({ actor: buyer, transactionId: 't', transactions })
+  assert.equal(result.peerContact.contactInfo, 'seller-contact')
+  assert.equal(result.peerContact.nickname, '乙'); assert.equal(result.peerContact.role, 'seller')
+  assert.ok(!JSON.stringify(result).includes('secret-'))
+  const reverse = await getTransactionDetail({ actor: seller, transactionId: 't', transactions })
+  assert.equal(reverse.peerContact.contactInfo, 'buyer-contact')
+  transactions.state.transactions[0].status = 'completed'
+  assert.equal((await getTransactionDetail({ actor: buyer, transactionId: 't', transactions })).peerContact, null)
+})

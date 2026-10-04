@@ -27,7 +27,8 @@ function validateProfile(input = {}) {
   }
 
   if (input.contactInfo !== undefined && (typeof input.contactInfo !== 'string' || [...input.contactInfo.trim()].length > 100)) throw new ProfileError('INVALID_CONTACT', '联系方式不能超过 100 个字符')
-  return { nickname, avatarFileId, campusId, ...(input.contactInfo !== undefined ? { contactInfo: input.contactInfo.trim() } : {}) }
+  if (input.contactType !== undefined && !['', '微信', 'QQ', '邮箱', '电话'].includes(input.contactType)) throw new ProfileError('INVALID_CONTACT', '请选择有效的联系方式类型')
+  return { nickname, avatarFileId, campusId, ...(input.contactType !== undefined ? { contactType: input.contactType } : {}), ...(input.contactInfo !== undefined ? { contactInfo: input.contactInfo.trim() } : {}) }
 }
 
 async function updateUserProfile({ openid, input, users, campuses, now }) {
@@ -57,6 +58,7 @@ async function updateUserProfile({ openid, input, users, campuses, now }) {
       schoolId: 'bupt',
       campusId: profile.campusId,
       ...(profile.contactInfo !== undefined ? { contactInfo: profile.contactInfo } : {}),
+      ...(profile.contactType !== undefined ? { contactType: profile.contactType } : {}),
       profileCompleted: true,
       updatedAt: now,
     })

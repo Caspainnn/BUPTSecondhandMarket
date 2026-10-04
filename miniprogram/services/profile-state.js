@@ -1,5 +1,7 @@
 const emptyForm = {
   nickname: '',
+  contactInfo: '',
+  contactType: '',
   avatarFileId: '',
   avatarPreview: '',
   campusId: '',

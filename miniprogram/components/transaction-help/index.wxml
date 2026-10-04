@@ -1,0 +1,7 @@
+<view wx:if="{{transaction.status === 'failed' || transaction.status === 'abnormal'}}" class="support">
+  <view class="results"><view class="feedback">买家反馈：<text class="result {{transaction.buyerResult === 'success' ? 'result-success' : transaction.buyerResult === 'failure' ? 'result-failure' : 'result-pending'}}">{{transaction.buyerResult === 'success' ? '成功' : transaction.buyerResult === 'failure' ? '失败' : '未反馈'}}</text></view><view class="feedback">卖家反馈：<text class="result {{transaction.sellerResult === 'success' ? 'result-success' : transaction.sellerResult === 'failure' ? 'result-failure' : 'result-pending'}}">{{transaction.sellerResult === 'success' ? '成功' : transaction.sellerResult === 'failure' ? '失败' : '未反馈'}}</text></view></view>
+  <text class="caption">对方留下的联系方式</text><text class="person">{{peer.nickname || '对方用户'}}{{peer.role === 'seller' ? '（卖家）' : peer.role === 'buyer' ? '（买家）' : ''}}</text>
+  <view class="contact"><text>{{peer.contactInfo ? (peer.contactType || '联系方式') + '：' + peer.contactInfo : '对方未留下联系方式'}}</text><button wx:if="{{peer.contactInfo}}" catchtap="copyContact">复制</button></view>
+  <text class="hint">请先联系对方协商，谨防诈骗！若协商无果请联系学校安保处</text>
+  <view class="security"><text>学校安保处：</text><text class="number" catchtap="copySecurity" aria-role="button" aria-label="复制学校安保处电话">010 6228 2222</text></view>
+</view>

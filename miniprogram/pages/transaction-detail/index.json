@@ -1,1 +1,6 @@
-{ "navigationBarTitleText": "交易详情" }
+{
+  "navigationBarTitleText": "交易详情",
+  "usingComponents": {
+    "transaction-help": "/components/transaction-help/index"
+  }
+}
